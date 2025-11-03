@@ -1,0 +1,30 @@
+'use client'
+
+import DiscoverCollections from "@/components/Landing/DiscoverCollections"
+import Footer from "@/components/Landing/Footer"
+import GlobalReach from "@/components/Landing/GlobalReach"
+import Header from "@/components/Landing/Header"
+import Hero from "@/components/Landing/Hero"
+import HowToTokenize from "@/components/Landing/HowToTokenize"
+import LiveAuctions from "@/components/Landing/LiveAuctions"
+import PlatformFeatures from "@/components/Landing/PlatformFeatures"
+import Trending from "@/components/Landing/Trending"
+import WhyChoose from "@/components/Landing/WhyChoose"
+
+
+export default function LandingPage() {
+  return (
+    <div style={{ background: '#0F0F23', minHeight: '100vh' }}>
+      <Hero />
+      <GlobalReach />
+      <PlatformFeatures />
+      {/* <Trending />
+      <LiveAuctions />
+      <DiscoverCollections />
+      <WhyChoose />
+      <HowToTokenize />
+      <Footer /> */}
+    </div>
+  )
+}
+

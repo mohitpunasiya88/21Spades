@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --color-spades-dark: #0F0F23;
+  --color-spades-dark-secondary: #1a1a2e;
+  --color-spades-purple: #8B5CF6;
+  --color-spades-gold: #FFD700;
+  --color-spades-yellow: #FFD700;
+  /* Tailwind v4 font token for Audiowide → enables class `font-audiowide` */
+  --font-audiowide: var(--font-audiowide), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  /* Tailwind v4 font token for Asul → enables class `font-asul` */
+  --font-asul: var(--font-asul), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+:root {
+  --background: #0F0F23;
+  --foreground: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0F0F23;
+  color: #ffffff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8B5CF6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed;
+}
+
+
+.gold-gradient-text {
+  /* font-weight: 400; */
+  font-style: normal;
+  /* font-size: 48px; */
+  line-height: 100%;
+  letter-spacing: 2%;
+  text-align: center;
+  color: transparent;
+  background: linear-gradient(180deg, #FFFFFF 22.25%, #FFB600 82.42%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: none;
+  
+  /* subtle outline border */
+  text-shadow:
+    0 0 1px rgba(255,255,255,0.2),
+    0 0 4px rgba(255,255,255,0.1);
+
+  /* optional faint white outer stroke using filter */
+  filter: drop-shadow(0 0 1px rgba(255,255,255,0.15));
+
+  /* optional border mimic around text container */
+  display: inline-block;
+  /* border: 1px solid rgba(255, 255, 255, 0.15); */
+  /* padding: 10px 20px; */
+  /* border-radius: 8px; */
+
+  /* positioning if you want to match your figma frame */
+  /* width: 607px;
+  height: 61px; */
+  /* position: relative;
+  top: 40px;
+  left: -8.5px; */
+  opacity: 1;
+}
