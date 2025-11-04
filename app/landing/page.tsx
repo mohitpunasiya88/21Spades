@@ -10,16 +10,18 @@ import LiveAuctions from "@/components/Landing/LiveAuctions"
 import PlatformFeatures from "@/components/Landing/PlatformFeatures"
 import Trending from "@/components/Landing/Trending"
 import WhyChoose from "@/components/Landing/WhyChoose"
+import LogoAnimation from "@/components/Landing/LogoAnimation"
 
 
 export default function LandingPage() {
   return (
-    <div style={{ background: '#0F0F23', minHeight: '100vh' }}>
+    <div style={{ background: '#0F0F23', minHeight: '100vh', width: '100%' , padding: '0 10px'}}>
       <Hero />
       <GlobalReach />
       <PlatformFeatures />
-      {/* <Trending />
-      <LiveAuctions />
+      <LogoAnimation />
+      <Trending />
+      {/* <LiveAuctions />
       <DiscoverCollections />
       <WhyChoose />
       <HowToTokenize />
