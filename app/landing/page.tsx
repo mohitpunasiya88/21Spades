@@ -21,11 +21,13 @@ export default function LandingPage() {
       <PlatformFeatures />
       <LogoAnimation />
       <Trending />
-      {/* <LiveAuctions />
+      <LiveAuctions />
       <DiscoverCollections />
       <WhyChoose />
       <HowToTokenize />
-      <Footer /> */}
+      <LogoAnimation />
+      <Footer />
+      
     </div>
   )
 }
