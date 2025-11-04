@@ -12,3 +12,7 @@ export const buttonStyle = {
   export const marginStyle = {
     marginTop: '10px',
   }
+
+  export const loginFormStyle = {
+    padding: '10px',
+  }
