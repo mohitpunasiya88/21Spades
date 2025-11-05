@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import FeedPost from '@/components/Dashboard/FeedPost'
 import { Image as ImageIcon, Laugh, Tag, Search, ChevronDown } from 'lucide-react'
-import FeedRightSidebar from '@/components/Layout/RightSidebar'
+import FeedRightSidebar from '@/components/Layout/FeedRightSidebar'
+import { Badge } from 'antd'
 
 interface Post {
   id: string
@@ -49,42 +50,53 @@ export default function FeedPage() {
           <h1 className="text-white text-2xl font-semibold font-Exo  mb-4">Hello Spades !</h1>
 
           {/* Input bar (pixel matched) */}
-           <div className="flex items-center justify-between">
-            <p>??</p>
-            <div className="hidden md:flex items-center gap-2 bg-gray-800/50 border border-gray-700 rounded-3xl px-4 py-4 w-full">
-                      <Search className="w-5 h-5 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="what's New"
-                        className="bg-transparent border-none outline-none text-white placeholder-gray-400 flex-1 text-sm"
-                      />
-                    </div>
-           </div>
-
-            {/* Helper row */}
-            <div className="mt-2 flex items-center justify-between text-[13px]">
-              <div className="flex items-center gap-6 ps-12 whitespace-nowrap">
-                <span className="flex items-center gap-1 text-blue-400">
-                  <ImageIcon className="w-4 h-4" />
-                  <span className="text-gray-400">Image/Videos</span>
-                </span>
-                <span className="flex items-center gap-1 text-yellow-400">
-                  <Laugh className="w-4 h-4" />
-                  <span className="text-gray-400">Emoji</span>
-                </span>
-                <span className="flex items-center gap-1 text-orange-400">
-                  <Tag className="w-4 h-4" />
-                  <span className="text-gray-400">Categories</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-500 ml-1" />
-                </span>
+          <div className="flex items-start gap-6">
+            <div className="relative">
+              <div
+                className="flex items-center justify-center w-16 h-16 rounded-full overflow-hidden p-2"
+                style={{
+                  background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)'
+                }}
+              >
+                {/* Avatar */}
+                <img src="/assets/card-icon.png" alt="Avatar" className="w-full h-full object-contain" />
               </div>
-              <button className="bg-white text-gray-900 font-semibold px-5 py-2 rounded-full shadow">Post</button>
             </div>
+            <div className="flex-1">
+              <div className="hidden md:flex items-center gap-2 bg-gray-800/50 border border-gray-700 rounded-3xl px-4 py-4 w-full">
+                <Search className="w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="what's New"
+                  className="bg-transparent border-none outline-none text-white placeholder-gray-400 flex-1 text-sm"
+                />
+              </div>
+              {/* Helper row */}
+              <div className="p-4 flex items-center justify-between text-[13px]">
+                <div className="flex items-center gap-6 whitespace-nowrap">
+                  <span className="flex items-center gap-1 text-blue-400">
+                    <ImageIcon className="w-4 h-4" />
+                    <span className="text-gray-400">Image/Videos</span>
+                  </span>
+                  <span className="flex items-center gap-1 text-yellow-400">
+                    <Laugh className="w-4 h-4" />
+                    <span className="text-gray-400">Emoji</span>
+                  </span>
+                  <span className="flex items-center gap-1 text-orange-400">
+                    <Tag className="w-4 h-4" />
+                    <span className="text-gray-400">Categories</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 ml-1" />
+                  </span>
+                </div>
+                <button className="bg-white text-gray-900 font-semibold px-5 py-2 rounded-full shadow">Post</button>
+              </div>
+            </div>
+          </div>
 
-            <div className="border-b-2 border-gray-700 mb-10 mt-10" ></div>
+          <div className="border-b-2 border-gray-700 mb-4" ></div>
 
           {/* Featured (Ticket) banner */}
-          <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#0F1429] to-[#0B0F1E] p-6 mb-6">
+          {/* <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#0F1429] to-[#0B0F1E] p-6 mb-6">
             <div className="flex items-center">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -104,13 +116,12 @@ export default function FeedPage() {
                   <span><b className="text-white">{mm}</b> Minutes</span>
                 </div>
               </div>
-              {/* Car placeholder */}
               <div className="hidden md:block w-72 h-36 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 ml-6 shadow-lg" />
             </div>
-          </div>
+          </div> */}
 
           {/* Discover banner */}
-          <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#19103a] via-[#2a1e70] to-[#0b0f1e] p-6 mb-6">
+          {/* <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#19103a] via-[#2a1e70] to-[#0b0f1e] p-6 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex-1 max-w-xl">
                 <h4 className="text-white text-xl font-bold mb-2">Discover and sell your own tokenized assets</h4>
@@ -123,7 +134,7 @@ export default function FeedPage() {
                 <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-yellow-400 flex items-center justify-center text-white font-bold">21</div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Explore Feed Section */}
           <div className="mb-6">
@@ -138,11 +149,10 @@ export default function FeedPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-[#0B0F1E] text-gray-400 hover:bg-[#151a2f] border border-[#2A2F4A]'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors border-b-2 ${selectedCategory === cat
+                      ? 'text-purple-400 border-purple-500'
+                      : 'text-gray-400 border-transparent hover:text-white hover:border-gray-600'
+                    }`}
                 >
                   {cat}
                 </button>

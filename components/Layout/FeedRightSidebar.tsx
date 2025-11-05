@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
+import GaugeComponent from 'react-gauge-component'
 interface MarketData {
   fearGreed: {
     value: number
@@ -17,7 +17,7 @@ interface MarketData {
 
 export default function FeedRightSidebar() {
   const [marketData, setMarketData] = useState<MarketData | null>(null)
-
+  const [selected, setSelected] = useState('AVAX')
   useEffect(() => {
     fetch('/api/market')
       .then((res) => res.json())
@@ -31,7 +31,7 @@ export default function FeedRightSidebar() {
   return (
     <aside
       id="right-sidebar"
-      className="w-80 h-screen overflow-y-auto p-6"
+      className="rounded-2xl h-screen overflow-y-auto p-4"
       style={{
         background: 'linear-gradient(180deg, #0F0F23 0%, #0F0F23 75%, rgb(38,42,66) 115%)',
         msOverflowStyle: 'none',
@@ -39,55 +39,75 @@ export default function FeedRightSidebar() {
       }}
     >
       {/* Fear & Greed Index */}
-      <div className="mb-6">
+      <div className="mb-6 p-4 rounded-2xl border border-[#2A2F4A] bg-[#0F1429]/60">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-white font-semibold">Fear & Greed Index</h3>
-          <div className="flex gap-2 text-[10px]">
-            <span className="px-2 py-0.5 rounded bg-[#1b2140] text-gray-300 border border-[#2A2F4A]">AVAX</span>
-            <span className="px-2 py-0.5 rounded bg-[#1b2140] text-gray-300 border border-[#2A2F4A]">BTC</span>
+          <div className="flex items-center justify-center ">
+            <div className="inline-flex rounded-full bg-[#2a2a3e]">
+              <button
+                onClick={() => setSelected('AVAX')}
+                className={` rounded-full font-semibold text-sm transition-all p-1  duration-300 ${selected === 'AVAX'
+                    ? 'bg-gradient-to-r from-[#5C09FF] to-[#8b5cf6] text-white shadow-lg shadow-purple-500/50'
+                    : 'text-gray-400 hover:text-white'
+                  }`}
+              >
+                AVAX
+              </button>
+              <button
+                onClick={() => setSelected('BTC')}
+                className={` rounded-full font-semibold text-sm transition-all p-1 duration-300 ${selected === 'BTC'
+                    ? 'bg-gradient-to-r from-[#5C09FF] to-[#8b5cf6] text-white shadow-lg shadow-purple-500/50'
+                    : 'text-gray-400 hover:text-white'
+                  }`}
+              >
+                BTC
+              </button>
+            </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-[#2A2F4A] bg-[#0F1429]/60 p-4">
+        <div className=" p-4">
           <div className="flex items-center gap-2 text-xs mb-2">
             <span className="text-gray-300">{price}</span>
             <span className="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">{label}</span>
           </div>
-          <div className="relative mx-auto" style={{ width: 240, height: 150 }}>
-            <svg viewBox="0 0 240 150" className="w-full h-full">
-              {/* Background arc */}
-              <path d="M20 130 A110 110 0 0 1 220 130" stroke="#23273f" strokeWidth="18" fill="none" strokeLinecap="round" />
-              {/* Segments (left->right: red, yellow, green) */}
-              <path d="M30 130 A100 100 0 0 1 93 67" stroke="#ef4444" strokeWidth="12" fill="none" strokeLinecap="round" />
-              <path d="M97 67 A100 100 0 0 1 143 67" stroke="#facc15" strokeWidth="12" fill="none" strokeLinecap="round" />
-              <path d="M147 67 A100 100 0 0 1 210 130" stroke="#22c55e" strokeWidth="12" fill="none" strokeLinecap="round" />
-              {/* Segment separators */}
-              <line x1="95" y1="69" x2="100" y2="74" stroke="#23273f" strokeWidth="3" />
-              <line x1="145" y1="69" x2="150" y2="74" stroke="#23273f" strokeWidth="3" />
-              {/* Needle */}
-              {(() => {
-                const angle = 180 - (value / 100) * 180 // 180..0
-                const rad = (angle * Math.PI) / 180
-                const cx = 120 + Math.cos(rad) * 78
-                const cy = 130 - Math.sin(rad) * 78
-                return (
-                  <g>
-                    <line x1="120" y1="130" x2={cx} y2={cy} stroke="#ffffff" strokeWidth="2" />
-                    <circle cx="120" cy="130" r="5" fill="#ffffff" />
-                  </g>
-                )
-              })()}
-              {/* center purple hub */}
-              <circle cx="120" cy="130" r="30" fill="url(#hub)" />
-              <defs>
-                <radialGradient id="hub" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#5b21b6" />
-                  <stop offset="100%" stopColor="#2a1e70" />
-                </radialGradient>
-              </defs>
-              <text x="120" y="124" textAnchor="middle" dominantBaseline="middle" fill="#ffffff" fontSize="20" fontWeight="700">{value}%</text>
-              {/* small white dot */}
-              <circle cx="120" cy="142" r="5" fill="#ffffff" />
-            </svg>
+          <div className="relative mx-auto mt-4 mb-2 -mx-4" style={{ width: 'calc(100% + 2rem)', height: 180 }}>
+            {/* Inner glow background to match design */}
+            <div className="pointer-events-none absolute left-1/2 bottom-2 -translate-x-1/2 w-[220px] h-[140px] rounded-b-[120px]" style={{
+              background: 'radial-gradient(120px 80px at 50% 100%, rgba(124,58,237,0.5) 0%, rgba(11,15,30,0.0) 70%)'
+            }} />
+            <GaugeComponent
+              type="semicircle"
+              arc={{
+                width: 0.25,
+                padding: 0.01,
+                cornerRadius: 1,
+                subArcs: [
+                  { limit: 20, color: '#EA4228' },
+                  { limit: 40, color: '#F5CD19' },
+                  { limit: 60, color: '#5BE12C' },
+                  { limit: 80, color: '#F5CD19' },
+                  { limit: 100, color: '#EA4228' }
+                ]
+              }}
+              pointer={{
+                color: '#7C3AED',
+                length: 0.82,
+                width: 12,
+              }}
+              labels={{
+                valueLabel: { formatTextValue: () => '' },
+                tickLabels: { type: 'outer', ticks: [] }
+              }}
+              value={value}
+              minValue={0}
+              maxValue={100}
+            />
+            {/* White hub with glow */}
+            <div className="pointer-events-none absolute left-1/2 bottom-[38px] -translate-x-1/2 w-4 h-4 rounded-full bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)]" />
+            {/* Centered percentage overlay */}
+            <div className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 text-white text-3xl font-semibold">
+              {Math.round(Number(value))}%
+            </div>
           </div>
         </div>
       </div>
@@ -131,7 +151,7 @@ export default function FeedRightSidebar() {
           <button className="text-purple-400 text-sm">See All &gt;</button>
         </div>
         <div className="space-y-3">
-          {[1,2].map((i) => (
+          {[1, 2].map((i) => (
             <div key={i} className="rounded-2xl border border-[#2A2F4A] bg-[#0F1429]/60 p-4">
               <div className="flex items-center justify-between text-[10px] mb-2">
                 <span className="px-2 py-0.5 rounded bg-[#1b2140] text-gray-300 border border-[#2A2F4A]">Sunday , 21 Sep 2025</span>
