@@ -4,7 +4,7 @@ export default function GlobalReach() {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-4">
       {/* Spade Icon */}
-       <div className="text-white text-6xl md:text-7xl">♠</div>
+       <div className="text-white text-[40px] font-[600]">♠</div>
 
       {/* Main Title with Golden Gradient */}
       <h1 className="text-4xl gold-gradient-text md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-yellow-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent font-audiowide" style={{ margin: '10px' }}>

@@ -23,9 +23,9 @@ export default function Trending() {
   ];
 
   return (
-    <section className=" relative my-10 " >
+    <section className=" relative my-15 " >
 
-      <div className="relative top-0 left-1/2 text-white text-4xl mb-6">♠</div>
+      <div className="relative top-0 left-1/2 text-white text-[40px] font-[600] mb-6">♠</div>
       <div className="container">
         <div className="text-center mb-12 relative w-1/3 mx-auto">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 text-yellow-400 gold-gradient-text font-audiowide">

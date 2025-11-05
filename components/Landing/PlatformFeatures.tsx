@@ -32,7 +32,7 @@ export default function PlatformFeatures() {
       <div className="mx-auto w-full max-w-[1367px] rounded-[51px] border border-white/20" style={{ minHeight: 591 }}>
         {/* Heading */}
         <div className="flex flex-col items-center pt-10 md:pt-14">
-          <div className="text-white/90 mb-3">{/* small spade */}♠</div>
+          <div className="text-white/90 mb-3 text-[40px] font-[600]">{/* small spade */}♠</div>
           <h2
             className="text-center font-audiowide gold-gradient-text font-audiowide text-4xl md:text-5xl font-bold"
            

@@ -38,8 +38,8 @@ export default function Hero() {
             </div>
 
             {/* lead paragraph */}
-            <p className="lead-text">
-              Create, trade, and connect in a decentralized Web3 social economy. Earn from your creativity, and exchange value transparently.
+            <p className="lead-text text-[24px] font-[600]">
+              Create, trade, and connect in a decentralized Web3 social economy. <br/>Earn from your creativity, and exchange value transparently.
             </p>
           </div>
           <div className="hero-content-inner-bottom">
