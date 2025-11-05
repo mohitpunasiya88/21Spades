@@ -1,35 +1,82 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
-import { Search, Bell, User, ChevronDown } from 'lucide-react'
+import { Input, Select, Badge, Button, Avatar, Dropdown, type MenuProps } from 'antd'
+import { Search, Bell, ChevronDown, Plus, Languages } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
   const { user, logout } = useAuthStore()
-  const [showDropdown, setShowDropdown] = useState(false)
-
-  useEffect(() => {
+  const [open, setOpen] = useState(false)
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState('English')
+  const languageRef = useRef<HTMLDivElement>(null)
+  const profileRef = useRef<HTMLDivElement>(null)
+useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('.dropdown-container')) {
-        setShowDropdown(false)
+      if (languageRef.current && !languageRef.current.contains(event.target as Node)) {
+        setIsLanguageOpen(false)
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false)
       }
     }
-    document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
+
+  const menuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      label: (
+        <button
+          onClick={() => {
+            router.push('/profile')
+            setOpen(false)
+          }}
+          className="w-full text-left text-white"
+        >
+          Profile
+        </button>
+      ),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: (
+        <button
+          onClick={() => {
+            logout()
+            router.push('/login')
+            setOpen(false)
+          }}
+          className="w-full text-left text-red-400"
+        >
+          Logout
+        </button>
+      ),
+    },
+  ]
+
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <nav
+      className="backdrop-blur-sm border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50"
+      style={{ background: 'linear-gradient(180deg, #0F0F23 0%, #0F0F23 75%,rgb(38, 42, 66) 115%)' }}
+    >
       {/* Logo */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-xl">21</span>
           </div>
-          <span className="text-white font-bold text-xl tracking-wide">SPADES</span>
+          <span className="font-bold text-xl tracking-wide bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">SPADES</span>
         </div>
 
         {/* Search Bar */}
@@ -46,61 +93,110 @@ export default function Navbar() {
       {/* Right Side */}
       <div className="flex items-center gap-4">
         {/* Language Selector */}
-        <div className="hidden md:block">
-          <select className="bg-gray-800/50 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 cursor-pointer">
-            <option>English</option>
-          </select>
-        </div>
+      {/* Language Dropdown */}
+            <div className="relative" ref={languageRef}>
+              <button
+                onClick={() => {
+                  setIsLanguageOpen(!isLanguageOpen)
+                  setIsProfileOpen(false)
+                }}
+                className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-all w-[107px] h-[22px]"
+                style={{
+                  background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                }}
+              >
+                <Languages className="w-4 h-4" />
+                <span 
+                  className="font-semibold text-[18px] leading-none"
+                  style={{ fontFamily: 'var(--font-exo2)' }}
+                >
+                  {selectedLanguage}
+                </span>
+                {/* Custom small caret (7.58 x 4.33) */}
+                <svg 
+                  className={`ml-1 ${isLanguageOpen ? 'rotate-180' : ''}`} 
+                  width="7.58" height="4.33" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M1 1.5L8 7.5L15 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+
+              {/* Language Dropdown Menu */}
+              {isLanguageOpen && (
+                <div 
+                  className="absolute top-full left-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                  style={{
+                    background: 'rgba(17, 24, 39, 0.98)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                    minWidth: '200px',
+                    zIndex: 1000,
+                  }}
+                >
+                  {languages.map((lang, index) => (
+                    <button
+                      key={lang}
+                      onClick={() => {
+                        setSelectedLanguage(lang)
+                        setIsLanguageOpen(false)
+                      }}
+                      className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center justify-between group"
+                      style={{
+                        borderBottom: index < languages.length - 1 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
+                      }}
+                    >
+                      <span className="group-hover:text-purple-300 transition-colors">{lang}</span>
+                      {lang === selectedLanguage && (
+                        <span className="text-green-400 text-sm font-bold">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
         {/* Notifications */}
         <div className="relative">
-          <button className="relative p-2 text-gray-400 hover:text-white transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-gray-900"></span>
-          </button>
+          <Badge dot offset={[-2, 2]} className="[&_.ant-badge-dot]:!bg-red-500">
+            <button className="relative text-gray-300 hover:text-white transition-colors w-9 h-9 rounded-full border border-gray-700 bg-gray-800/50 flex items-center justify-center">
+              <Bell className="w-5 h-5" />
+            </button>
+          </Badge>
         </div>
 
-        {/* Create NFT Button */}
-        <button className="hidden md:block bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors shadow-lg">
-          Create NFT
+        {/* Create NFT icon with border */}
+        <button className="text-gray-300 hover:text-white transition-colors w-9 h-9 rounded-full border border-gray-700 bg-gray-800/50 flex items-center justify-center">
+          <Plus className="w-5 h-5" />
         </button>
 
         {/* User Profile */}
-        <div className="relative dropdown-container">
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity"
-          >
-            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-md">
-              <User className="w-5 h-5" />
-            </div>
-            <span className="hidden md:block font-medium">{user?.name || 'Spades'}</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
-          </button>
+        {/* Extra dummy avatar to mirror layout */}
+        <Avatar
+          size={32}
+          src="https://i.pravatar.cc/80?img=32"
+          className="!bg-gray-700 !border !border-gray-600"
+        />
 
-          {showDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl py-2 z-50 border border-gray-700">
-              <button
-                onClick={() => {
-                  router.push('/profile')
-                  setShowDropdown(false)
-                }}
-                className="w-full text-left px-4 py-2.5 text-white hover:bg-gray-700 transition-colors text-sm"
-              >
-                Profile
-              </button>
-              <button
-                onClick={() => {
-                  logout()
-                  router.push('/login')
-                  setShowDropdown(false)
-                }}
-                className="w-full text-left px-4 py-2.5 text-red-400 hover:bg-gray-700 transition-colors text-sm"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+        <div className="relative dropdown-container">
+          <Dropdown
+            open={open}
+            onOpenChange={setOpen}
+            menu={{ items: menuItems }}
+            dropdownRender={(menu) => (
+              <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-2 w-48">{menu}</div>
+            )}
+          >
+            <button className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
+              <Avatar
+                size={32}
+                src="https://i.pravatar.cc/80?img=12"
+                className="!bg-purple-600 !shadow-md !border !border-gray-600"
+              />
+              {/* <span className="hidden md:block font-medium">{user?.name || 'Spades'}</span> */}
+              {/* <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} /> */}
+            </button>
+          </Dropdown>
         </div>
       </div>
     </nav>

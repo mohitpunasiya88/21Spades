@@ -17,16 +17,15 @@ import {
 
 const menuItems = [
   { icon: FileText, label: 'Feed', path: '/feed' },
-  { icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
-  { icon: BarChart, label: 'SpadesFI', path: '/spadesfi' },
   { icon: MessageCircle, label: 'Messages', path: '/messages' },
-  { icon: Users, label: 'Communities', path: '/communities' },
-  { icon: User, label: 'Group', path: '/group' },
-  { icon: Grid3x3, label: 'D-Drop', path: '/ddrop' },
-  { icon: Search, label: 'Explore', path: '/explore' },
-  { icon: RefreshCw, label: 'Trending', path: '/trending' },
-  { icon: Calendar, label: 'Events', path: '/events' },
-  { icon: File, label: 'News', path: '/news' },
+  // { icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
+  // { icon: BarChart, label: 'SpadesFI', path: '/spadesfi' },
+  // { icon: Grid3x3, label: 'D-Drop', path: '/ddrop' },
+  // { icon: Search, label: 'Explore', path: '/explore' },
+  // { icon: RefreshCw, label: 'trending', path: '/trending' },
+  // { icon: Calendar, label: 'Events', path: '/events' },
+  // { icon: File, label: 'News', path: '/news' },
+  // { icon: User, label: 'Dashboard', path: '/dashboard' },
 ]
 
 export default function Sidebar() {
@@ -34,61 +33,75 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 bg-gray-900 border-r border-gray-800 h-screen overflow-y-auto">
+    <aside className="w-64 h-screen overflow-y-auto border-r border-gray-800" style={{ background: 'linear-gradient(180deg, #0F0F23 0%, #0F0F23 75%, #0B2CFF 115%)' }}>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-800">
-        <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mx-auto">
+      {/* <div className="p-6 border-b border-gray-800">
+        <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mx-auto shadow-md">
           <span className="text-white font-bold text-2xl">21</span>
         </div>
-      </div>
+      </div> */}
 
       {/* Menu Items */}
-      <nav className="p-4 space-y-2">
-        {menuItems.map((item) => {
+      <nav className="p-4 pr-0">
+        <div className="rounded-xl border border-[#2A2F4A] bg-[#0B0F1E]/60">
+        {menuItems.map((item, idx) => {
           const Icon = item.icon
           const isActive = pathname === item.path
           return (
+            <div key={item.path}>
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`relative w-full flex items-center gap-3 px-4 py-3 transition-colors ${
                 isActive
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                  ? 'text-white'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <span className={`flex items-center justify-center w-6 h-6 rounded-md ${isActive ? 'border border-yellow-500/70 bg-yellow-500/10' : 'border border-[#2A2F4A]'} `}>
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-yellow-400' : 'text-gray-400'}`} />
+              </span>
+              <span className="ml-2 text-sm tracking-wide">{item.label}</span>
+              {isActive && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-6 rounded bg-yellow-500"></span>
+              )}
             </button>
+            {/* separators between groups */}
+            {idx === 2 || idx === 5 ? <div className="mx-4 h-px bg-[#2A2F4A]" /> : null}
+            </div>
           )
         })}
+        </div>
       </nav>
 
       {/* Chat Section */}
-      <div className="p-4 border-t border-gray-800 mt-4">
+      {/* <div className="p-4 border-t border-gray-800 mt-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold">Chat</h3>
-          <div className="flex gap-2">
-            <button className="text-xs px-2 py-1 bg-purple-600 text-white rounded">All</button>
-            <button className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded">Group</button>
-            <button className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded">Community</button>
-          </div>
+          <div className="text-gray-400">•••</div>
+        </div>
+        <div className="flex items-center gap-2 mb-3">
+          <button className="text-xs px-2 py-1 bg-purple-600/90 text-white rounded">All</button>
+          <button className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded">Group</button>
+          <button className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded">Community</button>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
-            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs">MN</span>
+          {[{n:'Magnus Nelson',t:'16:45'},{n:'Jonas Walden',t:'16:41'},{n:'Rose Nelson',t:'16:38'}].map((c)=> (
+            <div key={c.n} className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
+              <div className="w-8 h-8 rounded-full border border-[#2A2F4A] bg-gray-800/40 flex items-center justify-center">
+                <span className="text-white text-[10px] font-semibold">{c.n.split(' ').map(p=>p[0]).join('').slice(0,2)}</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-white text-sm">{c.n}</p>
+              </div>
+              <div className="text-gray-500 text-xs">{c.t}</div>
             </div>
-            <div className="flex-1">
-              <p className="text-white text-sm">Magnus Nelson</p>
-              <p className="text-gray-500 text-xs">16:45</p>
-            </div>
-          </div>
+          ))}
         </div>
-        <button className="text-purple-500 text-sm mt-2 hover:underline">
+        <button className="text-purple-400 text-sm mt-2 hover:underline">
           View All &gt;
         </button>
-      </div>
+      </div> */}
     </aside>
   )
 }
