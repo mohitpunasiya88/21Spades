@@ -4,7 +4,7 @@ import './landingPage.css'
 
 export default function Hero() {  
   return (
-    <div className="hero-section relative w-full min-h-screen flex flex-col items-center justify-center ">
+    <div className="hero-section relative w-full min-h-screen flex flex-col items-center justify-center mt-5">
       <div className="header-section w-full">
         <Header />
         {/* <hr className="border-white/20 w-full my-4" /> */}

@@ -15,7 +15,7 @@ import LogoAnimation from "@/components/Landing/LogoAnimation"
 
 export default function LandingPage() {
   return (
-    <div style={{ background: '#0F0F23', minHeight: '100vh', width: '100%' , padding: '0 10px'}}>
+    <div style={{ background: '#0F0F23', minHeight: '100vh', width: '100%' , padding: '0 10px' , overflowX: 'hidden'}}>
       <Hero />
       <GlobalReach />
       <PlatformFeatures />
