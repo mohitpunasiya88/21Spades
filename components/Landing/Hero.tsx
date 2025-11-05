@@ -1,162 +1,67 @@
-'use client'
+import { Facebook, Instagram, Twitter } from "lucide-react";
+import Header from "./Header";
+import './landingPage.css'
 
-import Header from "./Header"
-import { buttonStyle, marginStyle } from "../Style/style"
-
-export default function Hero() {
-
- 
-  const outlineStyle = {
-    ...buttonStyle,
-    backgroundColor: "transparent",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.2)"
-  };
-
-  
-
+export default function Hero() {  
   return (
-<section 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden rounded-3xl border border-white/20 bg-transparent backdrop-blur-lg"
-      style={{
-        background: 'linear-gradient(to bottom, #1a0a2e, #0F0F23)',
-        paddingTop: '80px',
-        margin: '50px'
-      }}
-    >
-<Header />
-
-      {/* Starry Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(100)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-              opacity: Math.random() * 0.5 + 0.2
-            }}
-          />
-        ))}
+    <div className="hero-section relative w-full min-h-screen flex flex-col items-center justify-center ">
+      <div className="header-section w-full">
+        <Header />
+        {/* <hr className="border-white/20 w-full my-4" /> */}
       </div>
+      
+      <div className="hero-content">
 
-      <div className="container mx-auto px-4 relative z-10 text-center">
-        {/* Large Spade Icon */}
-        <div className="mb-8 flex justify-center">
+        {/* background image */}
+        <div className="hero-background-image">
+          <img src="/assets/star-bg.png" alt="Hero Background" />
+        </div>
+       
+        {/* hero content inner */}
+        <div className="hero-content-inner">
+          <div className="hero-content-inner-top">
           <div className="text-white text-6xl md:text-7xl">♠</div>
+            {/* title plate */}
+            <div className="title-plate">
+              <h1>Social Exchange</h1>
+            </div>
+
+            {/* subtitle */}
+            <h2 className="subtitle-gradient">
+              Connect<span style={{ color: '#FFB600' }}>,</span> Create <span style={{ color: '#FFB600' }}>&amp;</span> Trade
+            </h2>
+
+            {/* inner line */}
+            <div className="inline-combo">
+              <span className="in-the">in the</span>
+              <span className="web3">WEB3 World</span>
+            </div>
+
+            {/* lead paragraph */}
+            <p className="lead-text">
+              Create, trade, and connect in a decentralized Web3 social economy. Earn from your creativity, and exchange value transparently.
+            </p>
+          </div>
+          <div className="hero-content-inner-bottom">
+            <button className="btn-base btn-primary">Explore more</button>
+            <button className="btn-base btn-secondary">Explore feed</button>
+            <button className="btn-base btn-secondary">Chat</button>
+          </div>
         </div>
-
-        {/* Social Exchange - Yellow-Orange Gradient */}
-        <h1 
-          className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6"
-          style={{ 
-            background: 'linear-gradient(to right, #FF8C00, #FFA500)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontFamily: 'system-ui, sans-serif',
-            letterSpacing: '0.02em',
-            margin: '10px'
-          }}
-          
-        >
-          Social Exchange
-        </h1>
-
-        {/* Connect, Create & Trade - with WEB3 highlighted */}
-        <h2 
-          className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-white"
-          style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '0.02em', margin: '10px' }}
-        >
-          Connect, Create & Trade<br />
-          in the{' '}
-          <span
-            style={{
-              background: 'linear-gradient(to right, #FF8C00, #FFA500)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              margin: '10px'
-            }}
-          >
-            WEB3
-          </span>{' '}
-          World
-        </h2>
-
-        {/* Centered Single Paragraph - White Text */}
-          <p 
-            className="text-lg md:text-xl text-white text-center leading-relaxed"
-            style={marginStyle}
-          >
-            
-            Create, trade, and connect in a decentralized Web3 social economy. <br /> Earn from your creativity, and exchange value transparently.
-          </p>
-
-        {/* Buttons - Exactly as per image */}
-        <div className=" items-center justify-center gap-4" style={marginStyle}>
-          {/* Explore more - White text on solid purple background */}
-          <button 
-            className=" px-10 py-4 rounded-full font-semibold text-base md:text-lg transition-all hover:scale-105 bg-white text-black"
-            style={outlineStyle} 
-          >
-            Explore more
-          </button>
-
-          {/* Explore feed - White text with purple border, transparent background */}
-          <button 
-            className="px-10 py-4 rounded-full font-semibold text-base md:text-lg transition-all hover:scale-105 border border-white/20 bg-transparent"
-            style={outlineStyle} 
-          >
-            Explore feed
-          </button>
-
-          {/* Chat - White text with purple border, transparent background */}
-          <button 
-            className="px-10 py-4 rounded-full font-semibold text-base md:text-lg transition-all hover:scale-105 border border-white/20 bg-transparent"
-            style={outlineStyle} 
-          >
-            Chat
-          </button>
-        </div>
-
-        {/* Social Media Icons - Right Side */}
-        <div className="fixed right-6 md:right-8 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-20">
-          <a 
-            href="#" 
-            className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <span className="text-white text-xl">📷</span>
+        {/* right side image */}
+      <div className="social-rail">
+          <a href="#" aria-label="Instagram" className="social-btn">
+            <Instagram />
           </a>
-          <a 
-            href="#" 
-            className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <span className="text-white text-xl font-bold">𝕏</span>
+          <a href="#" aria-label="X (Twitter)" className="social-btn">
+            <Twitter />
           </a>
-          <a 
-            href="#" 
-            className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <span className="text-white text-xl font-bold">f</span>
+          <a href="#" aria-label="Facebook" className="social-btn">
+            <Facebook />
           </a>
         </div>
       </div>
-    </section>
-   
-  )
+      
+    </div>
+  );
 }
-  

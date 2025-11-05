@@ -2,7 +2,6 @@
 
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
-import RightSidebar from './RightSidebar'
 
 export default function DashboardLayout({
   children,
@@ -17,7 +16,6 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-y-auto bg-gray-950">
           {children}
         </main>
-        <RightSidebar />
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Audiowide, Asul } from "next/font/google";
+import { Inter, Audiowide, Asul, Exo_2 } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,6 +18,12 @@ const asul = Asul({
   variable: "--font-asul",
 });
 
+const exo2 = Exo_2({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-exo2",
+});
+
 export const metadata: Metadata = {
   title: "21 SPADES - Social Exchange",
   description: "Connect, Create & Trade in the WEB3 World",
@@ -30,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${audiowide.variable} ${asul.variable} antialiased`}>
+      <body className={`${inter.className} ${audiowide.variable} ${asul.variable} ${exo2.variable} antialiased`}>
         {children}
       </body>
     </html>

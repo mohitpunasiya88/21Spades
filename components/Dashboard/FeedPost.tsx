@@ -1,6 +1,6 @@
 'use client'
 
-import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react'
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2 } from 'lucide-react'
 
 interface FeedPostProps {
   post: {
@@ -20,29 +20,31 @@ interface FeedPostProps {
 
 export default function FeedPost({ post }: FeedPostProps) {
   return (
-    <div className="bg-gray-900 rounded-lg p-6 mb-4 border border-gray-800">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+    <div className="rounded-2xl border border-[#2A2F4A] bg-gradient-to-b from-[#0F1429]/70 to-[#0B0F1E]/70 p-5">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center shadow">
           <span className="text-white font-bold">{post.username[0]}</span>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-white font-semibold">{post.username}</span>
-            {post.verified && (
-              <span className="text-blue-500">✓</span>
-            )}
+            <span className="text-white font-semibold truncate">{post.username}</span>
+            {post.verified && <CheckCircle2 className="w-4 h-4 text-blue-500" />}
             <span className="text-gray-500 text-sm">{post.timeAgo}</span>
           </div>
-          <p className="text-gray-400 text-sm">{post.walletAddress}</p>
+          <p className="text-gray-500 text-xs truncate">{post.walletAddress}</p>
         </div>
       </div>
 
-      <p className="text-white mb-4">{post.content}</p>
+      {/* Text */}
+      {post.content && <p className="text-white/90 mb-4 text-sm leading-relaxed">{post.content}</p>}
 
-      <div className="w-full h-96 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg mb-4 flex items-center justify-center">
-        <span className="text-white text-lg">NFT Image</span>
+      {/* Media */}
+      <div className="w-full aspect-[16/9] bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl mb-4 overflow-hidden flex items-center justify-center">
+        <span className="text-white/90 text-sm">NFT Image</span>
       </div>
 
+      {/* Actions */}
       <div className="flex items-center gap-6 text-gray-400">
         <button className="flex items-center gap-2 hover:text-red-500">
           <Heart className="w-5 h-5" />

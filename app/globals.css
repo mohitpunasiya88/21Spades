@@ -10,17 +10,13 @@
   --font-audiowide: var(--font-audiowide), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
   /* Tailwind v4 font token for Asul → enables class `font-asul` */
   --font-asul: var(--font-asul), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  /* Tailwind v4 font token for Exo 2 → enables class `font-exo2` */
+  --font-exo2: var(--font-exo2), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 :root {
   --background: #0F0F23;
   --foreground: #ffffff;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 body {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, ChevronDown, Bell, Settings } from 'lucide-react'
+import { Search, ChevronDown, Bell, Settings, Languages } from 'lucide-react'
 
 export default function Header() {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
@@ -19,7 +19,6 @@ export default function Header() {
         setIsProfileOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
@@ -28,19 +27,28 @@ export default function Header() {
 
   return (
     <header 
-       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center mt-6 md:mt-10 px-4"
+       className="flex items-center justify-center mt-6 md:mt-10 px-4"
        style={{marginTop: '20px'}}
     >
-      <div className="container mx-auto px-6 md:px-8 py-4">
+      <div className="container mx-auto px-6 md:px-8 py-4 w-full">
         <div className="flex items-center justify-between relative">
           {/* Left Side - Search & Language */}
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-4 md:gap-6 left-10 md:left-10">
+            {/* Search (84x22, gap 10) */}
             <button 
-              className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
+              className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-colors w-[84px] h-[22px]"
             >
-              <Search size={20} />
-              <span className="hidden md:inline text-sm">Search</span>
+              <Search className="w-4 h-4" />
+              <span 
+                className="hidden md:inline font-semibold text-[18px] leading-none"
+                style={{ fontFamily: 'var(--font-exo2)' }}
+              >
+                Search
+              </span>
             </button>
+
+            {/* Separator (1x19) */}
+            <span className="w-px h-[19px] bg-white/60 rounded-full" />
 
             {/* Language Dropdown */}
             <div className="relative" ref={languageRef}>
@@ -49,16 +57,25 @@ export default function Header() {
                   setIsLanguageOpen(!isLanguageOpen)
                   setIsProfileOpen(false)
                 }}
-                className="flex items-center gap-2 text-white hover:text-gray-300 transition-all px-4 py-2 rounded-lg"
+                className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-all w-[107px] h-[22px]"
                 style={{
                   background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
                 }}
               >
-                <span className="text-sm font-medium">{selectedLanguage}</span>
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform duration-300 ${isLanguageOpen ? 'rotate-180' : ''}`}
-                />
+                <Languages className="w-4 h-4" />
+                <span 
+                  className="font-semibold text-[18px] leading-none"
+                  style={{ fontFamily: 'var(--font-exo2)' }}
+                >
+                  {selectedLanguage}
+                </span>
+                {/* Custom small caret (7.58 x 4.33) */}
+                <svg 
+                  className={`ml-1 ${isLanguageOpen ? 'rotate-180' : ''}`} 
+                  width="7.58" height="4.33" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M1 1.5L8 7.5L15 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
 
               {/* Language Dropdown Menu */}
@@ -97,47 +114,28 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Center - Logo */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <div className="text-white font-bold text-2xl flex items-center gap-2">
-              <span className="text-3xl">21</span>
-              <span 
-                className="text-2xl"
-                style={{ 
-                  background: 'linear-gradient(to right, #8B5CF6, #3B82F6)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                ♠
-              </span>
-              <span 
-                style={{ 
-                  background: 'linear-gradient(to right, #8B5CF6, #3B82F6)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                SPADES
-              </span>
-            </div>
+          {/* Center - Logo (precise sizing and gradient) */}
+          <div className="flex items-center gap-2" style={{ top: 40, margin: 'auto 0',fontFamily: 'var(--font-audiowide)' }}>
+            <span className="text-3xl font-bold">21</span>
+            <span className="card-icon w-10 h-10"><img className="w-full h-full" src="/assets/card-icon.png" alt="Card Icon" /></span>
+            <span
+              className="text-3xl font-bold"
+              style={{
+                fontFamily: 'var(--font-audiowide)',
+                background: "linear-gradient(180deg, #CC66FF 0%, #4E00E6 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                color: "transparent",
+                display: "inline-block",
+              }}
+            >
+              SPADES
+            </span>
           </div>
 
           {/* Right Side - Profile & Icons */}
           <div className="flex items-center gap-3 md:gap-4">
-            {/* Notifications */}
-            <button className="relative p-2 text-white hover:text-gray-300 transition-colors rounded-lg hover:bg-white/10">
-              <Bell size={20} />
-              <span 
-                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full animate-pulse"
-                style={{ background: '#EF4444' }}
-              />
-            </button>
-
-            {/* Settings */}
-            <button className="p-2 text-white hover:text-gray-300 transition-colors rounded-lg hover:bg-white/10 hidden md:block">
-              <Settings size={20} />
-            </button>
 
             {/* Profile Dropdown */}
             <div className="relative border border-white/20 bg-transparent rounded-full" ref={profileRef} >
@@ -146,7 +144,7 @@ export default function Header() {
                   setIsProfileOpen(!isProfileOpen)
                   setIsLanguageOpen(false)
                 }}
-                className="flex items-center gap-2 text-white hover:text-gray-300 transition-all px-3 py-2 rounded-lg"
+                className="flex items-center gap-2 text-white hover:text-gray-300 transition-all rounded-lg"
                 style={{
                   background: isProfileOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
                   margin: '4px',
@@ -237,6 +235,7 @@ export default function Header() {
             </div>
           </div>
         </div>
+      <hr className="border-white/30 w-full my-4" />
       </div>
     </header>
   )

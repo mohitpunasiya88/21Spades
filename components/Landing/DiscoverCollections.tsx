@@ -2,73 +2,103 @@ import { ArrowRight } from 'lucide-react';
 
 export default function DiscoverCollections() {
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-950 to-gray-900 relative">
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-white text-4xl">♠</div>
+    <section 
+      className="py-20 relative overflow-hidden min-h-screen"
+      style={{
+        // background: '#000000',
+        backgroundImage: 'url("/assets/card-bg.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        // backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Purple glowing spade icon at top */}
+      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="relative">
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <span className="text-white text-5xl font-bold">♠</span>
+          </div>
+        </div>
+      </div>
 
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="text-5xl md:text-6xl font-bold mb-6 text-yellow-400" style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '0.05em' }}>
-          DISCOVER COLLECTIONS
-        </h2>
-        <p className="text-gray-400 text-lg mb-12">
-          Lorem ipsum dolor sit amet consectetur. Malesuada<br />
-          venenatis morbi nibh libero
-        </p>
+      <div className="container mx-auto px-4 relative z-20">
+        {/* Title Section */}
+        <div className="text-center mb-12 mt-10">
+          <h2 className="gold-gradient-text font-audiowide font-bold text-4xl md:text-5xl mb-6 text-center">
+            DISCOVER COLLECTIONS
+          </h2>
+          <p className="text-[#B8BAE5] text-lg font-exo2 font-medium max-w-2xl mx-auto text-center leading-relaxed">
+            Curate your world, Explore curated collections and rare finds<br />
+            that define your digital identity.
+          </p>
+        </div>
 
-        <div className="max-w-md mx-auto">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-3xl overflow-hidden border-4 border-white hover:border-purple-400 transition-all hover:transform hover:scale-105 cursor-pointer">
-            <div className="relative bg-gradient-to-br from-purple-900 via-purple-800 to-purple-950 aspect-square p-12 flex items-center justify-center">
-              <div className="relative">
-                <svg viewBox="0 0 200 240" className="w-64 h-80">
-                  <defs>
-                    <linearGradient id="collectionSpadeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: '#FCD34D', stopOpacity: 1 }} />
-                      <stop offset="100%" style={{ stopColor: '#F59E0B', stopOpacity: 1 }} />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M 100 20 Q 100 80 70 120 Q 50 140 50 160 Q 50 180 70 190 L 80 190 Q 80 200 90 210 L 110 210 Q 120 200 120 190 L 130 190 Q 150 180 150 160 Q 150 140 130 120 Q 100 80 100 20 Z"
-                    fill="url(#collectionSpadeGradient)"
-                    stroke="#FCD34D"
-                    strokeWidth="4"
-                  />
-                  <text x="100" y="130" textAnchor="middle" fill="white" fontSize="60" fontWeight="bold" fontFamily="system-ui">
-                    21
-                  </text>
-                </svg>
-              </div>
+        {/* NFT Card */}
+        <div className="flex justify-center mb-12">
+          <div 
+            className="relative overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer"
+            style={{
+              width: '260px',
+              height: '380px',
+              borderRadius: '25px',
+              border: '1.1px solid rgba(242, 242, 242, 0.5)',
+              background: '#FFFFFF'
+            }}
+          >
+            {/* NFT Image Area with Radial Gradient */}
+            <div 
+              className="relative flex items-center justify-center"
+              style={{
+                width: '240px',
+                height: '216px',
+                borderRadius: '25px',
+                background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
+                position: 'absolute',
+                top: '7px',
+                left: '8px'
+              }}
+            >
+              {/* Golden Spade with "21" */}
+              <img src="/assets/card-icon.png" alt="Discover Collections" width={150} height={180} className="object-contain" />
             </div>
 
-            <div className="p-6 bg-white">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+            {/* Card Details Section */}
+            <div className="absolute left-0 right-0 px-4 pt-3 pb-4" style={{ top: '223px' }}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="w-4 h-4 flex items-center justify-center">
+                  <img src="/assets/verify-tick-icon.png" alt="Verified" width={16} height={16} />
                 </div>
-                <span className="text-gray-600 text-sm font-medium">21Spades NFTs</span>
+                <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
               </div>
 
-              <h3 className="text-gray-900 text-2xl font-bold mb-4">Aether Guardian</h3>
+              <h3 className="text-gray-900 text-base font-bold mb-3">Aether Guardian</h3>
+              <hr className="w-full border-gray-200 my-3" />
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div>
-                  <div className="text-purple-700 text-sm font-semibold mb-1">Floor Price</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-red-500 text-xl">🔺</span>
-                    <span className="text-gray-900 text-lg font-bold">0.01 AVAX</span>
-                  </div>
+              {/* Floor Price Section */}
+              <div className="flex items-center justify-between">
+                <div className="px-2.5 py-1" >
+                  <span className="text-purple-700 text-xs font-semibold">Floor Price</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-red-500 text-base">▲</span>
+                  <span className="text-gray-900 text-base font-bold">0.01 AVAX</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4 mt-12">
-          <button className="px-6 py-3 bg-purple-700 text-white rounded-full font-medium hover:bg-purple-600 transition-all">
+        {/* Action Buttons */}
+        <div className="flex items-center justify-center gap-4">
+          <button 
+            className="px-6 py-3 text-white rounded-full font-semibold inline-flex items-center gap-2 transition-all" 
+            style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
+          >
             Avalanche
-            <span className="ml-2">▼</span>
+            <span className="text-white">▼</span>
           </button>
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-medium hover:bg-gray-100 transition-all">
+          <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-gray-100 transition-all border border-black/10">
             <span>View All</span>
             <ArrowRight className="w-5 h-5" />
           </button>
