@@ -24,57 +24,54 @@ export default function PlatformFeatures() {
       title: 'AI WEB3 NEWS',
       description: 'Your Smart Web3 Digest. Curated updates across crypto, NFTs, and culture — personalized for you.'
     }
-  ]
+  ];
 
   return (
-    <section className="px-4 md:px-6 lg:px-8 py-10">
-      {/* Outer frame 1367x591 with rounded and thin border */}
-      <div className="mx-auto w-full max-w-[1367px] rounded-[51px] border border-white/20" style={{ minHeight: 591 }}>
-        {/* Heading */}
-        <div className="flex flex-col items-center pt-10 md:pt-14">
-          <div className="text-white/90 mb-3 text-[40px] font-[600]">{/* small spade */}♠</div>
-          <h2
-            className="text-center font-audiowide gold-gradient-text font-audiowide text-4xl md:text-5xl font-bold"
-           
-          >
+    <section className="px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12 lg:py-16">
+      {/* Outer frame */}
+      <div className="mx-auto w-full max-w-[1367px] rounded-3xl sm:rounded-[40px] md:rounded-[51px] border border-white/20 overflow-hidden">
+        
+        {/* Heading Section */}
+        <div className="flex flex-col items-center pt-8 sm:pt-10 md:pt-12 lg:pt-14 px-4 sm:px-6">
+          <div className="text-white/90 mb-2 sm:mb-3 text-3xl sm:text-4xl md:text-[40px] font-semibold">♠</div>
+          <h2 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl px-4 leading-tight font-audiowide gold-gradient-text">
             Your All-in-One Gateway to Web3 World
           </h2>
         </div>
 
-        {/* Grid group */}
-        <div className="mx-auto mt-10 md:mt-16 w-[min(1254px,100%)] px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-0 items-stretch">
+        {/* Features Grid */}
+        <div className="mx-auto mt-8 sm:mt-10 md:mt-12 lg:mt-16 w-full px-4 sm:px-6 md:px-8 lg:px-12 pb-8 sm:pb-10 md:pb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 md:gap-0">
             {features.map((f, idx) => (
               <div
                 key={f.title}
                 className={
-                  'flex flex-col items-center justify-center text-center gap-3 px-6 md:px-10 py-6 md:py-10 relative h-full' +
-                  (idx % 3 !== 2 ? ' md:border-r md:border-white/20 md:border-r-[0.6px]' : '') +
-                  (idx >= 3 ? ' md:border-t md:border-white/20 md:border-t-[0.6px]' : '')
+                  'flex flex-col items-center justify-start text-center gap-3 sm:gap-4 px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10 relative min-h-[200px] sm:min-h-[220px] md:min-h-[240px] ' +
+                  // Desktop borders (3 columns)
+                  (idx % 3 !== 2 ? ' lg:border-r lg:border-white/20'  : '') +
+                  (idx >= 3 ? ' lg:border-t lg:border-white/20' : '') + 
+                  // Tablet borders (2 columns)
+                  (idx % 2 !== 1 ? ' sm:border-r sm:border-white/20 lg:border-r-0' : ' sm:border-r-0') +
+                  (idx >= 2 ? ' sm:border-t sm:border-white/20 lg:border-t-0' : '') +
+                  (idx >= 3 ? ' lg:border-t lg:border-white/20' : '') +
+                  // Mobile borders
+                  (idx !== features.length - 1 ? ' border-b border-white/20 sm:border-b-0' : '')
                 }
-                style={{ width: '100%', minHeight: 130 }}
               >
-                {/* Icon block 28x28 with 5px radius */}
-                <div className="w-7 h-7 rounded-[5px] bg-[#6E58E6]/40 flex items-center justify-center">
-                  <span className="text-lg">▣</span>
+                {/* Icon block */}
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-[5px] bg-[#6E58E6]/40 flex items-center justify-center flex-shrink-0">
+                  <span className="text-base sm:text-lg text-white">▣</span>
                 </div>
 
-                {/* Title plate 214x36 look */}
-                <div className="min-h-9">
-                  <h3
-                    className="font-audiowide text-center"
-                    style={{
-                      fontFamily: 'var(--font-audiowide)',
-                      fontWeight: 400,
-                      fontSize: 'clamp(18px, 2.4vw, 28px)',
-                      lineHeight: '100%'
-                    }}
-                  >
+                {/* Title */}
+                <div className="min-h-[36px] sm:min-h-[40px] flex items-center">
+                  <h3 className="text-white text-lg sm:text-xl md:text-2xl lg:text-[28px] leading-tight font-audiowide">
                     {f.title}
                   </h3>
                 </div>
 
-                <p className="text-center text-white/80 max-w-[330px]">
+                {/* Description */}
+                <p className="text-sm sm:text-base md:text-lg text-[#E5C9B8] max-w-[330px] leading-relaxed font-exo2">
                   {f.description}
                 </p>
               </div>
@@ -83,6 +80,5 @@ export default function PlatformFeatures() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-  

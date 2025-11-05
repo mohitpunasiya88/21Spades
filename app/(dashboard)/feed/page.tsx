@@ -44,31 +44,30 @@ export default function FeedPage() {
 
   return (
     <div className="p-6">
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 font-exo2" >
         {/* Left column */}
         <div className="p-4">
-          <h1 className="text-white text-2xl font-semibold font-Exo  mb-4">Hello Spades !</h1>
+          <h1 className="text-white text-2xl font-semibold font-exo2  mb-4">Hello Spades !</h1>
 
           {/* Input bar (pixel matched) */}
           <div className="flex items-start gap-6">
             <div className="relative">
               <div
-                className="flex items-center justify-center w-16 h-16 rounded-full overflow-hidden p-2"
+                className="flex items-center justify-center w-[48px] h-[48px] rounded-full overflow-hidden p-2"
                 style={{
                   background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)'
                 }}
               >
                 {/* Avatar */}
-                <img src="/assets/card-icon.png" alt="Avatar" className="w-full h-full object-contain" />
+                <img src="/post/card-21.png" alt="Avatar" className="w-[40px] h-[40px] object-contain" />
               </div>
             </div>
             <div className="flex-1">
-              <div className="hidden md:flex items-center gap-2 bg-gray-800/50 border border-gray-700 rounded-3xl px-4 py-4 w-full">
-                <Search className="w-5 h-5 text-gray-400" />
+              <div className="hidden md:flex items-center gap-2 bg-[#FFFFFF08] rounded-3xl px-4 py-4 w-full">
                 <input
                   type="text"
-                  placeholder="what's New"
-                  className="bg-transparent border-none outline-none text-white placeholder-gray-400 flex-1 text-sm"
+                  placeholder="What's New?"
+                  className="bg-transparent border-none outline-none text-white placeholder-[#FFFFFF4D] flex-1 text-sm font-exo2"
                 />
               </div>
               {/* Helper row */}
@@ -76,24 +75,27 @@ export default function FeedPage() {
                 <div className="flex items-center gap-6 whitespace-nowrap">
                   <span className="flex items-center gap-1 text-blue-400">
                     <ImageIcon className="w-4 h-4" />
-                    <span className="text-gray-400">Image/Videos</span>
+                    <span className="text-[#FFFFFF4D]">Image/Videos</span>
                   </span>
+                  {/* dot in center */}
+                  <div className="w-1 h-1 rounded-full bg-[#FFFFFF4D]" />
                   <span className="flex items-center gap-1 text-yellow-400">
                     <Laugh className="w-4 h-4" />
-                    <span className="text-gray-400">Emoji</span>
+                    <span className="text-[#FFFFFF4D]">Emoji</span>
                   </span>
+                  <div className="w-1 h-1 rounded-full bg-[#FFFFFF4D]" />
                   <span className="flex items-center gap-1 text-orange-400">
                     <Tag className="w-4 h-4" />
-                    <span className="text-gray-400">Categories</span>
+                    <span className="text-[#FFFFFF4D]">Categories</span>
                     <ChevronDown className="w-3.5 h-3.5 text-gray-500 ml-1" />
                   </span>
                 </div>
-                <button className="bg-white text-gray-900 font-semibold px-5 py-2 rounded-full shadow">Post</button>
+                <button className="bg-white text-[#020019] text-[18px] font-[600] px-4 py-1 rounded-full shadow font-exo2">Post</button>
               </div>
             </div>
           </div>
 
-          <div className="border-b-2 border-gray-700 mb-4" ></div>
+          <div className="border-b-1 border-[#FFFFFF33] mb-4" ></div>
 
           {/* Featured (Ticket) banner */}
           {/* <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#0F1429] to-[#0B0F1E] p-6 mb-6">

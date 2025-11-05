@@ -67,8 +67,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="backdrop-blur-sm border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50"
-      style={{ background: 'linear-gradient(180deg, #0F0F23 0%, #0F0F23 75%,rgb(38, 42, 66) 115%)' }}
+      className="backdrop-blur-sm border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 bg-[#020019]"
     >
       {/* Logo */}
       <div className="flex items-center gap-6">
@@ -79,12 +78,14 @@ export default function Navbar() {
         </div>
 
         {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-2 bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2.5 w-80">
-          <Search className="w-5 h-5 text-gray-400" />
+        <div className="hidden md:flex items-center gap-2 bg-[#F5F5F50A]  border border-gray-700 rounded-lg px-4 py-2.5 w-80">
+          <Search className="w-5 h-5 " />
+          {/* verdical line */}
+          <div className="w-px h-[19px] bg-[#787486]" />
           <input
             type="text"
             placeholder="Search for anything..."
-            className="bg-transparent border-none outline-none text-white placeholder-gray-400 flex-1 text-sm"
+            className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm"
           />
         </div>
       </div>

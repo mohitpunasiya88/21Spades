@@ -33,7 +33,7 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 h-screen overflow-y-auto border-r border-gray-800" style={{ background: 'linear-gradient(180deg, #0F0F23 0%, #0F0F23 75%, #0B2CFF 115%)' }}>
+    <aside className="w-64 overflow-y-auto">
       {/* Logo */}
       {/* <div className="p-6 border-b border-gray-800">
         <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mx-auto shadow-md">
@@ -42,8 +42,8 @@ export default function Sidebar() {
       </div> */}
 
       {/* Menu Items */}
-      <nav className="p-4 pr-0">
-        <div className="rounded-xl border border-[#2A2F4A] bg-[#0B0F1E]/60">
+      <nav className="p-4 pr-0 mt-5">
+        <div className="rounded-xl border border-[#2A2F4A] bg-[#090721] h-[80vh]">
         {menuItems.map((item, idx) => {
           const Icon = item.icon
           const isActive = pathname === item.path
@@ -63,7 +63,8 @@ export default function Sidebar() {
               </span>
               <span className="ml-2 text-sm tracking-wide">{item.label}</span>
               {isActive && (
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-6 rounded bg-yellow-500"></span>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-6 rounded bg-yellow-500 background: #F5F5F50A;
+"></span>
               )}
             </button>
             {/* separators between groups */}
