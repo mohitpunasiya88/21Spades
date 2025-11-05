@@ -1,85 +1,52 @@
-'use client'
-
-import { useState } from 'react'
+import { useState } from 'react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { FacebookIcon, GoogleIcon, XIcon } from '@/app/icon/svg';
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/lib/store/authStore'
-import type { LoginData } from '@/types/auth'
-import { ArrowLeft } from 'lucide-react'
-import { loginFormStyle } from '../Style/style'
 
-export default function LoginForm() {
+function LoginForm() {
   const router = useRouter()
-  const { login, isLoading } = useAuthStore()
-  const [loginType, setLoginType] = useState<'email' | 'phone'>('email')
-  const [formData, setFormData] = useState<LoginData>({
-    username: '',
-    password: '',
-    rememberMe: false,
-  })
-  const [phone, setPhone] = useState('')
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    })
-  }
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await login(formData)
-      router.push('/feed')
-    } catch (error) {
-      console.error('Login error:', error)
-    }
-  }
-
-  const handlePhoneLogin = () => {
-    router.push(`/verify-otp?phone=${encodeURIComponent(phone)}`)
-  }
 
   return (
-    <div className="w-full  lg:w-1/2 flex items-center justify-center p-8 bg-gray-950 m-12" >
-      <div className="w-full max-w-md bg-gradient-to-b from-gray-900/90 to-gray-950 rounded-2xl p-8 border border-gray-800 shadow-2xl" style={{ padding: '24px' }}>
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-yellow-400 mb-3 text-center" style={loginFormStyle}>
-          WELCOME BACK!
-        </h2>
+    <div className="min-h-screen  flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl bg-gradient-to-br from-[#4A01D8] to-black border border-gray-800/40 rounded-3xl p-8 md:p-12 backdrop-blur-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent tracking-wider">
+            WELCOME BACK!
+          </h1>
+          <p className="text-gray-400">
+            Not register yet?{' '}
+            <button className="text-white hover:text-yellow-400 transition-colors font-medium">
+              Create Account
+            </button>
+          </p>
+        </div>
 
-        {/* Create Account Link */}
-        <p className="text-gray-400 mb-6 text-sm text-center" style={{ padding: '10px', marginBottom: '10px' }}>
-          Not registered yet?{' '}
+        <div className="flex items-center gap-2 mb-8 bg-black/40 rounded-full p-1 max-w-md mx-auto border border-gray-800">
           <button
-            onClick={() => router.push('/signup')}
-            className="text-purple-400 hover:text-purple-300 underline"
-          >
-            Create Account
-          </button>
-        </p>
-
-        {/* Toggle Buttons */}
-        <div className="flex items-center gap-0 mb-6 bg-gray-800 p-1 rounded-lg" style={loginFormStyle}>
-          <button
-            onClick={() => setLoginType('email')}
-            className={`flex-1 py-2.5 px-4 rounded-md font-medium transition-all ${loginType === 'email'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-transparent text-gray-400 hover:text-white'
+            onClick={() => setLoginMethod('email')}
+            className={`flex-1 py-3 rounded-full font-medium transition-all ${loginMethod === 'email'
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
+              : 'text-gray-400 hover:text-white'
               }`}
-              style={{margin: '5px', padding: '10px'}}
           >
             Email ID
           </button>
 
-          {/* 🔥 Vertical Divider */}
-          <div className="w-px h-6 bg-gray-600 mx-1"></div>
+          {/* Vertical Divider */}
+          <div className="w-[1px] h-6 bg-gray-700"></div>
 
           <button
-            onClick={() => setLoginType('phone')}
-            className={`flex-1 py-2.5 px-4 rounded-md font-medium transition-all ${loginType === 'phone'
-                ? 'bg-yellow-400 text-gray-900 shadow-lg'
-                : 'bg-transparent text-gray-400 hover:text-white'
+            onClick={() => setLoginMethod('phone')}
+            className={`flex-1 py-3 rounded-full font-medium transition-all ${loginMethod === 'phone'
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
+              : 'text-gray-400 hover:text-white'
               }`}
           >
             Phone number
@@ -87,148 +54,93 @@ export default function LoginForm() {
         </div>
 
 
-        {loginType === 'email' ? (
-          <form onSubmit={handleEmailLogin} className="space-y-5">
-            {/* Username Field */}
-            <div style={loginFormStyle}>
-              <label className="block text-sm text-gray-300 mb-2 font-medium">Username</label>
+        <div className="space-y-6 mb-6">
+          <div>
+            <label className="block text-white text-lg mb-3 font-medium">Username</label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
+                <User size={20} />
+              </div>
               <input
                 type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="Enter username"
-                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
-                required
-                style={loginFormStyle}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="2L_spades"
+                className="w-full bg-black/40 border border-gray-700 rounded-xl py-4 px-12 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50 transition-colors"
               />
             </div>
+          </div>
 
-            {/* Password Field */}
-            <div style={loginFormStyle}>
-              <label className="block text-sm text-gray-300 mb-2 font-medium">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
-                required
-                style={loginFormStyle}
-              />
-            </div>
-
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between" style={loginFormStyle}>
-              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-purple-500"
-                />
-                Remember me
-              </label>
-              <button
-                type="button"
-                className="text-purple-400 text-sm hover:text-purple-300 hover:underline"
-              >
-                Forgot Password
-              </button>
-            </div>
-
-            {/* Social Login Buttons */}
-            <div className="space-y-3 pt-2" style={loginFormStyle}>
-              <button
-                type="button"
-                className="w-full flex items-center justify-center gap-3 py-3 px-4 text-white  text-gray-900 rounded-full border-1 border-gray-700 transition-colors font-medium shadow-md"
-                style={loginFormStyle}
-              >
-                Continue with Apple
-              </button>
-              <button
-                type="button"
-                className="w-full flex items-center justify-center gap-3 py-3 px-4  text-white rounded-full border-1 border-gray-700 transition-colors font-medium shadow-md"
-                style={loginFormStyle}
-              >
-                Continue with Facebook
-              </button>
-              <button
-                type="button"
-                className="w-full flex items-center justify-center gap-3 py-3 px-4  text-white rounded-full border-1 border-gray-700 transition-colors font-medium shadow-md"
-                style={loginFormStyle}
-              >
-                Continue with Google
-              </button>
-            </div>
-
-            {/* Login & Back Buttons */}
-            <div className="flex gap-4 pt-4" style={loginFormStyle}>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full transition-colors disabled:opacity-50 shadow-lg"
-                style={loginFormStyle}
-              >
-                {isLoading ? 'Logging in...' : 'Login'}
-              </button>
-
-            </div>
-            <div className="flex gap-4 pt-4" style={loginFormStyle}>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full transition-colors disabled:opacity-50 shadow-lg flex items-center justify-center gap-3"
-                style={loginFormStyle}
-              >
-                <ArrowLeft className="w-5 h-5" />
-                Back
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm text-gray-300 mb-2 font-medium">
-                Phone number
-              </label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter phone number"
-                  className="w-full px-4 py-3 pl-12 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
-                  required
-                />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">📱</span>
+          <div>
+            <label className="block text-white text-lg mb-3 font-medium">Password</label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
+                <Lock size={20} />
               </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="*****"
+                className="w-full bg-black/40 border border-gray-700 rounded-xl py-4 px-12 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50 transition-colors"
+              />
               <button
-                onClick={handlePhoneLogin}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
               >
-                Send Verification Code
-              </button>
-              <button
-                onClick={() => router.back()}
-                className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700"
-              >
-                <ArrowLeft className="w-5 h-5" />
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Copyright */}
-        <p className="text-xs text-gray-500 mt-8 text-center">
-          © 2023 21Spades. All Rights Reserved.
-        </p>
+        <div className="flex items-center justify-between mb-8 text-sm">
+          <label className="flex items-center gap-2 cursor-pointer text-white">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-600 bg-black/40 accent-yellow-500"
+            />
+            Remember me
+          </label>
+          <button className="text-white hover:text-yellow-400 transition-colors">
+            Forgot Password
+          </button>
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <button className="w-full bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+            <XIcon />
+            Continue with X
+          </button>
+
+          <button className="w-full bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+            <FacebookIcon />
+            Continue with Facebook
+          </button>
+
+          <button className="w-full bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+            <GoogleIcon />
+            Continue with Google
+          </button>
+        </div>
+
+        <button
+          className="w-full bg-[#4A01D8] text-white font-bold py-4 rounded-full mb-4 shadow-lg hover:shadow-xl transition-all text-lg"
+        >
+          Log In
+        </button>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="w-full border-2 border-gray-700 text-white font-bold py-4 rounded-full hover:border-gray-600 hover:bg-white/5 transition-all text-lg"
+        >
+          Back
+        </button>
       </div>
     </div>
-  )
+  );
 }
+
+export default LoginForm;
