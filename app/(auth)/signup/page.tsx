@@ -6,7 +6,7 @@ import SignUpForm from '@/components/Auth/SignUpForm'
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen bg-black flex flex-col md:flex-row relative">
+    <div className="min-h-screen relative bg-black bg-gradient-to-tr flex flex-col md:flex-row overflow-hidden">
       <AuthLeftPanel />
       <SignUpForm />
       <AuthFooter />
