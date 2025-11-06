@@ -197,7 +197,6 @@
   .inline-combo { gap: 12px; }
 }
 
-
 /* Right-side vertical social media rail */
 .social-rail {
   position: absolute;
@@ -240,22 +239,66 @@
 }
 
 /* Logo marquee animation */
-.logo-marquee {
-  position: relative;
-  overflow: hidden;
-}
 
-.marquee-track {
+/* Animated blurred background blobs */
+.hero-blobs {
   position: absolute;
-  inset: 0 auto 0 0;
-  display: flex;
-  width: max-content;
-  gap: 0;
-  animation: marquee-scroll 24s linear infinite;
-  will-change: transform;
+  inset: 0;
+  z-index: 0; /* above star bg, below content */
+  pointer-events: none;
+  overflow: hidden; /* hide overflow for cleaner edges */
 }
 
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+.blob {
+  position: absolute;
+  will-change: transform;
+  animation: blob-wave 2s ease-in-out infinite alternate; /* faster motion */
+}
+
+.blob-shape {
+  position: relative;
+  border-radius: 50%;
+  opacity: 0.5;
+  filter: blur(250px);
+  -webkit-filter: blur(250px);
+  backdrop-filter: blur(250px);
+  -webkit-backdrop-filter: blur(250px);
+  box-shadow: 0 0 200px 80px currentColor;
+}
+
+/* Blob variations */
+.blob.ani-1 { animation-duration: 10s; }
+.blob-shape.ani-1 {
+  width: 500px;
+  height: 500px;
+  background: #240C64;
+  color: #240C64;
+  mix-blend-mode: screen;
+}
+
+.blob.ani-2 { animation-duration: 10s; animation-delay: 2s; }
+.blob-shape.ani-2 {
+  width: 500px;  
+  height: 500px;
+  background: #EEC646;
+  color: #EEC646;
+  mix-blend-mode: screen;
+}
+
+.blob.ani-3 { animation-duration: 10s; animation-delay: 1s; }
+.blob-shape.ani-3 {
+  width: 600px;
+  height: 600px;
+  background: #6A24FF;
+  color: #6A24FF;
+  mix-blend-mode: screen;
+}
+
+/* Faster, wider full-screen motion */
+@keyframes blob-wave {
+  0%   { transform: translate3d(-40vw, -40vh, 0) scale(1); }
+  25%  { transform: translate3d(20vw, -20vh, 0) scale(1.1); }
+  50%  { transform: translate3d(40vw, 20vh, 0) scale(1.05); }
+  75%  { transform: translate3d(-20vw, 40vh, 0) scale(1.1); }
+  100% { transform: translate3d(-40vw, -40vh, 0) scale(1); }
 }
