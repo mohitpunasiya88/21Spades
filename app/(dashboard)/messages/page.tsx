@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, MoreVertical, Smile, Paperclip, Mic } from 'lucide-react'
+import { Search, MoreVertical, Smile, Paperclip, Mic, Edit, Check } from 'lucide-react'
 
 interface Chat {
   id: string
@@ -119,39 +119,61 @@ export default function MessagesPage() {
   const selectedChatData = chats.find((c) => c.id === selectedChat)
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-[calc(100vh-120px)] mt-10 font-exo2 w-full overflow-hidden min-h-0">
       {/* Chat List */}
-      <div className="w-80 border-r border-gray-800 bg-gray-900">
-        <div className="p-4 border-b border-gray-800">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="w-80 bg-[#090721] border border-[#FFFFFF33] rounded-[21px] mx-5 font-exo2 px-2 flex flex-col h-full min-h-0">
+        <div>
+          <div className="flex items-center justify-between p-2 my-2">
+            <h2 className="text-white text-[24px] font-[700]">Chats</h2>
+            <div className='gap-2 flex'>
+              <button className="text-[#787785] hover:text-white">
+                <Edit className="w-[18px] h-[18px]" />
+              </button>
+              <button className="text-[#787785] hover:text-white">
+                <MoreVertical className="w-[18px] h-[18px]" />
+              </button>
+            </div>
+          </div>
+          {/* horizontal line */}
+          <div className="mx-2 my-2 h-px bg-[#FFFFFF33]"></div>
+        </div>
+        <div className="shrink-0">
+          <div className="relative ">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#787785]" />
+            {/* vertical line in between icon and placeholder */}
+            <div className="absolute left-10 top-1/2 -translate-y-1/2 w-px h-[22px] bg-[#FFFFFF33]"></div>
             <input
               type="text"
               placeholder="Search"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+              className="w-full h-[44px] bg-[#14122D] border border-[#FFFFFF1A] mb-2 rounded-lg text-white placeholder-[#787486] focus:outline-none focus:border-purple-500 pl-14 pr-3"
             />
           </div>
         </div>
-        <div className="overflow-y-auto h-[calc(100vh-120px)]">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {chats.map((chat) => (
             <button
               key={chat.id}
               onClick={() => handleSelectChat(chat.id)}
-              className={`w-full p-4 flex items-center gap-3 hover:bg-gray-800 transition-colors ${
-                selectedChat === chat.id ? 'bg-gray-800' : ''
-              }`}
+              className={`w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A] ${selectedChat === chat.id ? 'bg-[#14122D]' : ''
+                }`}
             >
               <div className="relative">
-                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">{chat.name[0]}</span>
+                <div className="w-12 h-12 rounded-full items-center justify-center">
+                  <img src="/assets/avatar.jpg" alt="avatar"  className="w-full h-full rounded-full object-cover"/>
                 </div>
                 {chat.isOnline && (
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
                 )}
               </div>
-              <div className="flex-1 text-left">
-                <p className="text-white font-semibold">{chat.name}</p>
-                <p className="text-gray-400 text-sm">{chat.time}</p>
+              <div className="flex flex-col w-full">
+              <div className="flex text-left justify-between w-full items-center">
+                <p className="text-white text-[18px] font-semibold">{chat.name}</p>
+                <p className="text-gray-400 text-[14px]">{chat.time}</p>
+              </div>
+              <div className="flex text-left justify-between w-full items-center">
+                <p className="text-[#FFFFFF73] text-[14px] font-normal">{chat.name}</p>
+                <p className="text-gray-400 text-[14px]"><Check className={`w-5 h-5 ${chat.isOnline ? 'text-purple-500' : 'text-gray-400'}`} /></p>
+              </div>
               </div>
             </button>
           ))}
@@ -159,23 +181,23 @@ export default function MessagesPage() {
       </div>
 
       {/* Chat Window */}
-      <div className="flex-1 flex flex-col bg-gray-950">
+      <div className="flex-1 min-w-0 flex flex-col bg-[#090721] border border-[#FFFFFF33] rounded-[21px] mr-5 font-exo2 min-h-0">
         {selectedChatData ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-800 bg-gray-900 flex items-center justify-between">
+            <div className="p-4 rounded-t-[21px] border-b border-[#14122D] bg-[#14122D] flex items-center justify-between font-exo2">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">{selectedChatData.name[0]}</span>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                    <img src="/assets/avatar.jpg" alt="avatar"  className="w-full h-full rounded-full object-cover"/>
                   </div>
                   {selectedChatData.isOnline && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
                   )}
                 </div>
                 <div>
-                  <p className="text-white font-semibold">{selectedChatData.name}</p>
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-white text-[16px] font-semibold">{selectedChatData.name}</p>
+                  <p className="text-[#CC66FF] text-[14px]">
                     {selectedChatData.isOnline ? 'Online' : 'Last seen 5 min ago'}
                   </p>
                 </div>
@@ -200,11 +222,10 @@ export default function MessagesPage() {
                       className={`flex ${isMine ? 'justify-start' : 'justify-end'}`}
                     >
                       <div
-                        className={`max-w-md px-4 py-2.5 rounded-2xl ${
-                          isMine
-                            ? 'bg-gray-800/80 text-white rounded-bl-sm'
-                            : 'bg-purple-600 text-white rounded-br-sm'
-                        } shadow-md`}
+                        className={`max-w-md px-4 py-2.5 rounded-2xl ${isMine
+                            ? 'bg-[#FFFFFF29] text-white text-[16px] rounded-bl-sm'
+                            : 'bg-[#4E00E5] text-white text-[14px] rounded-br-sm'
+                          } shadow-md`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                         {msg.images && (
@@ -227,20 +248,21 @@ export default function MessagesPage() {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-gray-800 bg-gray-900">
-              <div className="flex items-center gap-2">
-                <button className="text-gray-400 hover:text-white">
+            <div className="p-4 border-t border-[#FFFFFF1A] bg-[#14122D] rounded-b-[21px]">
+              <div className="flex items-center gap-2 h-[24px]">
+                <button className="text-white ">
                   <Smile className="w-5 h-5" />
+                </button>
+                <button className="text-white ">
+                  <Paperclip className="w-5 h-5" />
                 </button>
                 <input
                   type="text"
                   placeholder="Type your message here ..."
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                  className="flex-1 px-4 py-2 text-white placeholder-[#A3AED0B2] focus:outline-none"
                 />
-                <button className="text-gray-400 hover:text-white">
-                  <Paperclip className="w-5 h-5" />
-                </button>
-                <button className="text-gray-400 hover:text-white">
+                
+                <button className="text-white">
                   <Mic className="w-5 h-5" />
                 </button>
               </div>
