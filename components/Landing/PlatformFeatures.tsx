@@ -27,9 +27,9 @@ export default function PlatformFeatures() {
   ];
 
   return (
-    <section className="px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12 lg:py-16">
+    <section className="w-[97%] mx-auto py-8 sm:py-10 md:py-12 lg:py-16">
       {/* Outer frame */}
-      <div className="mx-auto w-full max-w-[1367px] rounded-3xl sm:rounded-[40px] md:rounded-[51px] border border-white/20 overflow-hidden">
+      <div className="mx-auto w-full rounded-3xl sm:rounded-[40px] md:rounded-[51px] border border-white/20 overflow-hidden">
         
         {/* Heading Section */}
         <div className="flex flex-col items-center pt-8 sm:pt-10 md:pt-12 lg:pt-14 px-4 sm:px-6">

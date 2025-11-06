@@ -36,7 +36,7 @@ export default function Trending() {
     : allNfts.filter(nft => nft.category === activeCategory);
 
   return (
-    <section className="relative my-15 min-h-screen py-20">
+    <section className="relative w-[97%] mx-auto my-5 min-h-screen py-5">
       <div className="relative top-0 left-1/2 text-white text-[40px] font-[600] mb-6">♠</div>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 relative w-full max-w-2xl mx-auto">

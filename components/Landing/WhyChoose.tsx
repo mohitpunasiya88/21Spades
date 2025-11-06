@@ -31,26 +31,22 @@ export default function WhyChoose() {
             <h2 className="gold-gradient-text font-audiowide text-4xl md:text-5xl mb-6 text-center">
               Why 21spades
             </h2>
-            <p className="text-white w-[500px] text-lg font-exo2 font-medium max-w-3xl mx-auto text-center">
+            <p className="text-white text-base sm:text-lg font-exo2 font-medium max-w-3xl w-full mx-auto text-center px-4">
               All-in-one access to social, Tokenization, events, and news powered by Web3 simplicity.
             </p>
           </div>
   
-          {/* Content Grid Container - Centered with specified dimensions */}
-          <div className="flex justify-center">
+          {/* Content Grid Container - Centered with responsive dimensions */}
+          <div className="flex justify-center px-4">
             <div 
-              className="grid grid-cols-1 md:grid-cols-2 max-w-full mx-auto my-0"
-              style={{
-                width: '1000px',
-                minHeight: '350px',
-              }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 w-full max-w-[1000px] mx-auto my-0 md:min-h-[350px]"
             >
               {features.map((feature, index) => (
                 <div key={index} className="relative flex flex-col items-center justify-center">
                   <h3 className="text-[#884DFF] text-lg font-bold mb-3 font-audiowide text-center" style={{ letterSpacing: '0.1em' }}>
                     {feature.title}
                   </h3>
-                  <p className="text-[#E5C9B8] text-sm leading-relaxed font-exo2 w-[400px] text-center">
+                  <p className="text-[#E5C9B8] text-sm sm:text-base leading-relaxed font-exo2 w-full max-w-md sm:max-w-lg md:max-w-xl text-center px-2 sm:px-4">
                     {feature.description}
                   </p>
                 </div>
@@ -61,4 +57,3 @@ export default function WhyChoose() {
       </section>
     );
   }
-  

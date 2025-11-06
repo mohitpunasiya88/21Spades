@@ -36,19 +36,19 @@ export default function HowToTokenize() {
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Title Section */}
-        <div className="text-center mt-5">
-          <h2 className="gold-gradient-text font-audiowide font-[400] text-[48px] mb-6 text-center" style={{ letterSpacing: '0.05em' }}>
+        <div className="text-center mt-5 px-4">
+          <h2 className="gold-gradient-text font-audiowide font-[400] text-[36px] sm:text-[44px] md:text-[48px] mb-6 text-center" style={{ letterSpacing: '0.05em' }}>
             HOW TO TOKENIZE AN ASSET
           </h2>
         </div>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 max-w-6xl mx-auto px-4">
           {steps.map((step, index) => (
-            <div key={index} className="relative min-h-[250px] flex items-center justify-between">
+            <div key={index} className="relative min-h-[220px] md:min-h-[250px] flex flex-col md:flex-row items-center md:items-start justify-between gap-2">
             {/* Step Number */}
             <div
-              className={`absolute top-0 z-0 font-audiowide text-[120px] font-normal opacity-20 select-none ${
+              className={`hidden md:block absolute top-0 z-0 font-audiowide text-[120px] font-normal opacity-20 select-none ${
                 index === 0 || index === 2 ? 'left-0 text-left translate-y-1/4 translate-x-1/3' : 'right-0 text-right translate-y-1/4 -translate-x-1/3'
               }`}
               style={{
@@ -65,19 +65,13 @@ export default function HowToTokenize() {
             <div
               className={`relative z-10 flex flex-col ${
                 index === 0 || index === 2 ? 'items-start text-left' : 'items-end text-right'
-              }`}
-              style={{
-                maxWidth: '460px',
-                marginLeft: index === 0 || index === 2 ? '80px' : 'auto',
-                marginRight: index === 1 || index === 3 ? '80px' : 'auto',
-                marginTop: '60px',
-              }}
+              } md:max-w-[460px] w-full md:mt-[60px] ${index === 0 || index === 2 ? 'md:ml-20' : ''} ${index === 1 || index === 3 ? 'md:mr-20' : ''}`}
             >
-              <h3 className="font-audiowide text-[#884DFF] mb-2 text-[32px] font-normal leading-tight tracking-wide">
+              <h3 className="font-audiowide text-[#884DFF] mb-2 text-[22px] sm:text-[26px] md:text-[32px] font-normal leading-tight tracking-wide">
                 {step.title}
               </h3>
               <p
-                className="text-sm leading-relaxed font-exo2 rounded mt-2 w-[400px]"
+                className="text-sm sm:text-base leading-relaxed font-exo2 rounded mt-2 w-full max-w-[460px]"
                 style={{
                   color: '#E5C9B8',
                 }}
