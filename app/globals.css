@@ -29,7 +29,7 @@ body {
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
@@ -41,11 +41,11 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #8B5CF6;
   border-radius: 4px;
-}
+} */
 
-::-webkit-scrollbar-thumb:hover {
+/* ::-webkit-scrollbar-thumb:hover {
   background: #7c3aed;
-}
+} */
 
 
 .gold-gradient-text {
@@ -105,11 +105,11 @@ body {
   }
 
   .animate-scroll-up {
-    animation: scroll-up 10s linear infinite;
+    animation: scroll-up 18s linear infinite alternate;
   }
 
   .animate-scroll-down {
-    animation: scroll-down 10s linear infinite;
+    animation: scroll-down 18s linear infinite alternate;
   }
 
   @keyframes pulse-slow {

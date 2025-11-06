@@ -58,9 +58,9 @@ export default function LiveAuctions() {
   }, [isPaused, direction]);
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-5 mb-5 relative overflow-hidden">
       <div className="container mx-auto px-4">
-        {/* Header area with centered content and top-right buttons */}
+        {/* Header area with centered content and responsive action buttons */}
         <div className="relative mb-12">
           {/* Centered content section */}
           <div className="flex flex-col items-center justify-center">
@@ -86,11 +86,11 @@ export default function LiveAuctions() {
             </div>
           </div>
 
-          {/* Top-right action buttons - absolutely positioned */}
-          <div className="absolute bottom-0 right-0 flex items-center gap-4 mt-4 md:mt-0">
+          {/* Action buttons: centered on mobile, absolute on md+ */}
+          <div className="flex items-center justify-center gap-4 mt-6 md:mt-0 md:absolute md:bottom-0 md:right-0">
             <div className="relative">
               {/* <div className="pointer-events-none absolute -inset-3 rounded-full bg-gradient-to-r from-purple-700 via-indigo-500 to-purple-600 blur-2xl opacity-70" /> */}
-              <button className="relative px-6 py-3  text-white rounded-full font-semibold inline-flex items-center gap-2" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+              <button className="relative px-6 py-3 text-white rounded-full font-semibold inline-flex items-center gap-2" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
                 Avalanche
                 <span className="text-white">▼</span>
               </button>

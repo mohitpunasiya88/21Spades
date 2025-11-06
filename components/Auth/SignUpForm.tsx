@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { SignUpData } from '@/types/auth'
-import { ArrowLeft, User, Lock, Eye, EyeOff, Mail, Phone } from 'lucide-react'
+import { Eye } from 'lucide-react'
+import AuthLeftPanel from './AuthLeftPanel'
 
 export default function SignUpForm() {
   const router = useRouter()
@@ -42,23 +43,23 @@ export default function SignUpForm() {
   }
 
   return (
-    <div className="flex-1 min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 md:py-8 bg-black relative pb-20 md:pb-24">
+    <div className="flex-1 min-h-screen h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 md:py-8 bg-[#03020800] relative pb-20 md:pb-24 m-2 sm:m-4">
       {/* Right bottom corner color */}
       <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-[#480C64] rounded-full opacity-30 blur-3xl pointer-events-none"></div>
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md sm:max-w-lg relative z-10">
         {/* Form container with gray border */}
         <div className="relative rounded-xl md:rounded-2xl border-1 border-gray-600">
-          <div className="bg-[linear-gradient(135deg,#4A01D8_0%,#4A01D8_1%,#000_15%,#000_100%)] rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6">
+          <div className="bg-blur bg-[linear-gradient(135deg,#4A01D8_1%,#4A01D8_1%,#000_17%,#000_90%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/40">
             {/* Header Section */}
-            <div className="mb-3 md:mb-5 text-center">
-              <h1 className="text-2xl  sm:text-3xl md:text-4xl font-audiowide font-bold mb-1.5 bg-gradient-to-r from-[#ffcc00] via-orange-400 to-orange-500 bg-clip-text text-transparent">
+            <div className="mb-2 md:mb-3 text-center">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-audiowide font-bold mb-1 bg-gradient-to-r from-[#ffcc00] via-orange-400 to-orange-500 bg-clip-text text-transparent">
                 Create Account!
               </h1>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm sm:text-base md:text-lg text-gray-400 font-exo2">
                 Already have an account?{' '}
                 <button
                   onClick={() => router.push('/login')}
-                  className="text-white hover:underline font-semibold"
+                  className="text-white hover:underline font-exo2"
                 >
                   Log In
                 </button>
@@ -66,12 +67,12 @@ export default function SignUpForm() {
             </div>
 
             {/* Form Fields */}
-            <form onSubmit={handleSubmit} className="space-y-2.5 md:space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-1.5 sm:space-y-2">
               {/* Name */}
               <div>
-                <label className="block text-white text-sm mb-1.5 font-medium">Name</label>
+                <label className="block text-white text-base sm:text-lg mb-1 font-exo2">Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={16} />
+                  <img src="/assets/User Rounded.png" alt="User" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10" />
                   <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
                   <input
                     type="text"
@@ -79,7 +80,7 @@ export default function SignUpForm() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter name"
-                    className="w-full border border-gray-600 rounded-lg py-2.5 md:py-3 pl-12 md:pl-14 pr-3 md:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm md:text-base"
+                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -87,9 +88,9 @@ export default function SignUpForm() {
 
               {/* Username */}
               <div>
-                <label className="block text-white text-sm mb-1.5 font-medium">User name</label>
+                <label className="block text-white text-base sm:text-lg mb-1 font-exo2">User name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={16} />
+                  <img  src="/assets/User Heart.png" alt="User" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10"  />
                   <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
                   <input
                     type="text"
@@ -97,17 +98,16 @@ export default function SignUpForm() {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Enter user name"
-                    className="w-full border border-gray-600 rounded-lg py-2.5 md:py-3 pl-12 md:pl-14 pr-3 md:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm md:text-base"
+                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
               </div>
-
               {/* Email */}
               <div>
-                <label className="block text-white text-sm mb-1.5 font-medium">Email</label>
+                <label className="block text-white text-base sm:text-lg mb-1 font-exo2">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={16} />
+                <img  src="/assets/Vector.png" alt="vector" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10" />
                   <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
                   <input
                     type="email"
@@ -115,7 +115,7 @@ export default function SignUpForm() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter email"
-                    className="w-full border border-gray-600 rounded-lg py-2.5 md:py-3 pl-12 md:pl-14 pr-3 md:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm md:text-base"
+                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -123,9 +123,9 @@ export default function SignUpForm() {
 
               {/* Phone */}
               <div>
-                <label className="block text-white text-sm mb-1.5 font-medium">Phone number</label>
+                <label className="block text-white text-base sm:text-lg mb-1 font-exo2">Phone number</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={16} />
+                <img  src="/assets/Phone.png" alt="phone" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10"  />
                   <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
                   <input
                     type="tel"
@@ -133,7 +133,7 @@ export default function SignUpForm() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="Enter phone number"
-                    className="w-full border border-gray-600 rounded-lg py-2.5 md:py-3 pl-12 md:pl-14 pr-3 md:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm md:text-base"
+                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -141,9 +141,9 @@ export default function SignUpForm() {
 
               {/* Password */}
               <div>
-                <label className="block text-white text-sm mb-1.5 font-medium">Password</label>
+                <label className="block text-white text-base sm:text-lg mb-1 font-exo2">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={16} />
+                  <img  src="/assets/Key.png" alt="Key" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10"  />
                   <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -151,7 +151,7 @@ export default function SignUpForm() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
-                    className="w-full border border-gray-600 rounded-lg py-2.5 md:py-3 pl-12 md:pl-14 pr-8 md:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm md:text-base"
+                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
                     required
                   />
                   <button
@@ -159,16 +159,16 @@ export default function SignUpForm() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <Eye size={16} />:  <img src="/assets/Eye Closed.png" alt="Eye closed" className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-white text-sm mb-1.5 font-medium">Confirm Password</label>
+                <label className="block text-white text-base sm:text-lg mb-1 font-exo2">Confirm Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={16} />
+                <img  src="/assets/Key.png" alt="Key" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10" />
                   <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -176,7 +176,7 @@ export default function SignUpForm() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm Password"
-                    className="w-full border border-gray-600 rounded-lg py-2.5 md:py-3 pl-12 md:pl-14 pr-8 md:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm md:text-base"
+                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
                     required
                   />
                   <button
@@ -184,29 +184,29 @@ export default function SignUpForm() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showConfirmPassword ?  <Eye size={18} />:  <img  src="/assets/Eye Closed.png" alt="Eye closed" className="w-4 h-4" /> }
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                  <p className="text-red-500 text-sm sm:text-base mt-0.5">{errors.confirmPassword}</p>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-1.5 md:pt-2 space-y-2 md:space-y-2.5">
+              <div className="pt-1 md:pt-1.5 space-y-1.5 sm:space-y-2 mt-4">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#4A01D8] border border-gray-600 text-white font-semibold py-2.5 md:py-3 rounded-full hover:opacity-90 transition disabled:opacity-50 shadow-lg text-sm md:text-base"
+                  className="w-full bg-[#4A01D8] border border-gray-600 text-white text-base sm:text-lg font-exo2 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition disabled:opacity-50 shadow-lg"
                 >
                   {isLoading ? 'Creating...' : 'Create Account'}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="w-full border border-gray-600 rounded-full text-white py-2.5 md:py-3 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 text-sm md:text-base font-medium"
+                  className="w-full border border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2"
                 >
-                  <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" /> Back
+                   Back
                 </button>
               </div>
             </form>

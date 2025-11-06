@@ -115,23 +115,8 @@ export default function Header() {
           </div>
 
           {/* Center - Logo (precise sizing and gradient) */}
-          <div className="flex items-center gap-2" style={{ top: 40, margin: 'auto 0',fontFamily: 'var(--font-audiowide)' }}>
-            <span className="text-3xl font-bold">21</span>
-            <span className="card-icon w-10 h-10"><img className="w-full h-full" src="/assets/card-icon.png" alt="Card Icon" /></span>
-            <span
-              className="text-3xl font-bold"
-              style={{
-                fontFamily: 'var(--font-audiowide)',
-                background: "linear-gradient(180deg, #CC66FF 0%, #4E00E6 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                color: "transparent",
-                display: "inline-block",
-              }}
-            >
-              SPADES
-            </span>
+          <div className="flex items-center justify-center" >
+            <img src="/assets/logo.png" alt="Logo" className="" />
           </div>
 
           {/* Right Side - Profile & Icons */}

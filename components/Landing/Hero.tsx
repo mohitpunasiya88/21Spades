@@ -4,7 +4,24 @@ import './landingPage.css'
 
 export default function Hero() {  
   return (
-    <div className="hero-section relative w-full min-h-screen flex flex-col items-center justify-center ">
+    <div className="hero-section relative w-[97%] mx-auto min-h-screen flex flex-col items-center justify-center mt-5">
+      {/* background image */}
+        <div className="hero-background-image">
+          <img src="/assets/star-bg.png" alt="Hero Background" />
+        </div>
+        <div className="hero-blobs">
+          <div className="blob ani-1" style={{ top: 308, left: 114 }}>
+            <div className="blob-shape ani-1" style={{ transform: 'rotate(100.53deg)' }} />
+          </div>
+          <div className="blob ani-2" style={{ top: 655, left: 182 }}>
+            <div className="blob-shape ani-2" style={{ transform: 'rotate(168.05deg)' }} />
+          </div>
+          <div className="blob ani-3" style={{ top: 43, left: 50 }}>
+            <div className="blob-shape ani-3" style={{ transform: 'rotate(143.62deg)' }} />
+          </div>
+        </div>
+
+      {/* header section */}
       <div className="header-section w-full">
         <Header />
         {/* <hr className="border-white/20 w-full my-4" /> */}
@@ -12,10 +29,7 @@ export default function Hero() {
       
       <div className="hero-content">
 
-        {/* background image */}
-        <div className="hero-background-image">
-          <img src="/assets/star-bg.png" alt="Hero Background" />
-        </div>
+        
        
         {/* hero content inner */}
         <div className="hero-content-inner">
@@ -38,8 +52,8 @@ export default function Hero() {
             </div>
 
             {/* lead paragraph */}
-            <p className="lead-text">
-              Create, trade, and connect in a decentralized Web3 social economy. Earn from your creativity, and exchange value transparently.
+            <p className="lead-text text-[24px] font-[600]">
+              Create, trade, and connect in a decentralized Web3 social economy. <br/>Earn from your creativity, and exchange value transparently.
             </p>
           </div>
           <div className="hero-content-inner-bottom">

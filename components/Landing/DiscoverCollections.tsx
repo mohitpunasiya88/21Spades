@@ -36,6 +36,7 @@ export default function DiscoverCollections() {
 
         {/* NFT Card */}
         <div className="flex justify-center mb-12">
+          <img src="/assets/card-bg.png" alt="Background" className="absolute z-0" />
           <div 
             className="relative overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer"
             style={{
