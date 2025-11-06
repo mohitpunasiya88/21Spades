@@ -31,10 +31,10 @@ export default function FeedRightSidebar() {
   return (
     <aside
       id="right-sidebar"
-      className="rounded-2xl h-full p-4 mt-5 mb-5 font-exo2 bg-[#090721] border-[0.5px] border-[#FFFFFF33]"
+      className="rounded-2xl h-full p-2 mt-5 mb-5 font-exo2 bg-[#090721] border-[0.5px] border-[#FFFFFF33]"
     >
       {/* Fear & Greed Index */}
-      <div className="mb-6 p-4 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
+      <div className="mb-6 p-4 pb-0 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-white font-semibold">Fear & Greed Index</h3>
           <div className="flex items-center justify-center ">
@@ -60,22 +60,28 @@ export default function FeedRightSidebar() {
             </div>
           </div>
         </div>
-        <div className="px-4">
-          <div className="flex items-center gap-2 text-xs mb-2 ">
-            <span className="text-gray-300">{price}</span>
-            <span className="px-2 py-0.5 rounded bg-[#4E00E5] text-white border border-[#4E00E5]">{label}</span>
+        <div className="">
+          <div className="w-full h-[0.5px] bg-[#FFFFFF1A] mb-2" />
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-white font-semibold">{price}</span>
+            <span className="px-2 py-0.5 rounded-full bg-[#5C09FF] text-white border border-[#5C09FF]">{label}</span>
           </div>
-          <div className="relative w-full h-full ">
+          <div className="relative w-full h-full">
             {/* Inner glow background */}
-            <div className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 w-[200px] h-[100px] rounded-t-[120px]" style={{
-              background: 'radial-gradient(circle at 50% 100%, rgba(124,58,237,0.4) 0%, rgba(11,15,30,0.0) 60%)'
-            }} />
-
+            <div
+              className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[260px] h-[14 0px] rounded-t-[140px]"
+              style={{
+                background:
+                  'radial-gradient(circle at 50% 100%, rgba(92,9,255,0.45) 0%, rgba(92,9,255,0.20) 35%, rgba(11,15,30,0.00) 65%)',
+                filter: 'blur(14px)'
+              }}
+            />
+            
             <GaugeComponent
               type="semicircle"
               arc={{
                 width: 0.2,
-                padding: 0.01,
+                padding: 0.03,
                 cornerRadius: 1,
                 subArcs: [
                   { limit: 20, color: '#EA4228' },
@@ -88,9 +94,9 @@ export default function FeedRightSidebar() {
                 ]
               }}
               pointer={{
-                color: '#ffffff',
-                length: 0.7,
-                width: 10,
+                color: '#5C09FF',
+                length: 0.75,
+                width: 12,
                 elastic: false
               }}
               labels={{
@@ -103,10 +109,10 @@ export default function FeedRightSidebar() {
             />
 
             {/* White hub at center */}
-            <div className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 w-5 h-5 rounded-full bg-white shadow-[0_0_25px_rgba(255,255,255,0.8)]" />
+            <div className="pointer-events-none absolute left-1/2 bottom-2 -translate-x-1/2 w-5 h-5 rounded-full bg-white" />
 
             {/* Centered percentage */}
-            <div className="pointer-events-none absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2 text-white text-3xl font-bold">
+            <div className="pointer-events-none absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/3 text-white text-2xl font-bold">
               {Math.round(Number(value))}%
             </div>
           </div>

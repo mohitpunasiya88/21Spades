@@ -18,14 +18,14 @@ import {
 const menuItems = [
   { icon: FileText, label: 'Feed', path: '/feed' },
   { icon: MessageCircle, label: 'Messages', path: '/messages' },
-  // { icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
-  // { icon: BarChart, label: 'SpadesFI', path: '/spadesfi' },
-  // { icon: Grid3x3, label: 'D-Drop', path: '/ddrop' },
-  // { icon: Search, label: 'Explore', path: '/explore' },
-  // { icon: RefreshCw, label: 'trending', path: '/trending' },
-  // { icon: Calendar, label: 'Events', path: '/events' },
-  // { icon: File, label: 'News', path: '/news' },
-  // { icon: User, label: 'Dashboard', path: '/dashboard' },
+  { icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
+  { icon: BarChart, label: 'SpadesFI', path: '/spadesfi' },
+  { icon: Grid3x3, label: 'D-Drop', path: '/ddrop' },
+  { icon: Search, label: 'Explore', path: '/explore' },
+  { icon: RefreshCw, label: 'trending', path: '/trending' },
+  { icon: Calendar, label: 'Events', path: '/events' },
+  { icon: File, label: 'News', path: '/news' },
+  { icon: User, label: 'Dashboard', path: '/dashboard' },
 ]
 
 export default function Sidebar() {
@@ -52,19 +52,18 @@ export default function Sidebar() {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={`relative w-full flex items-center gap-3 px-4 py-3 transition-colors ${
+              className={`relative flex items-center gap-3 px-4 py-3 transition-colors ${
                 isActive
-                  ? 'text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'w-[253px] h-[49px] text-[#FFB600] bg-[#7E6BEF0A] border border-[#7E6BEF0A] rounded-tl-[5px] rounded-bl-[5px]'
+                  : 'w-full text-gray-400 hover:text-white'
               }`}
             >
-              <span className={`flex items-center justify-center w-6 h-6 rounded-md ${isActive ? 'border border-yellow-500/70 bg-yellow-500/10' : 'border border-[#2A2F4A]'} `}>
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-yellow-400' : 'text-gray-400'}`} />
+              <span className={`flex items-center justify-center w-6 h-6 rounded-md ${isActive ? 'border border-[#FFB600] bg-[#FFB6000A]' : 'border border-[#2A2F4A]'} `}>
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FFB600]' : 'text-gray-400'}`} />
               </span>
-              <span className="ml-2 text-sm tracking-wide">{item.label}</span>
+              <span className="text-sm tracking-wide">{item.label}</span>
               {isActive && (
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-6 rounded bg-yellow-500 background: #F5F5F50A;
-"></span>
+                <span className="absolute right-5  top-1/2  translate-y-[-50%]  w-1 h-6 rounded bg-yellow-500"></span>
               )}
             </button>
             {/* separators between groups */}
