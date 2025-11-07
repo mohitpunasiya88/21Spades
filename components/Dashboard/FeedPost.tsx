@@ -42,12 +42,12 @@ export default function FeedPost({ post }: FeedPostProps) {
             <img src="/post/verify-white.png" alt="" />
             <span className="text-gray-500 text-sm">{post.timeAgo}</span>
           </div>
-          <p className="text-gray-500 text-xs truncate">{post.walletAddress}</p>
+          <p className="text-gray-500 text-xs truncate font-exo2">{post.walletAddress}</p>
         </div>
       </div>
 
       {/* Text */}
-      {post.content && <p className="text-white/90 mb-4 text-sm leading-relaxed">{post.content}</p>}
+      {post.content && <p className="text-white/90 mb-4 text-sm leading-relaxed font-exo2">{post.content}</p>}
 
       {/* Media */}
       <div className="overflow-hidden rounded-xl w-full">

@@ -1,11 +1,14 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 interface AuthFooterProps {
     showCopyright?: boolean
     className?: string
 }
 
 export default function AuthFooter({ showCopyright = true, className = '' }: AuthFooterProps) {
+    const t = useTranslations('auth')
     return (
         <footer className={`absolute bottom-0 left-0 right-0 w-full ${className}`}>
             {/* Horizontal line above footer */}
@@ -23,13 +26,13 @@ export default function AuthFooter({ showCopyright = true, className = '' }: Aut
                 {/* Right side - Links */}
                 <div className="flex gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-end mx-12">
                     <button className="text-white hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-lg sm:text-xs py-1">
-                        Marketplace
+                        {t('marketplace')}
                     </button>
                     <button className="text-white hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
-                        License
+                        {t('license')}
                     </button>
                     <button className="text-white hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
-                        Terms of Use
+                        {t('termsOfUse')}
                     </button>
                 </div>
             </div>
