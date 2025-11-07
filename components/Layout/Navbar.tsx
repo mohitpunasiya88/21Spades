@@ -2,17 +2,22 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@/lib/store/authStore'
+import { useLocaleStore } from '@/lib/store/localeStore'
 import { Input, Select, Badge, Button, Avatar, Dropdown, type MenuProps } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages } from 'lucide-react'
 
+type Locale = 'en' | 'es' | 'fr' | 'de' | 'zh' | 'ja'
+
 export default function Navbar() {
   const router = useRouter()
+  const t = useTranslations('common')
   const { user, logout } = useAuthStore()
+  const { locale, setLocale, getLanguageName } = useLocaleStore()
   const [open, setOpen] = useState(false)
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState('English')
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -28,7 +33,21 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
+  // Update HTML lang attribute when locale changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.lang = locale
+    }
+  }, [locale])
+
+  const languages: Locale[] = ['en', 'es', 'fr', 'de', 'zh', 'ja']
+
+  const handleLanguageChange = (newLocale: Locale) => {
+    setLocale(newLocale)
+    setIsLanguageOpen(false)
+    // The locale change will trigger IntlProvider to reload messages
+    // and all components using useTranslations will update automatically
+  }
 
   const menuItems: MenuProps['items'] = [
     {
@@ -41,7 +60,7 @@ export default function Navbar() {
           }}
           className="w-full text-left text-white"
         >
-          Profile
+          {t('profile')}
         </button>
       ),
     },
@@ -59,7 +78,7 @@ export default function Navbar() {
           }}
           className="w-full text-left text-red-400"
         >
-          Logout
+          {t('logout')}
         </button>
       ),
     },
@@ -84,7 +103,7 @@ export default function Navbar() {
           <div className="w-px h-[19px] bg-[#787486]" />
           <input
             type="text"
-            placeholder="Search for anything..."
+            placeholder={t('search')}
             className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm"
           />
         </div>
@@ -110,7 +129,7 @@ export default function Navbar() {
               className="font-semibold text-[18px] leading-none"
               style={{ fontFamily: 'var(--font-exo2)' }}
             >
-              {selectedLanguage}
+              {getLanguageName(locale)}
             </span>
             {/* Custom small caret (7.58 x 4.33) */}
             <svg
@@ -138,16 +157,15 @@ export default function Navbar() {
                 <button
                   key={lang}
                   onClick={() => {
-                    setSelectedLanguage(lang)
-                    setIsLanguageOpen(false)
+                    handleLanguageChange(lang)
                   }}
                   className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center justify-between group"
                   style={{
                     borderBottom: index < languages.length - 1 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
                   }}
                 >
-                  <span className="group-hover:text-purple-300 transition-colors">{lang}</span>
-                  {lang === selectedLanguage && (
+                  <span className="group-hover:text-purple-300 transition-colors">{getLanguageName(lang)}</span>
+                  {lang === locale && (
                     <span className="text-green-400 text-sm font-bold">✓</span>
                   )}
                 </button>

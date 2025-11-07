@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { useLocaleStore } from '@/lib/store/localeStore'
+import { translateBackendContent } from '@/lib/utils/translate'
 import GaugeComponent from 'react-gauge-component'
 interface MarketData {
   fearGreed: {
@@ -16,16 +19,25 @@ interface MarketData {
 }
 
 export default function FeedRightSidebar() {
+  const t = useTranslations('rightSidebar')
+  const { locale } = useLocaleStore()
   const [marketData, setMarketData] = useState<MarketData | null>(null)
   const [selected, setSelected] = useState('AVAX')
+  
   useEffect(() => {
     fetch('/api/market')
       .then((res) => res.json())
-      .then((data) => setMarketData(data))
-  }, [])
+      .then((data) => {
+        // Translate backend data
+        if (data.fearGreed?.label) {
+          data.fearGreed.label = translateBackendContent(data.fearGreed.label, locale)
+        }
+        setMarketData(data)
+      })
+  }, [locale]) // Re-fetch and translate when locale changes
 
   const value = marketData?.fearGreed.value ?? 60
-  const label = marketData?.fearGreed.label ?? 'Greed'
+  const label = marketData?.fearGreed.label ?? t('greed')
   const price = marketData?.fearGreed.price ?? '120,530.31 USD'
 
   return (
@@ -36,7 +48,7 @@ export default function FeedRightSidebar() {
       {/* Fear & Greed Index */}
       <div className="mb-6 p-4 pb-0 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-white font-semibold">Fear & Greed Index</h3>
+          <h3 className="text-white font-semibold">{t('fearGreedIndex')}</h3>
           <div className="flex items-center justify-center ">
             <div className="inline-flex rounded-full bg-[#FFFFFF08] font-exo2 ">
               <button
@@ -124,8 +136,8 @@ export default function FeedRightSidebar() {
 
         <div className="rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
           <div className="flex items-center justify-between mb-2 ">
-            <h3 className="text-white font-semibold">Market Cap <span className="text-gray-500">›</span></h3>
-            <button className="text-purple-400 text-sm">See All &gt;</button>
+            <h3 className="text-white font-semibold">{t('marketCap')} <span className="text-gray-500">›</span></h3>
+            <button className="text-purple-400 text-sm">{t('seeAll')} &gt;</button>
           </div>
           {/* horizontal line */}
           <div className="w-full h-[0.5px] bg-[#FFFFFF33] mb-2" />
@@ -157,8 +169,8 @@ export default function FeedRightSidebar() {
       {/* Trending in Web3 */}
       <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Trending in Web3</h3>
-          <button className="text-purple-400 text-sm">See All &gt;</button>
+          <h3 className="text-white font-semibold">{t('trendingWeb3')}</h3>
+          <button className="text-purple-400 text-sm">{t('seeAll')} &gt;</button>
         </div>
         <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-5" />
         <div className="space-y-3">
@@ -176,7 +188,7 @@ export default function FeedRightSidebar() {
                   <div className="w-8 h-8 rounded-[5px] overflow-hidden" >
                     <img src="/post/news-img-1.jpg" alt="Avatar" className="w-full h-full " />
                   </div>
-                  <h4 className="text-white text-sm font-semibold mb-1 truncate">Here's what happened in crypto</h4>
+                  <h4 className="text-white text-sm font-semibold mb-1 truncate">{t('hereWhatHappened')}</h4>
                 </div>
                 <div className="flex-1 min-w-0 mt-2">
                   <p className="text-[#A3AED069] text-xs line-clamp-2">
@@ -184,10 +196,10 @@ export default function FeedRightSidebar() {
                   </p>
                   <div className="flex items-center justify-between mt-3 text-[11px] text-gray-400">
                     <div className="flex gap-4 items-center">
-                      <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg> 2k</span>
-                      <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg> 1hr ago</span>
+                      <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg> 2k {t('views')}</span>
+                      <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg> 1hr {t('ago')}</span>
                     </div>
-                    <button className="text-white px-2 py-1 rounded-full border-[0.5px] border-[#FFFFFF0D]">Read More </button>
+                    <button className="text-white px-2 py-1 rounded-full border-[0.5px] border-[#FFFFFF0D]">{t('readMore')}</button>
                   </div>
                 </div>
               </div>
@@ -200,15 +212,15 @@ export default function FeedRightSidebar() {
       {/* Upcoming Web3 Events */}
       <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Upcoming Web3 Events</h3>
-          <button className="text-white text-sm">See All  &gt;</button>
+          <h3 className="text-white font-semibold">{t('upcomingEvents')}</h3>
+          <button className="text-white text-sm">{t('seeAll')}  &gt;</button>
         </div>
         <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-5" />
         <div className="bg-white text-black p-1 rounded-[5px] ">
           <div className="w-full h-32 rounded-[5px] mb-3 flex items-center justify-center">
             <img src="/post/web-event-img.jpg" alt="Event" className="w-full h-full rounded-[5px] object-cover" />
           </div>
-          <h4 className="text-black font-semibold mb-1">Web3 Event</h4>
+          <h4 className="text-black font-semibold mb-1">{t('web3Event')}</h4>
           <div className="flex items-center justify-between gap-2">
             <p className="text-[#030208] text-[10px] mb-2 font-[500]">⚲ 36 Guild Street London, UK</p>
             <div className="flex -space-x-2">
@@ -218,7 +230,7 @@ export default function FeedRightSidebar() {
                   className="w-4 h-4 bg-[#884DFF] rounded-full border-2 border-[#884DFF]"
                 ></div>
               ))}
-              <span className="text-[#030208] text-[8px] ml-2 font-[500]">+19 Going</span>
+              <span className="text-[#030208] text-[8px] ml-2 font-[500]">+19 {t('going')}</span>
             </div>
           </div>
         </div>
@@ -227,8 +239,8 @@ export default function FeedRightSidebar() {
       {/* Learn Web3 */}
       <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Learn Web3</h3>
-          <button className="text-white text-sm">See All &gt;</button>
+          <h3 className="text-white font-semibold">{t('learnWeb3')}</h3>
+          <button className="text-white text-sm">{t('seeAll')} &gt;</button>
         </div>
         <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-5" />
         <div className="space-y-3">
@@ -237,9 +249,9 @@ export default function FeedRightSidebar() {
               <img src="/post/news-img-1.jpg" alt="Avatar" className="w-full h-full " />
             </div>
             <div className="flex-1">
-              <h4 className="text-white text-sm font-semibold">What is Web3?</h4>
+              <h4 className="text-white text-sm font-semibold">{t('whatIsWeb3')}</h4>
               <p className="text-[#A3AED069] text-xs line-clamp-1">Web3 is a proposed next generation of the World Wide Web that emphasizes decentralization</p>
-              <p className="text-white text-[10px] font-[500] flex items-center gap-2"><span className="">⏲ 2.1k views</span> <span className="">⏲ 20 min</span></p>
+              <p className="text-white text-[10px] font-[500] flex items-center gap-2"><span className="">⏲ 2.1k {t('views')}</span> <span className="">⏲ 20 {t('minAgo')}</span></p>
             </div>
           </div>
           <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-2 mt-2" />
@@ -248,9 +260,9 @@ export default function FeedRightSidebar() {
               <img src="/post/news-img-1.jpg" alt="Avatar" className="w-full h-full " />
             </div>
             <div className="flex-1">
-              <h4 className="text-white text-sm font-semibold">What is Web3?</h4>
+              <h4 className="text-white text-sm font-semibold">{t('whatIsWeb3')}</h4>
               <p className="text-[#A3AED069] text-xs line-clamp-1">Web3 is a proposed next generation of the World Wide Web that emphasizes decentralization</p>
-              <p className="text-white text-[10px] font-[500] flex items-center gap-2"><span className="">⏲ 2.1k views</span> <span className="">⏲ 20 min</span></p>
+              <p className="text-white text-[10px] font-[500] flex items-center gap-2"><span className="">⏲ 2.1k {t('views')}</span> <span className="">⏲ 20 {t('minAgo')}</span></p>
             </div>
           </div>
         </div>
@@ -259,8 +271,8 @@ export default function FeedRightSidebar() {
       {/* New Collection */}
       <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">New Collection</h3>
-          <button className="text-white text-sm">See All &gt;</button>
+          <h3 className="text-white font-semibold">{t('newCollection')}</h3>
+          <button className="text-white text-sm">{t('seeAll')} &gt;</button>
         </div>
         <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-5" />
         <div className="space-y-3">
@@ -273,10 +285,10 @@ export default function FeedRightSidebar() {
                 <div className="flex flex-col items-start gap-[0.5px] w-full">
                   <div className="flex flex-row items-center justify-between w-full">
                     <p className="text-white text-[16px] font-semibold">21Spades</p>
-                    <p className="text-[#FFFFFF99] text-[10px]">35s ago</p>
+                    <p className="text-[#FFFFFF99] text-[10px]">35s {t('ago')}</p>
                   </div>
                   <div className="flex flex-row items-center justify-between w-full">
-                    <p className="text-white text-[12px] font-[500]">By <span className="text-[#884DFF]">21Spades</span></p>
+                    <p className="text-white text-[12px] font-[500]">{t('by')} <span className="text-[#884DFF]">21Spades</span></p>
                     <p className="text-white text-[12px]">⟠ 0.91 ETH</p>
                   </div>
                 </div>
