@@ -26,6 +26,7 @@ const menuItems = [
   { icon: Calendar, label: 'Events', path: '/events' },
   { icon: File, label: 'News', path: '/news' },
   { icon: User, label: 'Dashboard', path: '/dashboard' },
+  { icon: User, label: 'Profile', path: '/profile' },
 ]
 
 export default function Sidebar() {
