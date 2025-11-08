@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Audiowide, Asul, Exo_2 } from "next/font/google";
 import "./globals.css";
+import IntlProvider from "@/components/Providers/IntlProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,9 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${audiowide.variable} ${asul.variable} ${exo2.variable} antialiased`}>
-        {children}
+        <IntlProvider>
+          {children}
+        </IntlProvider>
       </body>
     </html>
   );

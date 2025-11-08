@@ -1,6 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useLocaleStore } from '@/lib/store/localeStore'
 import {
   FileText,
   ShoppingBag,
@@ -15,23 +18,26 @@ import {
   File,
 } from 'lucide-react'
 
-const menuItems = [
-  { icon: FileText, label: 'Feed', path: '/feed' },
-  { icon: MessageCircle, label: 'Messages', path: '/messages' },
-  { icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
-  { icon: BarChart, label: 'SpadesFI', path: '/spadesfi' },
-  { icon: Grid3x3, label: 'D-Drop', path: '/ddrop' },
-  { icon: Search, label: 'Explore', path: '/explore' },
-  { icon: RefreshCw, label: 'trending', path: '/trending' },
-  { icon: Calendar, label: 'Events', path: '/events' },
-  { icon: File, label: 'News', path: '/news' },
-  { icon: User, label: 'Dashboard', path: '/dashboard' },
-  { icon: User, label: 'Profile', path: '/profile' },
-]
 
 export default function Sidebar() {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations('sidebar')
+  const { locale } = useLocaleStore()
+
+  const menuItems = useMemo(() => [
+    { icon: FileText, label: t('feed'), path: '/feed' },
+    { icon: MessageCircle, label: t('messages'), path: '/messages' },
+    { icon: ShoppingBag, label: t('marketplace'), path: '/marketplace' },
+    { icon: BarChart, label: t('spadesfi'), path: '/spadesfi' },
+    { icon: Grid3x3, label: t('ddrop'), path: '/ddrop' },
+    { icon: Search, label: t('explore'), path: '/explore' },
+    { icon: RefreshCw, label: t('trending'), path: '/trending' },
+    { icon: Calendar, label: t('events'), path: '/events' },
+    { icon: File, label: t('news'), path: '/news' },
+    { icon: User, label: t('dashboard'), path: '/dashboard' },
+    { icon: User, label: t('profile'), path: '/profile' },
+  ], [t, locale]) // Re-compute when locale changes
 
   return (
     <aside className="w-64 overflow-y-auto">

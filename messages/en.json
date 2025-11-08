@@ -1,0 +1,118 @@
+{
+  "common": {
+    "search": "Search for anything...",
+    "language": "English",
+    "profile": "Profile",
+    "logout": "Logout",
+    "notifications": "Notifications",
+    "issue": "Issue"
+  },
+  "languages": {
+    "english": "English",
+    "spanish": "Spanish",
+    "french": "French",
+    "german": "German",
+    "chinese": "Chinese",
+    "japanese": "Japanese"
+  },
+  "sidebar": {
+    "feed": "Feed",
+    "messages": "Messages",
+    "marketplace": "Marketplace",
+    "spadesfi": "SpadesFI",
+    "ddrop": "D-Drop",
+    "explore": "Explore",
+    "trending": "Trending",
+    "events": "Events",
+    "news": "News",
+    "dashboard": "Dashboard"
+  },
+  "feed": {
+    "hello": "Hello Spades !",
+    "whatsNew": "what's New",
+    "post": "Post",
+    "imageVideos": "Image/Videos",
+    "emoji": "Emoji",
+    "categories": "Categories",
+    "ddrop": "D-DROP",
+    "verified": "99% VERIFIED",
+    "winFerrari": "Win a Ferrari",
+    "purosangue": "Purosangue",
+    "buyTicketDesc": "Buy a 50 NFT ticket in USDC for your chance to win the ultimate luxury SUV.",
+    "buyTicket": "Buy Ticket",
+    "cart": "Cart",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "discoverTitle": "Discover and sell your own tokenized assets",
+    "discoverDesc": "Create, trade, and showcase what's uniquely yours from digital art to real‑world experiences.",
+    "discoverNow": "Discover Now",
+    "exploreFeed": "Explore Feed",
+    "exploreFeedDesc": "Explore Feed, the premier Web3 marketplace for securely buying, selling, and trading digital assets.",
+    "all": "All",
+    "crypto": "Crypto",
+    "gaming": "Gaming",
+    "ticketing": "Ticketing",
+    "fashion": "Fashion",
+    "art": "Art",
+    "ai": "AI",
+    "realEstate": "Real Estate"
+  },
+  "rightSidebar": {
+    "fearGreedIndex": "Fear & Greed Index",
+    "greed": "Greed",
+    "fear": "Fear",
+    "marketCap": "Market Cap",
+    "seeAll": "See All",
+    "trendingWeb3": "Trending in Web3",
+    "upcomingEvents": "Upcoming Web3 Events",
+    "web3Event": "Web3 Event",
+    "going": "Going",
+    "learnWeb3": "Learn Web3",
+    "whatIsWeb3": "What is Web3?",
+    "whatIsNFT": "What is NFT?",
+    "views": "views",
+    "minAgo": "min ago",
+    "newCollection": "New Collection",
+    "ago": "ago",
+    "readMore": "Read More",
+    "hereWhatHappened": "Here's what happened in crypto",
+    "by": "By"
+  },
+  "feedPost": {
+    "likes": "likes",
+    "comments": "comments",
+    "shares": "shares",
+    "saves": "saves",
+    "nftImage": "NFT Image"
+  },
+  "messages": {
+    "chats": "Chats",
+    "search": "Search",
+    "online": "Online",
+    "lastSeen": "Last seen {minutes} min ago",
+    "typeMessage": "Type your message here ...",
+    "selectChat": "Select a chat to start messaging"
+  },
+  "marketplace": {
+    "title": "NFT Marketplace",
+    "description": "Discover a curated collection of unique digital assets and rare collectibles from top artists.",
+    "trending": "Trending",
+    "live": "Live",
+    "viewAll": "View All",
+    "all": "All",
+    "crypto": "Crypto",
+    "gaming": "Gaming",
+    "ticketing": "Ticketing",
+    "fashion": "Fashion",
+    "nft": "NFT",
+    "realEstate": "Real Estate",
+    "ai": "AI"
+  },
+  "auth": {
+    "marketplace": "Marketplace",
+    "license": "License",
+    "termsOfUse": "Terms of Use"
+  }
+}
+
