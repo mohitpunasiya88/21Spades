@@ -90,12 +90,12 @@ export default function LiveAuctions() {
           <div className="flex items-center justify-center gap-4 mt-6 md:mt-0 md:absolute md:bottom-0 md:right-0">
             <div className="relative">
               {/* <div className="pointer-events-none absolute -inset-3 rounded-full bg-gradient-to-r from-purple-700 via-indigo-500 to-purple-600 blur-2xl opacity-70" /> */}
-              <button className="relative px-6 py-3 text-white rounded-full font-semibold inline-flex items-center gap-2" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+              <button className="relative px-6 py-3 text-white rounded-full font-exo2 inline-flex items-center gap-2" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
                 Avalanche
                 <span className="text-white">▼</span>
               </button>
             </div>
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-gray-100 transition-all border border-black/10">
+            <button className="inline-flex items-center font-exo2 gap-2 px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-gray-100 transition-all border border-black/10">
               <span>View All</span>
               <ArrowRight className="w-5 h-5" />
             </button>

@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, ChevronDown, Bell, Settings, Languages } from 'lucide-react'
 
 export default function Header() {
+  const router = useRouter()
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('English')
@@ -176,7 +178,7 @@ export default function Header() {
                   
                   {/* Menu Items */}
                   <div className="py-2">
-                    <button className="w-full text-left px-5 py-3 text-sm text-white hover:bg-purple-600/30 transition-all flex items-center gap-3 group">
+                    {/* <button className="w-full text-left px-5 py-3 text-sm text-white hover:bg-purple-600/30 transition-all flex items-center gap-3 group">
                       <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -200,19 +202,25 @@ export default function Header() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       <span className="group-hover:text-purple-300 transition-colors">Wallet</span>
-                    </button>
+                    </button> */}
                   </div>
 
-                  {/* Logout Section */}
+                  {/* Sign Up Section */}
                   <div 
                     className="border-t py-2"
                     style={{ borderColor: 'rgba(139, 92, 246, 0.2)' }}
                   >
-                    <button className="w-full text-left px-5 py-3 text-sm text-red-400 hover:bg-red-500/20 transition-all flex items-center gap-3 group">
-                      <svg className="w-4 h-4 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <button 
+                      onClick={() => {
+                        setIsProfileOpen(false)
+                        router.push('/signup')
+                      }}
+                      className="w-full text-left px-5 py-3 text-sm text-purple-400 hover:bg-purple-500/20 transition-all flex items-center gap-3 group"
+                    >
+                      <svg className="w-4 h-4 group-hover:text-purple-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                       </svg>
-                      <span className="group-hover:text-red-300 transition-colors font-medium">Logout</span>
+                      <span className="group-hover:text-purple-300 transition-colors font-medium">Sign Up</span>
                     </button>
                   </div>
                 </div>

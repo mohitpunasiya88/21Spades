@@ -1,139 +1,3 @@
-// 'use client'
-
-// import { useState, useEffect, useRef } from 'react'
-// import { useRouter, useSearchParams } from 'next/navigation'
-// import { useAuthStore } from '@/lib/store/authStore'
-// import { ArrowLeft } from 'lucide-react'
-
-// export default function OTPVerification() {
-//   const router = useRouter()
-//   const searchParams = useSearchParams()
-//   const phone = searchParams.get('phone') || ''
-//   const { verifyOTP, isLoading } = useAuthStore()
-//   const [otp, setOtp] = useState(['', '', '', ''])
-//   const [timer, setTimer] = useState(60)
-//   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-
-//   useEffect(() => {
-//     const interval = setInterval(() => {
-//       setTimer((prev) => (prev > 0 ? prev - 1 : 0))
-//     }, 1000)
-//     return () => clearInterval(interval)
-//   }, [])
-
-//   const handleChange = (index: number, value: string) => {
-//     if (value.length > 1) return
-//     const newOtp = [...otp]
-//     newOtp[index] = value
-//     setOtp(newOtp)
-
-//     if (value && index < 3) {
-//       inputRefs.current[index + 1]?.focus()
-//     }
-//   }
-
-//   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-//     if (e.key === 'Backspace' && !otp[index] && index > 0) {
-//       inputRefs.current[index - 1]?.focus()
-//     }
-//   }
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault()
-//     const otpString = otp.join('')
-//     if (otpString.length !== 4) return
-
-//     try {
-//       await verifyOTP({ phone, otp: otpString })
-//       router.push('/feed')
-//     } catch (error) {
-//       console.error('OTP verification error:', error)
-//       alert('Invalid OTP. Try 1234 or 1537')
-//     }
-//   }
-
-//   const maskedPhone = phone.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+1 *** *** $4')
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center p-4">
-//       <div className="w-full max-w-2xl bg-gradient-to-br from-[#4A01D8] to-black border border-gray-800/40 rounded-3xl p-8 md:p-12 backdrop-blur-sm">
-//         <h2 className="text-2xl font-bold text-purple-400 mb-2 text-center">
-//           Enter the OTP code
-//         </h2>
-//         <p className="text-gray-400 mb-2 text-sm text-center">
-//           Not registered yet?{' '}
-//           <button
-//             onClick={() => router.push('/signup')}
-//             className="text-purple-400 hover:text-purple-300 underline"
-//           >
-//             Create Account
-//           </button>
-//         </p>
-
-//         <p className="text-sm text-gray-500 mb-6">
-//           Enter the 4-digit code that we have sent on the Phone No. <br /> {maskedPhone || '+1 *** *** 7294'}
-//         </p>
-
-//         <form onSubmit={handleSubmit} className="space-y-6">
-//           <div className="flex gap-3 justify-center">
-//             {otp.map((digit, index) => (
-//               <input
-//                 key={index}
-//                 ref={(el) => {
-//                   inputRefs.current[index] = el
-//                 }}
-//                 type="text"
-//                 inputMode="numeric"
-//                 maxLength={1}
-//                 value={digit}
-//                 onChange={(e) => handleChange(index, e.target.value)}
-//                 onKeyDown={(e) => handleKeyDown(index, e)}
-//                 className="w-16 h-16 text-center text-2xl font-bold bg-gray-800/50 border-2 border-gray-700 rounded-lg text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all"
-//               />
-//             ))}
-//           </div>
-
-//           <p className="text-center text-sm text-gray-400">
-//             {timer > 0 ? (
-//               <>Resend code in {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}</>
-//             ) : (
-//               <button
-//                 type="button"
-//                 onClick={() => setTimer(60)}
-//                 className="text-purple-400 hover:text-purple-300 hover:underline"
-//               >
-//                 Resend code
-//               </button>
-//             )}
-//           </p>
-
-//           <div className="flex gap-4 pt-4">
-//             <button
-//               type="submit"
-//               disabled={isLoading || otp.join('').length !== 4}
-//               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 shadow-lg"
-//             >
-//               {isLoading ? 'Verifying...' : 'Verify OTP'}
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => router.back()}
-//               className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700"
-//             >
-//               <ArrowLeft className="w-5 h-5" />
-//             </button>
-//           </div>
-//         </form>
-
-//         <p className="text-xs text-gray-500 mt-6 text-center">
-//           © 2023 21Spades. All Rights Reserved.
-//         </p>
-//       </div>
-//     </div>
-//   )
-// }
-
-
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -144,8 +8,81 @@ import { ArrowLeft } from 'lucide-react'
 export default function OTPVerification() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const phone = searchParams.get('phone') || ''
-  const { verifyOTP, isLoading } = useAuthStore()
+  const fullPhone = searchParams.get('phone') || ''
+  const { verifyOTP, isLoading, isAuthenticated } = useAuthStore()
+
+  // Parse phone number to extract countryCode and phoneNumber
+  // Format: +919174570187 -> countryCode: +91, phoneNumber: 9174570187
+  const parsePhoneNumber = (fullPhone: string) => {
+    if (!fullPhone) return { countryCode: '+91', phoneNumber: '' }
+    
+    // Remove any spaces or special characters except +
+    const cleaned = fullPhone.replace(/\s/g, '').trim()
+    
+    // Special case: Indian numbers (+91) - check this FIRST before any other logic
+    // Indian numbers are 10 digits starting with 6-9
+    if (cleaned.startsWith('+91')) {
+      const phoneNumber = cleaned.substring(3) // Remove '+91' (3 characters)
+      // Indian numbers should be exactly 10 digits starting with 6-9
+      if (phoneNumber.length >= 10) {
+        // Take first 10 digits
+        const indianNumber = phoneNumber.substring(0, 10)
+        if (/^[6-9]\d{9}$/.test(indianNumber)) {
+          return {
+            countryCode: '+91',
+            phoneNumber: indianNumber
+          }
+        }
+      }
+      // Even if validation fails, still return +91 as country code
+      return {
+        countryCode: '+91',
+        phoneNumber: phoneNumber.substring(0, 10) || phoneNumber
+      }
+    }
+    
+    // Common country codes (sorted by length DESC to match longest first)
+    const countryCodes = [
+      '+971', '+966', '+965', '+964', '+963', '+962', '+961', '+960', '+959', '+958',
+      '+90', '+86', '+84', '+82', '+81', '+66', '+65', '+62', '+61',
+      '+60', '+55', '+52', '+49', '+44', '+39', '+34', '+33', '+7', '+1'
+    ]
+    
+    // Try to match longest codes first
+    for (const code of countryCodes) {
+      if (cleaned.startsWith(code)) {
+        const phoneNumber = cleaned.substring(code.length)
+        return {
+          countryCode: code,
+          phoneNumber: phoneNumber
+        }
+      }
+    }
+    
+    // Default to +91 if no match
+    return {
+      countryCode: '+91',
+      phoneNumber: cleaned.replace(/^\+/, '')
+    }
+  }
+
+  const { countryCode, phoneNumber } = parsePhoneNumber(fullPhone)
+  
+  // Debug: Log parsed values
+  useEffect(() => {
+    if (fullPhone) {
+      console.log('Full phone from URL:', fullPhone)
+      console.log('Parsed countryCode:', countryCode)
+      console.log('Parsed phoneNumber:', phoneNumber)
+    }
+  }, [fullPhone, countryCode, phoneNumber])
+
+  // Redirect to feed when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      router.replace('/feed')
+    }
+  }, [isAuthenticated, isLoading, router])
   const [otp, setOtp] = useState(['', '', '', ''])
   const [timer, setTimer] = useState(60)
 
@@ -178,16 +115,28 @@ export default function OTPVerification() {
     if (otpString.length !== 4) return
 
     try {
-      await verifyOTP({ phone, otp: otpString })
-      router.push('/feed')
-    } catch (error) {
+      // Debug: Log what we're sending
+      console.log('Sending OTP verification with:', {
+        phoneNumber,
+        countryCode,
+        otp: otpString
+      })
+      
+      // Send phoneNumber and countryCode separately as backend expects
+      await verifyOTP({ 
+        phoneNumber, 
+        countryCode, 
+        otp: otpString 
+      } as any)
+      // Redirect will happen via useEffect when isAuthenticated becomes true
+    } catch (error: any) {
       console.error('OTP verification error:', error)
-      alert('Invalid OTP. Try 1234 or 1537')
+      alert(error?.response?.data?.message || error?.message || 'Invalid OTP. Please try again')
     }
   }
 
-  const maskedPhone = phone
-    ? phone.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+1 *****$4')
+  const maskedPhone = fullPhone
+    ? fullPhone.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+1 *****$4')
     : '+1 *****244'
 
   return (
@@ -201,19 +150,19 @@ export default function OTPVerification() {
             Not register yet?{' '}
             <button
               onClick={() => router.push('/signup')}
-              className="text-[#ffcc00] hover:underline font-semibold"
+              className="text-[#ffcc00] hover:underline font-exo2"
             >
               Create Account
             </button>
           </p>
 
-          <p className="text-gray-300 mb-8 text-sm font-semibold">
+          <p className="text-gray-300 mb-4 text-sm font-exo2 ">
             Enter the 4-digit code that we have sent<br />
-            via the Phone-No <span className="text-white font-extrabold">{maskedPhone}</span>
+            via the Phone-No <span className="text-white font-exo2">{maskedPhone}</span>
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="flex justify-center space-x-5">
+          <form onSubmit={handleSubmit} className="space-y-2">
+            <div className="flex justify-center space-x-2">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -226,12 +175,12 @@ export default function OTPVerification() {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-12 text-center text-2xl font-extrabold bg-transparent border-b-4 border-gray-600 text-white focus:border-[#ffcc00] outline-none transition-all"
+                  className="w-5 h-5 text-center text-2xl font-exo2 bg-transparent border-b-4 border-gray-600 text-white focus:border-[#ffcc00] outline-none transition-all"
                 />
               ))}
             </div>
 
-            <div className="text-gray-400 text-sm font-medium">
+            <div className="text-gray-400 text-sm font-exo2">
               {timer > 0 ? (
                 <>
                   Resend code in{' '}

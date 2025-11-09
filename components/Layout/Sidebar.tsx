@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   FileText,
   ShoppingBag,
@@ -13,7 +15,14 @@ import {
   RefreshCw,
   Calendar,
   File,
+  MoreVertical,
+  ChevronDown,
+  ChevronRight,
+  Send,
+  ChevronLeft,
 } from 'lucide-react'
+import { useUIStore } from '@/lib/store/uiStore'
+import image22 from '@/components/assets/image22.png'
 
 const menuItems = [
   { icon: FileText, label: 'Feed', path: '/feed' },
@@ -28,80 +37,247 @@ const menuItems = [
   { icon: User, label: 'Dashboard', path: '/dashboard' },
 ]
 
-export default function Sidebar() {
+const chatData = [
+  {
+    id: 'magnus-nelson',
+    userId: '1',
+    name: 'Magnus Nelson',
+    message: '...is typing',
+    time: '16:45',
+    profilePicture: 'https://img.freepik.com/free-photo/portrait-young-man-with-dark-curly-hair_176420-18744.jpg?size=626&ext=jpg',
+    isTyping: true,
+    unread: 0,
+  },
+  {
+    id: 'jonas-walden',
+    userId: '2',
+    name: 'Jonas Walden',
+    message: 'You: Come back!',
+    time: '16:45',
+    profilePicture: 'https://img.freepik.com/free-photo/portrait-man-with-blue-purple-lighting_23-2149126949.jpg?size=626&ext=jpg',
+    isTyping: false,
+    unread: 0,
+  },
+  {
+    id: 'rose-nelson',
+    userId: '3',
+    name: 'Rose Nelson',
+    message: 'Wait for me',
+    time: '16:45',
+    profilePicture: 'https://img.freepik.com/free-photo/portrait-woman-with-dark-curly-hair_23-2149126948.jpg?size=626&ext=jpg',
+    isTyping: false,
+    unread: 1,
+  },
+]
+
+interface SidebarProps {
+  onClose?: () => void
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [isSpadesFIOpen, setIsSpadesFIOpen] = useState(false)
+  const { sidebarOpen, toggleSidebar } = useUIStore()
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+    if (onClose) {
+      onClose()
+    }
+  }
+
+  // SpadesFI dropdown items
+  const spadesFIItems = [
+    { label: 'Dashboard', path: '/spadesfi/dashboard' },
+    { label: 'Analytics', path: '/spadesfi/analytics' },
+    { label: 'Reports', path: '/spadesfi/reports' },
+    { label: 'Settings', path: '/spadesfi/settings' },
+  ]
 
   return (
-    <aside className="w-64 overflow-y-auto">
-      {/* Logo */}
-      {/* <div className="p-6 border-b border-gray-800">
-        <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mx-auto shadow-md">
-          <span className="text-white font-bold text-2xl">21</span>
-        </div>
-      </div> */}
-
-      {/* Menu Items */}
-      <nav className="p-4 pr-0 mt-5">
-        <div className="rounded-xl border border-[#2A2F4A] bg-[#090721] h-[80vh]">
-        {menuItems.map((item, idx) => {
-          const Icon = item.icon
-          const isActive = pathname === item.path
-          return (
-            <div key={item.path}>
+    <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} h-full overflow-y-auto scrollbar-hide bg-[#020019] transition-all duration-300 mt-6`}>
+      {/* Combined Container */}
+      <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4`}>
+        <div className="rounded-lg bg-[#090721] border border-[#2A2F4A]">
+          {/* Toggle Button */}
+          <div className="flex justify-center   border-b border-[#2A2F4A]">
             <button
-              key={item.path}
-              onClick={() => router.push(item.path)}
-              className={`relative flex items-center gap-3 px-4 py-3 transition-colors ${
-                isActive
-                  ? 'w-[253px] h-[49px] text-[#FFB600] bg-[#7E6BEF0A] border border-[#7E6BEF0A] rounded-tl-[5px] rounded-bl-[5px]'
-                  : 'w-full text-gray-400 hover:text-white'
-              }`}
+              onClick={toggleSidebar}
+              className="p-1.5 rounded-lg  text-white transition-colors"
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
-              <span className={`flex items-center justify-center w-6 h-6 rounded-md ${isActive ? 'border border-[#FFB600] bg-[#FFB6000A]' : 'border border-[#2A2F4A]'} `}>
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FFB600]' : 'text-gray-400'}`} />
-              </span>
-              <span className="text-sm tracking-wide">{item.label}</span>
-              {isActive && (
-                <span className="absolute right-5  top-1/2  translate-y-[-50%]  w-1 h-6 rounded bg-yellow-500"></span>
+              {sidebarOpen ? (
+               <Image src={image22} alt="Collapse" width={40} height={40} className="object-contain" />
+              ) : (
+                <Image src={image22} alt="Collapse" width={40} height={40} className="object-contain" />
               )}
             </button>
-            {/* separators between groups */}
-            {idx === 2 || idx === 5 ? <div className="mx-4 h-px bg-[#2A2F4A]" /> : null}
-            </div>
-          )
-        })}
-        </div>
-      </nav>
+          </div>
 
-      {/* Chat Section */}
-      {/* <div className="p-4 border-t border-gray-800 mt-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Chat</h3>
-          <div className="text-gray-400">•••</div>
-        </div>
-        <div className="flex items-center gap-2 mb-3">
-          <button className="text-xs px-2 py-1 bg-purple-600/90 text-white rounded">All</button>
-          <button className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded">Group</button>
-          <button className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded">Community</button>
-        </div>
-        <div className="space-y-2">
-          {[{n:'Magnus Nelson',t:'16:45'},{n:'Jonas Walden',t:'16:41'},{n:'Rose Nelson',t:'16:38'}].map((c)=> (
-            <div key={c.n} className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
-              <div className="w-8 h-8 rounded-full border border-[#2A2F4A] bg-gray-800/40 flex items-center justify-center">
-                <span className="text-white text-[10px] font-semibold">{c.n.split(' ').map(p=>p[0]).join('').slice(0,2)}</span>
+          {/* Menu Items */}
+          <nav >
+          {menuItems.map((item, idx) => {
+            const Icon = item.icon
+            const isActive = pathname === item.path || (item.label === 'SpadesFI' && pathname.startsWith('/spadesfi'))
+            const isSpadesFI = item.label === 'SpadesFI'
+            
+            return (
+              <div key={item.path}>
+                {isSpadesFI ? (
+                  <div>
+                    <button
+                      onClick={() => {setIsSpadesFIOpen(!isSpadesFIOpen); toggleSidebar()}}
+                      className={`relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                        isActive
+                          ? 'text-[#FFB600] bg-[#7E6BEF0A]'
+                          : 'text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon  className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`} />
+                        {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
+                      </div>
+                      {sidebarOpen && (
+                        <ChevronDown 
+                          className={`w-4 h-4 transition-transform ${isSpadesFIOpen ? 'rotate-180' : ''} ${isActive ? 'text-[#FFB600]' : 'text-white'}`} 
+                        />
+                      )}
+                      {isActive && sidebarOpen && (
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#FFB600] rounded-l"></span>
+                      )}
+                    </button>
+                    
+                    {/* SpadesFI Dropdown */}
+                    {isSpadesFIOpen && sidebarOpen && (
+                      <div className="bg-[#0A0519] border-l-2 border-[#2A2F4A] ml-4">
+                        {spadesFIItems.map((subItem) => {
+                          const isSubActive = pathname === subItem.path
+                          return (
+                            <button
+                              key={subItem.path}
+                              onClick={() => handleNavigation(subItem.path)}
+                              className={`w-full text-left px-4 py-2.5 pl-8 text-sm font-exo2 transition-colors flex items-center gap-2 ${
+                                isSubActive
+                                  ? 'text-[#FFB600] bg-[#7E6BEF0A]'
+                                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                              {subItem.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleNavigation(item.path)}
+                    className={`relative flex items-center ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                      isActive
+                        ? 'text-[#FFB600] bg-[#7E6BEF0A]'
+                        : 'text-white hover:bg-white/5'
+                    }`}
+                    title={!sidebarOpen ? item.label : ''}
+                  >
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`} />
+                    {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
+                    {isActive && sidebarOpen && (
+                      <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#FFB600] rounded-l"></span>
+                    )}
+                  </button>
+                )}
+                {/* separators between groups - after SpadesFI (idx 3) and after trending (idx 6) */}
+                {(idx === 3 || idx === 6) && <div className="mx-4 h-px bg-[#2A2F4A]" />}
               </div>
-              <div className="flex-1">
-                <p className="text-white text-sm">{c.n}</p>
+            )
+          })}
+          </nav>
+
+          {/* Separator Line between Navigation and Chat */}
+          {sidebarOpen && <div className="mx-4 my-2 h-px bg-[#2A2F4A]"></div>}
+
+          {/* Chat Section */}
+          {sidebarOpen && (
+            <div className="p-4">
+            {/* Chat Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-lg font-exo2">Chat</h3>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleNavigation('/messages')}
+                  className="text-white hover:text-gray-300 transition-colors"
+                  title="New Message"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+                <button className="text-white hover:text-gray-300 transition-colors">
+                  <MoreVertical className="w-5 h-5" />
+                </button>
               </div>
-              <div className="text-gray-500 text-xs">{c.t}</div>
             </div>
-          ))}
+
+            {/* Filter */}
+            <div className="mb-4">
+              <button className="text-white text-sm font-exo2 relative pb-1.5">
+                All
+                <span className="absolute bottom-0 left-0 right-0 h-[1px] bg-white"></span>
+              </button>
+            </div>
+
+            {/* Chat List */}
+            <div className="space-y-2.5 mb-4">
+              {chatData.map((chat, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleNavigation(`/messages?chat=${chat.id}&userId=${chat.userId}`)}
+                  className="flex items-center gap-3 py-2 px-1 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
+                >
+                  {/* Profile Picture */}
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                    <img
+                      src={chat.profilePicture}
+                      alt={chat.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Chat Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-exo2 truncate mb-0.5">{chat.name}</p>
+                    <p className={`text-xs truncate ${chat.isTyping ? 'text-gray-400 italic' : 'text-gray-400'}`}>
+                      {chat.message}
+                    </p>
+                  </div>
+
+                  {/* Right Side - Time, Badge, Arrow */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-gray-400 text-xs whitespace-nowrap">{chat.time}</span>
+                    {chat.unread > 0 ? (
+                      <div className="w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center">
+                        <span className="text-white text-[10px] font-semibold">{chat.unread}</span>
+                      </div>
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* View All */}
+            <button 
+              onClick={() => handleNavigation('/messages')}
+              className="flex items-center gap-1 text-white text-sm font-exo2 hover:text-gray-300 transition-colors"
+            >
+              View All
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          )}
         </div>
-        <button className="text-purple-400 text-sm mt-2 hover:underline">
-          View All &gt;
-        </button>
-      </div> */}
+      </div>
     </aside>
   )
 }

@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
@@ -11,13 +11,21 @@ import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
 
 export default function LoginForm() {
   const router = useRouter()
-  const { login, isLoading } = useAuthStore()
+  const { login, isLoading, user, isAuthenticated } = useAuthStore()
+
+  // Redirect to feed when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      router.replace('/feed')
+    }
+  }, [isAuthenticated, isLoading, router])
 
   const [formData, setFormData] = useState<LoginData>({
 
     username: '',
     password: '',
   })
+  console.log('loginformuser', user)
   const [errors, setErrors] = useState<Partial<SignUpData>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
@@ -30,16 +38,11 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.password) {
-      setErrors({ confirmPassword: 'Passwords do not match' })
-      return
-    }
-
     try {
       await login(formData)
-      router.push('/feed')
+      // Redirect will happen via useEffect when isAuthenticated becomes true
     } catch (error) {
-      console.error('Signup error:', error)
+      console.error('Login error:', error)
     }
   }
 
@@ -50,8 +53,7 @@ export default function LoginForm() {
       <div className="w-full max-w-md sm:max-w-lg relative z-10">
         {/* Form container with gray border */}
         <div className="relative rounded-xl  md:rounded-2xl border-1 border-gray-600">
-          <div className="bg-blur bg-[linear-gradient(135deg,#4A01D8_1%,#4A01D8_1%,#000_17%,#000_90%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/40">
-            {/* Header Section */}
+        <div className="bg-blur bg-opacity-20 bg-[linear-gradient(135deg,rgba(74,1,216,0.3)_10%,#000_25%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/40">            {/* Header Section */}
             <div className="mb-2 md:mb-3 text-center">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-audiowide font-bold mb-1 bg-gradient-to-r from-[#ffcc00] via-orange-400 to-orange-500 bg-clip-text text-transparent">
                 WELCOME BACK!
@@ -157,7 +159,7 @@ export default function LoginForm() {
                 <div className="h-px bg-gray-600 w-full"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="px-2 py-0.5 text-gray text-xs sm:text-sm font-exo2 bg-black rounded-full ">
-                    Ro
+                    OR
                   </span>
                 </div>
               </div>
@@ -182,7 +184,7 @@ export default function LoginForm() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full  mt-3 bg-[#4A01D8] border border-gray-600 text-white text-base sm:text-lg font-exo2 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition disabled:opacity-50 shadow-lg"
+                  className="w-full mt-3 rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold btn-purple-gradient transition-all duration-200"
                 >
                   {isLoading ? 'Logging in...' : 'Log In'}
                 </button>

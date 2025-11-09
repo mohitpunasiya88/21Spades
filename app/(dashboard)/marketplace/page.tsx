@@ -23,7 +23,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-yellow-400 text-4xl font-bold mb-4">NFT Marketplace</h1>
+      <h1 className="text-yellow-400 text-4xl font-exo2 mb-4">NFT Marketplace</h1>
       <p className="text-gray-400 mb-8">
         Discover a curated collection of unique digital assets and rare collectibles from top artists.
       </p>
@@ -34,7 +34,7 @@ export default function MarketplacePage() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-lg font-exo2 whitespace-nowrap transition-colors ${
               selectedCategory === cat
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
@@ -48,7 +48,7 @@ export default function MarketplacePage() {
       {/* Trending Section */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-yellow-400 text-2xl font-bold">Trending</h2>
+          <h2 className="text-yellow-400 text-2xl font-exo2">Trending</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trending.map((nft) => (
@@ -58,7 +58,7 @@ export default function MarketplacePage() {
             >
               <div className="w-full h-64 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-6xl font-bold text-white mb-2">21</div>
+                  <div className="text-6xl font-exo2 text-white mb-2">21</div>
                   <div className="text-white text-sm">SPADES</div>
                 </div>
               </div>
@@ -69,11 +69,11 @@ export default function MarketplacePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <span className="text-purple-500">Ξ</span>
-                    <span className="text-white font-semibold">{nft.price} ETH</span>
+                    <span className="text-white font-exo2">{nft.price} ETH</span>
                   </div>
                   <button className="flex items-center gap-1 text-gray-400 hover:text-red-500">
                     <Heart className="w-4 h-4" />
-                    <span className="text-xs">{nft.likes}</span>
+                    <span className="text-xs font-exo2">{nft.likes}</span>
                   </button>
                 </div>
               </div>
@@ -90,7 +90,7 @@ export default function MarketplacePage() {
             <select className="bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2">
               <option>Avalanche</option>
             </select>
-            <button className="bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2">
+            <button className="bg-gray-800 text-white font-exo2 border border-gray-700 rounded-lg px-4 py-2">
               View All
             </button>
           </div>

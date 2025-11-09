@@ -8,7 +8,9 @@ import { Search, Bell, ChevronDown, Plus, Languages } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
-  const { user, logout } = useAuthStore()
+  const { logout,user } = useAuthStore()
+  console.log('login98989898',user)
+
   const [open, setOpen] = useState(false)
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -32,23 +34,6 @@ export default function Navbar() {
 
   const menuItems: MenuProps['items'] = [
     {
-      key: 'profile',
-      label: (
-        <button
-          onClick={() => {
-            router.push('/profile')
-            setOpen(false)
-          }}
-          className="w-full text-left text-white"
-        >
-          Profile
-        </button>
-      ),
-    },
-    {
-      type: 'divider',
-    },
-    {
       key: 'logout',
       label: (
         <button
@@ -57,7 +42,7 @@ export default function Navbar() {
             router.push('/login')
             setOpen(false)
           }}
-          className="w-full text-left text-red-400"
+          className="w-full text-left text-red-400 px-4 py-2 hover:bg-red-500/10 transition-colors"
         >
           Logout
         </button>
@@ -170,34 +155,52 @@ export default function Navbar() {
           <Plus className="w-5 h-5" />
         </button>
 
-        {/* User Profile */}
-        {/* Extra dummy avatar to mirror layout */}
-        <Avatar
-          size={32}
-          src="https://i.pravatar.cc/80?img=32"
-          className="!bg-gray-700 !border !border-gray-600"
-        />
+        {/* User Profile with Email */}
+        {user && (
+          <div className="flex items-center gap-3">
+            {/* Profile Picture and Email */}
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600 bg-purple-600 shadow-md flex items-center justify-center flex-shrink-0">
+                {user.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={user.name || 'User'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/avatar.jpg'
+                    }}
+                  />
+                ) : (
+                  <img
+                    src="/assets/avatar.jpg"
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+              <div className="hidden md:flex flex-col">
+                <p className="text-white font-semibold text-sm leading-tight">{user.name || 'User'}</p>
+                <p className="text-gray-400 text-xs leading-tight truncate max-w-[150px]">{user.email || ''}</p>
+              </div>
+            </div>
 
-        <div className="relative dropdown-container">
-          <Dropdown
-            open={open}
-            onOpenChange={setOpen}
-            menu={{ items: menuItems }}
-            dropdownRender={(menu) => (
-              <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-2 w-48">{menu}</div>
-            )}
-          >
-            <button className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
-              <Avatar
-                size={32}
-                src="https://i.pravatar.cc/80?img=12"
-                className="!bg-purple-600 !shadow-md !border !border-gray-600"
-              />
-              {/* <span className="hidden md:block font-medium">{user?.name || 'Spades'}</span> */}
-              {/* <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} /> */}
-            </button>
-          </Dropdown>
-        </div>
+            {/* Logout Dropdown */}
+            <div className="relative dropdown-container">
+              <Dropdown
+                open={open}
+                onOpenChange={setOpen}
+                menu={{ items: menuItems }}
+                dropdownRender={(menu) => (
+                  <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-2 min-w-[120px]">{menu}</div>
+                )}
+              >
+                <button className="text-gray-300 hover:text-white transition-colors">
+                  <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+                </button>
+              </Dropdown>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   )

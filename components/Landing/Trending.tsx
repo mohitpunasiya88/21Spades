@@ -40,10 +40,10 @@ export default function Trending() {
       <div className="relative top-0 left-1/2 text-white text-[40px] font-[600] mb-6">♠</div>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 relative w-full max-w-2xl mx-auto">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-yellow-400">
+          <h2 className="gold-gradient-text font-audiowide font-bold text-lg md:text-6xl text-center">
             Trending
           </h2>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 mt-3 text-lg font-exo2">
             Where Culture Moves. See what's capturing attention across art, gaming, fashion, and culture — all rising on-chain
           </p>
         </div>
