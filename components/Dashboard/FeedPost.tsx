@@ -237,7 +237,7 @@ export default function FeedPost({ post }: FeedPostProps) {
   }
   return (
     <div className="rounded-xl sm:rounded-2xl border border-[#FFFFFF33] bg-[#090721] p-4 sm:p-6 md:p-8 font-exo2">
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div
           className="flex items-center justify-center w-[40px] h-[40px] sm:w-[48px] sm:h-[48px] rounded-full overflow-hidden p-1.5 sm:p-2 flex-shrink-0"
