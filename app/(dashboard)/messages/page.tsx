@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Search, MoreVertical, Smile, Paperclip, Mic, Edit, Check } from 'lucide-react'
 
 interface Chat {
@@ -22,7 +21,6 @@ interface Message {
 }
 
 export default function MessagesPage() {
-  const t = useTranslations('messages')
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -126,7 +124,7 @@ export default function MessagesPage() {
       <div className="w-80 bg-[#090721] border border-[#FFFFFF33] rounded-[21px] mx-5 font-exo2 px-2 flex flex-col h-full min-h-0">
         <div>
           <div className="flex items-center justify-between p-2 my-2">
-            <h2 className="text-white text-[24px] font-[700]">{t('chats')}</h2>
+            <h2 className="text-white text-[24px] font-[700]">Chats</h2>
             <div className='gap-2 flex'>
               <button className="text-[#787785] hover:text-white">
                 <Edit className="w-[18px] h-[18px]" />
@@ -146,7 +144,7 @@ export default function MessagesPage() {
             <div className="absolute left-10 top-1/2 -translate-y-1/2 w-px h-[22px] bg-[#FFFFFF33]"></div>
             <input
               type="text"
-              placeholder={t('search')}
+              placeholder="Search"
               className="w-full h-[44px] bg-[#14122D] border border-[#FFFFFF1A] mb-2 rounded-lg text-white placeholder-[#787486] focus:outline-none focus:border-purple-500 pl-14 pr-3"
             />
           </div>
@@ -200,7 +198,7 @@ export default function MessagesPage() {
                 <div>
                   <p className="text-white text-[16px] font-semibold">{selectedChatData.name}</p>
                   <p className="text-[#CC66FF] text-[14px]">
-                    {selectedChatData.isOnline ? t('online') : t('lastSeen', { minutes: 5 })}
+                    {selectedChatData.isOnline ? 'Online' : 'Last seen 5 min ago'}
                   </p>
                 </div>
               </div>
@@ -260,7 +258,7 @@ export default function MessagesPage() {
                 </button>
                 <input
                   type="text"
-                  placeholder={t('typeMessage')}
+                  placeholder="Type your message here ..."
                   className="flex-1 px-4 py-2 text-white placeholder-[#A3AED0B2] focus:outline-none"
                 />
                 
@@ -272,7 +270,7 @@ export default function MessagesPage() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400">{t('selectChat')}</p>
+            <p className="text-gray-400">Select a chat to start messaging</p>
           </div>
         )}
       </div>

@@ -1,14 +1,11 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-
 interface AuthFooterProps {
     showCopyright?: boolean
     className?: string
 }
 
 export default function AuthFooter({ showCopyright = true, className = '' }: AuthFooterProps) {
-    const t = useTranslations('auth')
     return (
         <footer className={`relative md:absolute md:bottom-0 md:left-0 md:right-0 w-full  ${className}`}>
             {/* Horizontal line above footer */}
@@ -24,15 +21,15 @@ export default function AuthFooter({ showCopyright = true, className = '' }: Aut
                 )}
 
                 {/* Right side - Links */}
-                <div className="flex gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-end mx-12">
-                    <button className="text-white hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-lg sm:text-xs py-1">
-                        {t('marketplace')}
+                <div className="flex gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-end  sm:mx-4 md:mx-12">
+                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
+                        Marketplace
                     </button>
-                    <button className="text-white hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
-                        {t('license')}
+                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
+                        License
                     </button>
-                    <button className="text-white hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
-                        {t('termsOfUse')}
+                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
+                        Terms of Use
                     </button>
                 </div>
             </div>

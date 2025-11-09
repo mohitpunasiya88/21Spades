@@ -1,15 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { useLocaleStore } from '@/lib/store/localeStore'
 import { Heart } from 'lucide-react'
 import type { NFT } from '@/types/nft'
 
 export default function MarketplacePage() {
-  const t = useTranslations('marketplace')
-  const { locale } = useLocaleStore()
   const [trending, setTrending] = useState<NFT[]>([])
   const [live, setLive] = useState<NFT[]>([])
   const [selectedCategory, setSelectedCategory] = useState('ALL')
@@ -24,37 +19,28 @@ export default function MarketplacePage() {
       .then((data) => setLive(data.nfts))
   }, [])
 
-  const categories = useMemo(() => [
-    { key: 'ALL', label: t('all') },
-    { key: 'Crypto', label: t('crypto') },
-    { key: 'Gaming', label: t('gaming') },
-    { key: 'Ticketing', label: t('ticketing') },
-    { key: 'Fashion', label: t('fashion') },
-    { key: 'NFT', label: t('nft') },
-    { key: 'Real Estate', label: t('realEstate') },
-    { key: 'AI', label: t('ai') }
-  ], [t, locale])
+  const categories = ['ALL', 'Crypto', 'Gaming', 'Ticketing', 'Fashion', 'NFT', 'Real Estate', 'AI']
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-yellow-400 text-4xl font-bold mb-4">{t('title')}</h1>
+      <h1 className="text-yellow-400 text-4xl font-bold mb-4">NFT Marketplace</h1>
       <p className="text-gray-400 mb-8">
-        {t('description')}
+        Discover a curated collection of unique digital assets and rare collectibles from top artists.
       </p>
 
       {/* Category Filters */}
       <div className="flex gap-2 mb-8 overflow-x-auto">
         {categories.map((cat) => (
           <button
-            key={cat.key}
-            onClick={() => setSelectedCategory(cat.key)}
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              selectedCategory === cat.key
+              selectedCategory === cat
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
           >
-            {cat.label}
+            {cat}
           </button>
         ))}
       </div>
@@ -62,7 +48,7 @@ export default function MarketplacePage() {
       {/* Trending Section */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-yellow-400 text-2xl font-bold">{t('trending')}</h2>
+          <h2 className="text-yellow-400 text-2xl font-bold">Trending</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trending.map((nft) => (
@@ -99,13 +85,13 @@ export default function MarketplacePage() {
       {/* Live Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-yellow-400 text-2xl font-bold">{t('live')}</h2>
+          <h2 className="text-yellow-400 text-2xl font-bold">Live</h2>
           <div className="flex gap-2">
             <select className="bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2">
               <option>Avalanche</option>
             </select>
             <button className="bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2">
-              {t('viewAll')}
+              View All
             </button>
           </div>
         </div>
