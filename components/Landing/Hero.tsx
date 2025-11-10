@@ -4,7 +4,7 @@ import './landingPage.css'
 
 export default function Hero() {  
   return (
-    <div className="hero-section relative w-[97%] mx-auto min-h-screen flex flex-col items-center justify-center mt-5">
+    <div className="hero-section relative md:w-[97%] w-[100%] mx-auto min-h-screen flex flex-col items-center justify-center mt-5 ">
       {/* background image */}
         <div className="hero-background-image">
           <img src="/assets/star-bg.png" alt="Hero Background" />
@@ -28,38 +28,36 @@ export default function Hero() {
       </div>
       
       <div className="hero-content">
-
-        
-       
+      
         {/* hero content inner */}
         <div className="hero-content-inner">
           <div className="hero-content-inner-top">
-          <div className="text-white text-6xl md:text-7xl">♠</div>
-            {/* title plate */}
-            <div className="title-plate">
-              <h1>Social Exchange</h1>
-            </div>
+          <div className="text-white text-6xl md:text-7xl sm:text-5xl sm:mt-0 sm:pt-0">♠</div>
+            {/* title plate */} {/* small or phone view size font size small */}
+            {/* <div className="title-plate md:text-6xl text-4xl sm:text-5xl"> */}
+              <p className="title-plate md:text-6xl text-3xl sm:text-2xl text-[#FFB600] font-audiowide">Social Exchange</p>
+            {/* </div> */}
 
-            {/* subtitle */}
-            <h2 className="subtitle-gradient">
-              Connect<span style={{ color: '#FFB600' }}>,</span> Create <span style={{ color: '#FFB600' }}>&amp;</span> Trade
-            </h2>
+              {/* subtitle */}
+            <p className="subtitle-gradient md:text-6xl text-[20px] sm:text-[16px]">
+              Connect, Create &amp; Trade
+            </p>
 
             {/* inner line */}
             <div className="inline-combo">
-              <span className="in-the">in the</span>
-              <span className="web3">WEB3 World</span>
+              <span className="in-the text-[20px] md:text-6xl">in the</span>
+              <span className="web3 text-[20px] md:text-6xl">WEB3 World</span>
             </div>
 
             {/* lead paragraph */}
-            <p className="lead-text text-[24px] font-[600]">
-              Create, trade, and connect in a decentralized Web3 social economy. <br/>Earn from your creativity, and exchange value transparently.
+            <p className="font-[400] md:font-[600] md:text-2xl text-[12px] sm:text-[12px] justify-center text-center align-center text-[#BBB8E5]">
+              Create, trade, and connect in a decentralized Web3 social economy. Earn from your creativity, and exchange value transparently.
             </p>
           </div>
-          <div className="hero-content-inner-bottom">
-            <button className="btn-base btn-primary">Explore more</button>
-            <button className="btn-base btn-secondary">Explore feed</button>
-            <button className="btn-base btn-secondary">Chat</button>
+          <div className="flex gap-2 md:gap-6 font-[400] font-exo2">
+            <button className="text-black bg-white rounded-full border border-[#CBD5E14D] px-4 py-2 md:text-2xl text-[12px]">Explore more</button>
+            <button className="text-white bg-transparent border border-[#CBD5E14D] rounded-full px-4 py-2 md:text-2xl text-[12px]">Explore feed</button>
+            <button className="text-white bg-transparent border border-[#CBD5E14D] rounded-full px-4 py-2 md:text-2xl text-[12px]">Chat</button>
           </div>
         </div>
         {/* right side image */}

@@ -74,7 +74,7 @@
 .subtitle-gradient {
   font-family: var(--font-audiowide);
   font-weight: 400;
-  font-size: clamp(28px, 6vw, 64px);
+  /* font-size: clamp(28px, 6vw, 64px); */
   line-height: 100%;
   text-align: center;
   background: linear-gradient(180deg, #FFFFFF 50%, #FFB600 100%);
@@ -94,7 +94,7 @@
 .inline-combo .in-the {
   font-family: var(--font-audiowide);
   font-weight: 400;
-  font-size: clamp(26px, 5.5vw, 64px);
+  /* font-size: clamp(26px, 5.5vw, 64px); */
   line-height: 100%;
   color: #FFFFFF;
 }
@@ -102,14 +102,13 @@
 .inline-combo .web3 {
   font-family: var(--font-audiowide);
   font-weight: 400;
-  font-size: clamp(28px, 6vw, 64px);
+  /* font-size: clamp(28px, 6vw, 64px); */
   line-height: 100%;
   text-align: center;
   background: linear-gradient(180deg, #FFFFFF 43.75%, #FFB600 71.15%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  border: 1px solid rgba(255,255,255,0.15);
   padding: 0 4px; /* subtle framing like spec border */
   border-radius: 8px;
 }
@@ -130,7 +129,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
+  gap: 15px;
 }
 
 .btn-base {
@@ -148,7 +147,7 @@
   font-size: 18px;
   line-height: 28.8px;
   letter-spacing: 0px;
-  white-space: nowrap;
+  /* white-space: nowrap; */
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
@@ -197,6 +196,59 @@
   .inline-combo { gap: 12px; }
 }
 
+/* Mobile-first refinements for small screens */
+@media (max-width: 640px) {
+  .hero-content { padding: 0 16px 96px; }
+
+  .hero-content-inner {
+    gap: 24px;
+    margin: 32px auto;
+    padding: 0 8px;
+  }
+
+  .hero-content-inner-top {
+    gap: 16px;
+  }
+
+  .hero-content-inner-bottom {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .btn-base {
+    height: 44px;
+    font-size: 16px;
+    padding: 10px 14px;
+    flex: 1 1 calc(50% - 12px);
+    min-width: 0; /* allow flex to shrink as needed */
+  }
+
+  .btn-primary {
+    flex-basis: 100%; /* first button spans full width on small screens */
+  }
+
+  /* Bottom-centered social buttons on phones */
+  .social-rail {
+    display: flex;
+    position: absolute;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    top: auto;
+    width: auto;
+    flex-direction: row;
+    gap: 14px;
+    z-index: 3;
+  }
+
+  .social-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* Right-side vertical social media rail */
 .social-rail {
   position: absolute;
@@ -211,7 +263,19 @@
 }
 
 @media (min-width: 1024px) {
-  .social-rail { display: flex; }
+  .social-rail { 
+    display: flex;
+    bottom: 0; /* per spec */
+    /* right: clamp(8px, 2vw, 24px); */
+    width: 50px;
+    /* flex-direction: column; */
+    align-items: center;
+    gap: 19px; /* per spec */
+    z-index: 2; /* above content */
+    justify-content: center;
+    align-items: center;
+  }
+  
 }
 
 .social-btn {
@@ -236,6 +300,28 @@
   width: 18px; /* per spec */
   height: 18px;
   color: #FFFFFF; /* white icons */
+}
+
+/* Ensure mobile override wins in cascade (placed after base/desktop rules) */
+@media (max-width: 640px) {
+  .social-rail {
+    display: flex;
+    position: absolute;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    top: auto;
+    width: auto;
+    flex-direction: row;
+    gap: 14px;
+    z-index: 3;
+  }
+
+  .social-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* Logo marquee animation */
