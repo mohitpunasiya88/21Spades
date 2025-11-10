@@ -117,22 +117,15 @@ export default function LiveAuctions() {
             {duplicatedAuctions.map((auction, index) => (
               <div 
                 key={index} 
-                className="flex-shrink-0 overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer relative mx-auto"
+                className="flex-shrink-0 overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer relative mx-auto w-[220px] h-[330px] sm:w-[240px] sm:h-[360px] md:w-[260px] md:h-[380px] rounded-[25px] bg-white"
                 style={{
-                  width: '260px',
-                  height: '380px',
-                  borderRadius: '25px',
-                  border: '1.1px solid rgba(242, 242, 242, 0.5)',
-                  background: '#FFFFFF'
+                  border: '1.1px solid rgba(242, 242, 242, 0.5)'
                 }}
               >
                 {/* NFT Image Area with Radial Gradient */}
                 <div 
-                  className="relative flex items-center justify-center"
+                  className="relative flex items-center justify-center w-[200px] h-[180px] sm:w-[220px] sm:h-[200px] md:w-[240px] md:h-[216px] rounded-[25px]"
                   style={{
-                    width: '240px',
-                    height: '216px',
-                    borderRadius: '25px',
                     background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
                     position: 'absolute',
                     top: '7px',
@@ -160,7 +153,7 @@ export default function LiveAuctions() {
                 </div>
 
                 {/* Card Details Section - positioned below the image */}
-                <div className="absolute left-0 right-0 px-4 pt-3 pb-4" style={{ top: '223px' }}>
+                <div className="absolute left-0 right-0 px-3 pt-2 pb-3 top-[190px] sm:top-[205px] md:top-[223px]">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <div className="w-4 h-4 flex items-center justify-center">
