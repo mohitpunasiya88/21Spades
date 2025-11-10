@@ -57,9 +57,7 @@ export default function MessagesPage() {
   // Debug: Log chats and user info
   useEffect(() => {
     if (chats.length > 0) {
-      console.log('Current user ID:', currentUserId)
-      console.log('Chats:', chats)
-      console.log('User object:', user)
+      
     }
   }, [chats, currentUserId, user])
 

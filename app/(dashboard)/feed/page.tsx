@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FeedPost from '@/components/Dashboard/FeedPost'
-import { Image as ImageIcon, Laugh, LayoutGrid, Search, ChevronDown } from 'lucide-react'
+import { Image as ImageIcon, Laugh, LayoutGrid, ChevronDown, X } from 'lucide-react'
 import FeedRightSidebar from '@/components/Layout/FeedRightSidebar'
 import { Badge } from 'antd'
 import { useCategoriesStore, useFeedStore, type Post } from '@/lib/store/authStore'
+import EmojiPicker from 'emoji-picker-react'
 
 // Helper function to format time ago
 function formatTimeAgo(dateString: string): string {
@@ -76,12 +77,23 @@ function transformPost(post: Post) {
   }
 }
 
+
 export default function FeedPage() {
-  const { posts, isLoading, getPosts } = useFeedStore()
+  const { posts, isLoading, getPosts, createPost } = useFeedStore()
   const { categories, getCategories } = useCategoriesStore()
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const categoriesRef = useRef<HTMLDivElement>(null)
+  
+  // Post creation state
+  const [postText, setPostText] = useState('')
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
+  const [isPosting, setIsPosting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
+  const textInputRef = useRef<HTMLInputElement>(null)
 
   // Prepare categories list with "All" option at the beginning
   const categoriesList = useMemo(() => {
@@ -118,16 +130,131 @@ export default function FeedPage() {
     })
   }, [selectedCategory, categories, getPosts])
 
-  // Close categories dropdown on outside click
+  // Close categories dropdown and emoji picker on outside click
   useEffect(() => {
+    if (!isCategoriesOpen && !isEmojiPickerOpen) return
+
     const onDocClick = (e: MouseEvent) => {
-      if (categoriesRef.current && !categoriesRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement
+      
+      // Close categories dropdown
+      if (isCategoriesOpen && categoriesRef.current && !categoriesRef.current.contains(target)) {
         setIsCategoriesOpen(false)
       }
+      
+      // Close emoji picker - check if click is outside the emoji picker container
+      if (isEmojiPickerOpen && emojiPickerRef.current) {
+        const isClickInsidePicker = emojiPickerRef.current.contains(target)
+        // Check if click is on the emoji button (to allow toggle)
+        const emojiButton = emojiPickerRef.current.querySelector('button')
+        const isClickOnButton = emojiButton && emojiButton.contains(target)
+        
+        // Close if click is outside the picker container, but allow button clicks to toggle
+        if (!isClickInsidePicker || (isClickOnButton && isEmojiPickerOpen)) {
+          // Don't close if clicking the button (let the onClick handler toggle it)
+          if (!isClickOnButton) {
+            setIsEmojiPickerOpen(false)
+          }
+        }
+      }
     }
+    
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
-  }, [])
+  }, [isCategoriesOpen, isEmojiPickerOpen])
+
+  // Handle image selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files)
+      setSelectedImages(prev => [...prev, ...newFiles])
+      
+      // Create previews
+      newFiles.forEach(file => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          if (reader.result) {
+            setImagePreviews(prev => [...prev, reader.result as string])
+          }
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+    // Reset input to allow selecting same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  // Remove image
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Handle emoji selection
+  const handleEmojiSelect = (emoji: string) => {
+    if (textInputRef.current) {
+      const input = textInputRef.current
+      const start = input.selectionStart || 0
+      const end = input.selectionEnd || 0
+      const newText = postText.substring(0, start) + emoji + postText.substring(end)
+      setPostText(newText)
+      // Set cursor position after emoji
+      setTimeout(() => {
+        input.focus()
+        input.setSelectionRange(start + emoji.length, start + emoji.length)
+      }, 0)
+    } else {
+      setPostText(prev => prev + emoji)
+    }
+  }
+
+  // Handle post submission
+  const handlePostSubmit = async () => {
+    // Validate: must have text or image
+    if (!postText.trim() && imagePreviews.length === 0) {
+      alert('Please add text or an image to post')
+      return
+    }
+
+    setIsPosting(true)
+    try {
+      // Get category ID if a category is selected
+      const categoryId = selectedCategory === 'All' 
+        ? undefined 
+        : categories.find(cat => cat.name === selectedCategory)?._id
+
+      // Use first image preview URL if available (for now using data URL)
+      // In production, you'd upload to S3 first and get the URL
+      const postUrl = imagePreviews.length > 0 ? imagePreviews[0] : undefined
+
+      await createPost({
+        text: postText.trim() || undefined,
+        postUrl: postUrl,
+        categoryId: categoryId,
+      })
+
+      // Reset form after successful post
+      setPostText('')
+      setSelectedImages([])
+      setImagePreviews([])
+      setSelectedCategory('All')
+      
+      // Refresh posts to show the new post
+      await getPosts({ 
+        categoryId: categoryId,
+        page: 1,
+        limit: 20
+      })
+    } catch (error: any) {
+      console.error('Error creating post:', error)
+      alert(error?.response?.data?.message || error?.message || 'Failed to create post. Please try again.')
+    } finally {
+      setIsPosting(false)
+    }
+  }
 
   return (
     <div className="p-3 sm:p-4 md:p-6">
@@ -152,25 +279,76 @@ export default function FeedPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 bg-[#FFFFFF08] rounded-2xl sm:rounded-3xl px-3 sm:px-4 py-3 sm:py-4 w-full">
                 <input
+                  ref={textInputRef}
                   type="text"
                   placeholder="What's New?"
+                  value={postText}
+                  onChange={(e) => setPostText(e.target.value)}
                   className="bg-transparent border-none outline-none text-white placeholder-[#FFFFFF4D] flex-1 text-sm font-exo2 w-full"
                 />
               </div>
+              
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-600">
+                      <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600 rounded-full p-1 transition-colors"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {/* Helper row */}
               <div className="p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 text-[11px] sm:text-[13px]">
                 <div className="flex items-center flex-wrap gap-2 sm:gap-4 md:gap-6">
-                  <span className="flex items-center gap-1 text-blue-400">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1 text-blue-400 cursor-pointer hover:text-blue-300 transition-colors"
+                  >
                     <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span className="text-[#FFFFFF4D] hidden xs:inline">Image/Videos</span>
-                    <span className="text-[#FFFFFF4D] xs:hidden">Media</span>
-                  </span>
+                    <span className="text-[#FFFFFF4D] xs:hidden">Photos/Videos</span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
                   {/* dot in center */}
                   <div className="w-1 h-1 rounded-full bg-[#FFFFFF4D]" />
-                  <span className="flex items-center gap-1 text-yellow-400">
-                    <Laugh className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="text-[#FFFFFF4D]">Emoji</span>
-                  </span>
+                  <div className="relative" ref={emojiPickerRef}>
+                    <button
+                      onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+                      className="flex items-center gap-1 text-yellow-400 hover:text-yellow-300 transition-colors"
+                    >
+                      <Laugh className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="text-[#FFFFFF4D]">Emoji</span>
+                    </button>
+                    
+                    {/* Emoji Picker Component */}
+                    {isEmojiPickerOpen && (
+                      <div className="absolute top-full left-0 mt-2 z-50">
+                        <EmojiPicker
+                          onEmojiClick={(emojiData) => {
+                            handleEmojiSelect(emojiData.emoji)
+                            setIsEmojiPickerOpen(false)
+                          }}
+                          width={360}
+                          height={400}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <div className="w-1 h-1 rounded-full bg-[#FFFFFF4D]" />
                   {/* Categories Dropdown */}
                   <div className="relative" ref={categoriesRef}>
@@ -217,7 +395,13 @@ export default function FeedPage() {
                     )}
                   </div>
                 </div>
-                <button className="bg-white text-[#020019] text-sm sm:text-base md:text-[18px] font-[600] px-3 sm:px-4 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto">Post</button>
+                <button 
+                  onClick={handlePostSubmit}
+                  disabled={isPosting || (!postText.trim() && imagePreviews.length === 0)}
+                  className="bg-white text-[#020019] text-sm sm:text-base md:text-[18px] font-[600] px-3 sm:px-4 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  {isPosting ? 'Posting...' : 'Post'}
+                </button>
               </div>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
 import { Eye, XIcon } from 'lucide-react'
+import { message } from 'antd'
 import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
 
 export default function LoginForm() {
@@ -38,11 +39,37 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Reset errors
+    setErrors({})
+    
+    // Validation checks
+    if (!formData.username || formData.username.trim() === '') {
+      setErrors({ username: 'Please enter your username' })
+      message.error('Please enter your username')
+      return
+    }
+
+    if (!formData.password || formData.password.trim() === '') {
+      setErrors({ password: 'Please enter your password' })
+      message.error('Please enter your password')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setErrors({ password: 'Password must be at least 6 characters long' })
+      message.error('Password must be at least 6 characters long')
+      return
+    }
+
     try {
       await login(formData)
+      message.success('Login successful! Redirecting...')
       // Redirect will happen via useEffect when isAuthenticated becomes true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Login failed. Please check your credentials and try again.'
+      message.error(errorMessage)
     }
   }
 
@@ -109,10 +136,13 @@ export default function LoginForm() {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Enter user name"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.username ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                 </div>
+                {errors.username && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.username}</p>}
               </div>
 
 
@@ -128,7 +158,9 @@ export default function LoginForm() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                   <button
@@ -139,6 +171,7 @@ export default function LoginForm() {
                     {showPassword ? <Eye size={16} /> : <img src="/assets/Eye Closed.png" alt="Eye closed" className="w-4 h-4" />}
                   </button>
                 </div>
+                {errors.password && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.password}</p>}
               </div>
               <div className="flex mt-4 items-center justify-between mb-6 sm:mb-8 text-xs sm:text-sm">
                 <label className="flex items-center gap-2 cursor-pointer text-white">

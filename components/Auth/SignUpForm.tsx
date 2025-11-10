@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { SignUpData } from '@/types/auth'
 import { Eye, ChevronDown } from 'lucide-react'
+import { message } from 'antd'
 import AuthLeftPanel from './AuthLeftPanel'
 
 // Phone validation rules for each country
@@ -158,9 +159,46 @@ export default function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validate password match
-    if (formData.password !== formData.confirmPassword) {
-      setErrors({ confirmPassword: 'Passwords do not match' })
+    // Reset errors
+    setErrors({})
+    setPhoneError('')
+    
+    // Validation checks
+    if (!formData.name || formData.name.trim() === '') {
+      setErrors({ name: 'Please enter your name' })
+      message.error('Please enter your name')
+      return
+    }
+
+    if (!formData.username || formData.username.trim() === '') {
+      setErrors({ username: 'Please enter a username' })
+      message.error('Please enter a username')
+      return
+    }
+
+    if (formData.username.length < 3) {
+      setErrors({ username: 'Username must be at least 3 characters long' })
+      message.error('Username must be at least 3 characters long')
+      return
+    }
+
+    if (!formData.email || formData.email.trim() === '') {
+      setErrors({ email: 'Please enter your email' })
+      message.error('Please enter your email')
+      return
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setErrors({ email: 'Please enter a valid email address' })
+      message.error('Please enter a valid email address')
+      return
+    }
+
+    if (!formData.phone || formData.phone.trim() === '') {
+      setPhoneError('Please enter your phone number')
+      message.error('Please enter your phone number')
       return
     }
 
@@ -169,8 +207,28 @@ export default function SignUpForm() {
       const validation = validatePhoneNumber(formData.phone, countryCode)
       if (!validation.valid) {
         setPhoneError(validation.message)
+        message.error(validation.message)
         return
       }
+    }
+
+    if (!formData.password || formData.password.trim() === '') {
+      setErrors({ password: 'Please enter a password' })
+      message.error('Please enter a password')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setErrors({ password: 'Password must be at least 6 characters long' })
+      message.error('Password must be at least 6 characters long')
+      return
+    }
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: 'Passwords do not match' })
+      message.error('Passwords do not match')
+      return
     }
 
     try {
@@ -180,24 +238,23 @@ export default function SignUpForm() {
         countryCode,
       }
       await signup(signupData)
+      message.success('Account created successfully! Redirecting to login...')
+      setTimeout(() => {
       router.push('/login')
+      }, 1000)
     } catch (error: any) {
       console.error('Signup error:', error)
       // Display error message to user
-      if (error?.response?.data?.message || error?.message) {
-        const errorMessage = error?.response?.data?.message || error?.message
-        setErrors({ 
-          ...errors, 
-          email: errorMessage.includes('email') ? errorMessage : undefined,
-          username: errorMessage.includes('username') ? errorMessage : undefined,
-          phone: errorMessage.includes('phone') ? errorMessage : undefined,
-        })
-        // Show a general error if specific field error not set
-        if (!errorMessage.includes('email') && !errorMessage.includes('username') && !errorMessage.includes('phone')) {
-          alert(errorMessage)
-        }
-      } else {
-        alert('Signup failed. Please try again.')
+      const errorMessage = error?.response?.data?.message || error?.message || 'Signup failed. Please try again.'
+      message.error(errorMessage)
+      
+      // Set field-specific errors
+      if (errorMessage.includes('email')) {
+        setErrors({ ...errors, email: errorMessage })
+      } else if (errorMessage.includes('username')) {
+        setErrors({ ...errors, username: errorMessage })
+      } else if (errorMessage.includes('phone')) {
+        setPhoneError(errorMessage)
       }
     }
   }
@@ -240,10 +297,13 @@ export default function SignUpForm() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter name"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                 </div>
+                {errors.name && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.name}</p>}
               </div>
 
               {/* Username */}
@@ -258,10 +318,13 @@ export default function SignUpForm() {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Enter user name"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.username ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                 </div>
+                {errors.username && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.username}</p>}
               </div>
               {/* Email */}
               <div>
@@ -275,10 +338,13 @@ export default function SignUpForm() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter email"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                 </div>
+                {errors.email && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.email}</p>}
               </div>
 
               {/* Phone */}
@@ -374,12 +440,12 @@ export default function SignUpForm() {
                   {/* Phone Input */}
                   <div className="relative flex-1">
                     <img src="/assets/Phone.png" alt="phone" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10" />
-                    <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
+                  <div className="absolute left-9 md:left-10 top-1/2 -translate-y-1/2 h-5 md:h-6 w-px bg-gray-600"></div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                       onBlur={() => {
                         // Validate on blur
                         if (formData.phone) {
@@ -389,34 +455,16 @@ export default function SignUpForm() {
                           }
                         }
                       }}
-                      placeholder="Enter phone number"
+                    placeholder="Enter phone number"
                       className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base bg-transparent ${
                         phoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
                       }`}
-                      required
-                    />
-                  </div>
+                    required
+                  />
                 </div>
-                
-                {/* Display full phone number and validation info */}
-                {formData.phone && (
-                  <div className="space-y-1 mt-2">
-                    <p className="text-gray-400 text-xs font-exo2">
-                      Full number: {countryCode} {formData.phone}
-                    </p>
-                    {phoneValidationRules[countryCode as keyof typeof phoneValidationRules] && (
-                      <p className="text-gray-500 text-xs font-exo2">
-                        Required: {phoneValidationRules[countryCode as keyof typeof phoneValidationRules].min}-{phoneValidationRules[countryCode as keyof typeof phoneValidationRules].max} digits
-                      </p>
-                    )}
-                  </div>
-                )}
-                
-                {phoneError && (
-                  <p className="text-red-500 text-sm sm:text-base mt-1 font-exo2">{phoneError}</p>
-                )}
-                {errors.phone && (
-                  <p className="text-red-500 text-sm sm:text-base mt-1 font-exo2">{errors.phone}</p>
+                </div>
+                {(phoneError || errors.phone) && (
+                  <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{phoneError || errors.phone}</p>
                 )}
               </div>
 
@@ -432,7 +480,9 @@ export default function SignUpForm() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                   <button
@@ -443,6 +493,7 @@ export default function SignUpForm() {
                     {showPassword ? <Eye size={16} />:  <img src="/assets/Eye Closed.png" alt="Eye closed" className="w-4 h-4" />}
                   </button>
                 </div>
+                {errors.password && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.password}</p>}
               </div>
 
               {/* Confirm Password */}
@@ -457,7 +508,9 @@ export default function SignUpForm() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm Password"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                   <button
@@ -469,7 +522,7 @@ export default function SignUpForm() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-red-500 text-sm sm:text-base mt-0.5">{errors.confirmPassword}</p>
+                  <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.confirmPassword}</p>
                 )}
               </div>
 
