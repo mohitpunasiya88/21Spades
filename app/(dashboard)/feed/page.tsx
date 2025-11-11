@@ -260,7 +260,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="p-3 mt-10 sm:p-4 md:p-6 relative">
+    <div className="p-3 sm:p-4 md:p-6 relative">
       {/* Mobile Floating Button for Right Sidebar */}
       <button
         onClick={() => setIsMobileRightSidebarOpen(true)}
