@@ -138,6 +138,27 @@ interface CategoriesState {
   getCategories: () => Promise<void>
 }
 
+interface MarketCap {
+  id: string,
+  symbol: string,
+  name: string,
+  marketCap: number,
+  currentPrice: number,
+  priceChange24h: number,
+  priceChangePercentage24h: number,
+  sparkline: number[],
+}
+interface MarketDataState {
+  isLoading: boolean
+  value: number,
+  coinAmount: number,
+  coinCurrency: string,
+  coinSymbol: string,
+  marketCap:MarketCap | null,
+  getFeedGreedIndex: () => Promise<void>
+  getCoinPrice: (coin: string) => Promise<void>
+  getMarketCap: (coin: string) => Promise<void>
+}
 
 
 export const useAuthStore = create<AuthState>()(
@@ -371,8 +392,7 @@ export const useAuthStore = create<AuthState>()(
 
 
 export const useFeedStore = create<FeedState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       posts: [],
       isLoading: false,
       pagination: null,
@@ -629,16 +649,11 @@ export const useFeedStore = create<FeedState>()(
           throw error
         }
       },
-    }),
-    {
-      name: 'feed-storage',
-    }
-  )
+    })
 )
 
 export const useCategoriesStore = create<CategoriesState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       categories: [],
       isLoading: false,
 
@@ -659,10 +674,56 @@ export const useCategoriesStore = create<CategoriesState>()(
           throw error
         }
       },
-    }),
-    {
-      name: 'categories-storage',
-    }
-  )
+    })
 )
 
+
+export const useMarketDataStore = create<MarketDataState>()(
+  (set, get) => ({
+      isLoading: false,
+      value: 0,
+      coinAmount: 0,
+      coinCurrency: '',
+      coinSymbol: '',
+      marketCap: null,
+      getFeedGreedIndex: async () => {
+        try {
+          const response = await apiCaller('GET', authRoutes.getFeedGreedIndex )
+          if (response.success) {
+            set({ 
+              value: response.data.value,
+            })
+          }
+        }
+        catch (error) {
+          throw error
+        }
+      },
+      getCoinPrice: async (coin: string) => {
+        try {
+          const response = await apiCaller('GET', `${authRoutes.getCoinPrice}/${coin}`)
+          if (response.success) {
+            set({ 
+              coinAmount: response.data.amount,
+              coinCurrency: response.data.currency, 
+              coinSymbol: response.data.symbol
+            })
+          }
+        }
+        catch (error) {
+          throw error
+        }
+      },
+      getMarketCap: async (coin: string) => {
+        try {
+          const response = await apiCaller('GET', `${authRoutes.getMarketCap}/${coin}`)
+          if (response.success) {
+            set({ marketCap: response.data as MarketCap || null })
+          }
+        }
+        catch (error) {
+          throw error
+        }
+      },
+    })
+)

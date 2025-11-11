@@ -35,7 +35,9 @@ const authRoutes = {
     deleteMessage: 'chat/messages', // Use with messageId: `chat/messages/${messageId}`
     deleteChat: 'chat', // Use with chatId: `chat/${chatId}`
     sendMessage: 'chat', // Use with chatId: `chat/${chatId}/messages`
-    
+    getFeedGreedIndex: 'market-data/fear-greed',
+    getCoinPrice: 'market-data/coin-price',
+    getMarketCap: 'market-data/coin-data',
 }
 
 export default authRoutes;
