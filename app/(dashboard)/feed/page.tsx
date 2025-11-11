@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FeedPost from '@/components/Dashboard/FeedPost'
-import { Image as ImageIcon, Laugh, LayoutGrid, ChevronDown, X } from 'lucide-react'
+import { Image as ImageIcon, Laugh, LayoutGrid, ChevronDown, X, SidebarIcon } from 'lucide-react'
 import FeedRightSidebar from '@/components/Layout/FeedRightSidebar'
-import { Badge } from 'antd'
+import { Badge, Drawer } from 'antd'
 import { useCategoriesStore, useFeedStore, type Post } from '@/lib/store/authStore'
 import EmojiPicker from 'emoji-picker-react'
 
@@ -84,6 +84,9 @@ export default function FeedPage() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const categoriesRef = useRef<HTMLDivElement>(null)
+  
+  // Mobile right sidebar state
+  const [isMobileRightSidebarOpen, setIsMobileRightSidebarOpen] = useState(false)
   
   // Post creation state
   const [postText, setPostText] = useState('')
@@ -257,7 +260,45 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="p-3 sm:p-4 md:p-6">
+    <div className="p-3 mt-10 sm:p-4 md:p-6 relative">
+      {/* Mobile Floating Button for Right Sidebar */}
+      <button
+        onClick={() => setIsMobileRightSidebarOpen(true)}
+        className="lg:hidden fixed top-20 right-6 text-white position-fixed p-2 rounded-full  transition-all duration-300  border-2 border-purple-400/30 fixed"
+        aria-label="Open sidebar"
+      >
+        {/* <SidebarIcon className="w-6 h-6" /> */}
+        Side Bar
+      </button>
+
+      {/* Mobile Right Sidebar Drawer */}
+      <Drawer
+        title=""
+        placement="right"
+        onClose={() => setIsMobileRightSidebarOpen(false)}
+        open={isMobileRightSidebarOpen}
+        width={320}
+        styles={{
+          header: {
+            background: '#020019',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+            color: 'white',
+            display: 'none',
+            top: '64px',
+          },
+          body: {
+            background: '#020019',
+            padding: 0,
+          },
+          footer: {
+            display: 'none',
+          },
+          
+        }}
+      >
+        <FeedRightSidebar />
+      </Drawer>
+
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 md:gap-6 font-exo2">
         {/* Left column */}
         <div className="p-2 sm:p-3 md:p-4">
@@ -490,7 +531,8 @@ export default function FeedPage() {
         </div>
 
         {/* Right column */}
-        <div className="hidden lg:block">
+        {/* in phone it will be show small button on top right on click it will open sidebar */}
+        <div className="hidden lg:block lg:w-[360px]">
           <FeedRightSidebar />
         </div>
       </div>
