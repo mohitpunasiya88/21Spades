@@ -3,6 +3,7 @@
 import { create } from 'zustand'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/app/routes/route'
+import type { Socket } from 'socket.io-client'
 
 export interface Chat {
   _id: string
@@ -53,6 +54,8 @@ interface ChatState {
   isLoading: boolean
   isSendingMessage: boolean
   isSearchingUsers: boolean
+  typingUsers: Record<string, string[]> // chatId -> userIds who are typing
+  socket: Socket | null
 
   // Chat operations
   getChats: () => Promise<void>
@@ -66,9 +69,20 @@ interface ChatState {
   editMessage: (messageId: string, message: string) => Promise<void>
   deleteMessage: (messageId: string) => Promise<void>
 
+  // WebSocket operations
+  setSocket: (socket: Socket | null) => void
+  initializeSocketListeners: () => void
+  sendTypingIndicator: (chatId: string, isTyping: boolean) => void
+  markAsRead: (chatId: string) => void
+
   // Utility
   clearSearchedUsers: () => void
   setSelectedChat: (chat: Chat | null) => void
+  addMessage: (message: Message) => void
+  updateMessage: (message: Message) => void
+  removeMessage: (messageId: string, chatId: string) => void
+  updateChat: (chat: Chat) => void
+  removeChat: (chatId: string) => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -79,6 +93,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading: false,
   isSendingMessage: false,
   isSearchingUsers: false,
+  typingUsers: {},
+  socket: null,
 
       getChats: async () => {
         set({ isLoading: true })
@@ -180,23 +196,81 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   searchUsers: async (query: string) => {
     if (!query.trim()) {
+      console.log('🔍 [API] Empty query, clearing results')
       set({ searchedUsers: [] })
       return
     }
+    
+    console.log('🔍 [API] Starting user search with query:', query)
+    console.log('🔍 [API] Full API endpoint:', `${authRoutes.searchUsers}?q=${encodeURIComponent(query.trim())}`)
     set({ isSearchingUsers: true })
+    
     try {
-      const response = await apiCaller('GET', `${authRoutes.searchUsers}?query=${encodeURIComponent(query)}`)
-      console.log('searchUsers response', response)
-      if (response.success) {
-        set({ 
-          searchedUsers: response.data.users || [],
-          isSearchingUsers: false 
+      // Try 'q' parameter first
+      const url = `${authRoutes.searchUsers}?q=${encodeURIComponent(query.trim())}`
+      console.log('🔍 [API] Making GET request to:', url)
+      console.log('🔍 [API] Base URL from interceptor: http://localhost:8080/api/')
+      console.log('🔍 [API] Full URL will be: http://localhost:8080/api/chat/search-users?q=' + encodeURIComponent(query.trim()))
+      
+      let response
+      try {
+        console.log('🔍 [API] Calling apiCaller...')
+        response = await apiCaller('GET', url)
+        console.log('🔍 [API] ✅ Search response received (q param):', response)
+        console.log('🔍 [API] Response type:', typeof response)
+        console.log('🔍 [API] Response keys:', response ? Object.keys(response) : 'null')
+      } catch (error: any) {
+        console.log('⚠️ [API] Search with q failed, trying query parameter')
+        console.error('🔍 [API] Error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          url: error.config?.url
         })
+        
+        // If 'q' fails, try 'query' parameter
+        const url2 = `${authRoutes.searchUsers}?query=${encodeURIComponent(query.trim())}`
+        console.log('🔍 [API] Trying alternative URL:', url2)
+        console.log('🔍 [API] Full URL will be: http://localhost:8080/api/chat/search-users?query=' + encodeURIComponent(query.trim()))
+        response = await apiCaller('GET', url2)
+        console.log('🔍 [API] ✅ Search response received (query param):', response)
       }
-    } catch (error) {
-      console.error('Error searching users:', error)
-      set({ isSearchingUsers: false })
-      throw error
+      
+      // Handle different response formats
+      let users = []
+      if (response) {
+        console.log('🔍 [API] Processing response...')
+        if (response.success) {
+          users = response.data?.users || response.data?.data?.users || response.data || []
+          console.log('🔍 [API] Users from response.success path:', users)
+        } else if (Array.isArray(response.data)) {
+          users = response.data
+          console.log('🔍 [API] Users from response.data array:', users)
+        } else if (Array.isArray(response)) {
+          users = response
+          console.log('🔍 [API] Users from direct array response:', users)
+        } else if (response.users) {
+          users = response.users
+          console.log('🔍 [API] Users from response.users:', users)
+        } else {
+          console.log('🔍 [API] ⚠️ Unknown response format:', response)
+        }
+      } else {
+        console.log('🔍 [API] ⚠️ No response received')
+      }
+      
+      console.log('✅ [API] Found users:', users.length, users)
+      set({ 
+        searchedUsers: Array.isArray(users) ? users : [],
+        isSearchingUsers: false 
+      })
+    } catch (error: any) {
+      console.error('❌ [API] Error searching users:', error)
+      console.error('❌ [API] Error response:', error.response?.data)
+      console.error('❌ [API] Error status:', error.response?.status)
+      console.error('❌ [API] Error message:', error.message)
+      console.error('❌ [API] Full error object:', error)
+      set({ isSearchingUsers: false, searchedUsers: [] })
     }
   },
 
@@ -393,25 +467,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  deleteChat: async (chatId: string) => {
-    try {
-      const response = await apiCaller('DELETE', `${authRoutes.deleteChat}/${chatId}`)
-      console.log('deleteChat response', response)
-      if (response.success) {
-        // Remove chat from local state
-        set(state => ({
-          chats: state.chats.filter(chat => chat._id !== chatId),
-          selectedChat: state.selectedChat?._id === chatId ? null : state.selectedChat,
-          messages: Object.fromEntries(
-            Object.entries(state.messages).filter(([id]) => id !== chatId)
-          )
-        }))
-      }
-    } catch (error) {
-      console.error('Error deleting chat:', error)
-      throw error
-    }
-  },
 
   clearSearchedUsers: () => {
     set({ searchedUsers: [] })
@@ -422,7 +477,271 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (chat) {
       // Load messages for selected chat
       get().getMessages(chat._id)
+      // Mark messages as read
+      get().markAsRead(chat._id)
     }
+  },
+
+  // WebSocket methods
+  setSocket: (socket: Socket | null) => {
+    set({ socket })
+    if (socket) {
+      get().initializeSocketListeners()
+    }
+  },
+
+  initializeSocketListeners: () => {
+    const socket = get().socket
+    if (!socket) return
+
+    // Remove existing listeners to avoid duplicates
+    socket.removeAllListeners('new_message')
+    socket.removeAllListeners('message_sent')
+    socket.removeAllListeners('message_edited')
+    socket.removeAllListeners('message_deleted')
+    socket.removeAllListeners('chat_updated')
+    socket.removeAllListeners('chat_deleted')
+    socket.removeAllListeners('user_typing')
+    socket.removeAllListeners('error')
+
+    // Listen for new messages (when someone else sends you a message)
+    socket.on('new_message', (message: any) => {
+      console.log('🔵 [REAL-TIME] Received new_message event:', message)
+      const transformedMessage: Message = {
+        _id: message._id,
+        chatId: message.chat || message.chatId || message.chatId,
+        senderId: message.sender?._id || message.senderId || message.sender || message.senderId,
+        message: message.text || message.message || '',
+        images: message.imageUrl ? [message.imageUrl] : (message.images || []),
+        timestamp: message.createdAt || message.timestamp || new Date().toISOString(),
+        isRead: message.isRead !== undefined ? message.isRead : false,
+        editedAt: message.editedAt,
+        createdAt: message.createdAt || message.timestamp || new Date().toISOString(),
+      }
+      console.log('🔵 [REAL-TIME] Adding message to UI:', transformedMessage)
+      get().addMessage(transformedMessage)
+      
+      // Update chat list to show latest message
+      get().getChats()
+    })
+
+    // Listen for message_sent (confirmation when you send a message)
+    socket.on('message_sent', (message: any) => {
+      console.log('✅ [REAL-TIME] Received message_sent event (your message):', message)
+      const transformedMessage: Message = {
+        _id: message._id,
+        chatId: message.chat || message.chatId || message.chatId,
+        senderId: message.sender?._id || message.senderId || message.sender || message.senderId,
+        message: message.text || message.message || '',
+        images: message.imageUrl ? [message.imageUrl] : (message.images || []),
+        timestamp: message.createdAt || message.timestamp || new Date().toISOString(),
+        isRead: message.isRead !== undefined ? message.isRead : false,
+        editedAt: message.editedAt,
+        createdAt: message.createdAt || message.timestamp || new Date().toISOString(),
+      }
+      console.log('✅ [REAL-TIME] Adding your sent message to UI:', transformedMessage)
+      get().addMessage(transformedMessage)
+    })
+
+    // Listen for message edits
+    socket.on('message_edited', (message: any) => {
+      const transformedMessage: Message = {
+        _id: message._id,
+        chatId: message.chat || message.chatId,
+        senderId: message.sender?._id || message.senderId || message.sender,
+        message: message.text || message.message || '',
+        images: message.imageUrl ? [message.imageUrl] : (message.images || []),
+        timestamp: message.createdAt || message.timestamp,
+        isRead: message.isRead !== undefined ? message.isRead : false,
+        editedAt: message.editedAt || new Date().toISOString(),
+        createdAt: message.createdAt || message.timestamp,
+      }
+      get().updateMessage(transformedMessage)
+    })
+
+    // Listen for message deletions
+    socket.on('message_deleted', (data: any) => {
+      const messageId = data.messageId || data._id
+      const chatId = data.chat || data.chatId
+      if (messageId && chatId) {
+        get().removeMessage(messageId, chatId)
+      }
+    })
+
+    // Listen for chat updates
+    socket.on('chat_updated', (chat: any) => {
+      const participants = chat.otherUser 
+        ? [chat.otherUser] 
+        : (chat.participants || [])
+      
+      const lastMessage = chat.lastMessage ? {
+        _id: chat.lastMessage._id || '',
+        message: chat.lastMessage.message || chat.lastMessage.text || '',
+        senderId: chat.lastMessage.senderId || chat.lastMessage.sender?._id || '',
+        timestamp: chat.lastMessage.timestamp || chat.lastMessage.createdAt || chat.lastMessageAt || '',
+        isRead: chat.lastMessage.isRead !== undefined ? chat.lastMessage.isRead : true,
+      } : undefined
+
+      const transformedChat: Chat = {
+        _id: chat._id,
+        participants,
+        lastMessage,
+        unreadCount: chat.unreadCount || 0,
+        updatedAt: chat.updatedAt || chat.lastMessageAt || chat.createdAt,
+        createdAt: chat.createdAt,
+      }
+      get().updateChat(transformedChat)
+    })
+
+    // Listen for chat deletions
+    socket.on('chat_deleted', (data: any) => {
+      const chatId = data.chatId || data._id
+      if (chatId) {
+        get().removeChat(chatId)
+      }
+    })
+
+    // Listen for typing indicators (real-time typing status)
+    socket.on('user_typing', (data: { chatId: string; userId: string; isTyping: boolean }) => {
+      console.log('⌨️ [REAL-TIME] User typing event:', data)
+      const { chatId, userId, isTyping } = data
+      const typingUsers = { ...get().typingUsers }
+      
+      if (!typingUsers[chatId]) {
+        typingUsers[chatId] = []
+      }
+      
+      if (isTyping) {
+        if (!typingUsers[chatId].includes(userId)) {
+          typingUsers[chatId] = [...typingUsers[chatId], userId]
+        }
+        console.log('⌨️ [REAL-TIME] User is typing in chat:', chatId)
+      } else {
+        typingUsers[chatId] = typingUsers[chatId].filter(id => id !== userId)
+        console.log('⌨️ [REAL-TIME] User stopped typing in chat:', chatId)
+      }
+      
+      set({ typingUsers })
+    })
+
+    // Listen for errors
+    socket.on('error', (error: any) => {
+      console.error('Socket error:', error)
+    })
+  },
+
+  sendTypingIndicator: (chatId: string, isTyping: boolean) => {
+    const socket = get().socket
+    if (socket && socket.connected) {
+      socket.emit('typing', { chatId, isTyping })
+    }
+  },
+
+  markAsRead: (chatId: string) => {
+    const socket = get().socket
+    if (socket && socket.connected) {
+      socket.emit('mark_read', { chatId })
+    }
+  },
+
+  // Helper methods for WebSocket updates - Add message in real-time
+  addMessage: (message: Message) => {
+    console.log('📨 [REAL-TIME] addMessage called with:', message)
+    const messages = { ...get().messages }
+    if (!messages[message.chatId]) {
+      messages[message.chatId] = []
+    }
+    // Check if message already exists (avoid duplicates)
+    const messageExists = messages[message.chatId].some(msg => msg._id === message._id)
+    if (!messageExists) {
+      // Sort messages by timestamp to maintain order
+      const updatedMessages = [...messages[message.chatId], message].sort((a, b) => {
+        const timeA = new Date(a.timestamp).getTime()
+        const timeB = new Date(b.timestamp).getTime()
+        return timeA - timeB
+      })
+      messages[message.chatId] = updatedMessages
+      set({ messages })
+      console.log('✅ [REAL-TIME] Message added to UI! Total messages for chat:', updatedMessages.length)
+      
+      // Update chat's lastMessage in real-time
+      set(state => ({
+        chats: state.chats.map(chat => 
+          chat._id === message.chatId 
+            ? { 
+                ...chat, 
+                lastMessage: {
+                  _id: message._id,
+                  message: message.message,
+                  senderId: message.senderId,
+                  timestamp: message.timestamp,
+                  isRead: message.isRead,
+                },
+                updatedAt: message.timestamp,
+              }
+            : chat
+        )
+      }))
+    } else {
+      console.log('⚠️ [REAL-TIME] Message already exists, skipping duplicate')
+    }
+  },
+
+  updateMessage: (message: Message) => {
+    const messages = { ...get().messages }
+    Object.keys(messages).forEach(chatId => {
+      messages[chatId] = messages[chatId].map(msg =>
+        msg._id === message._id ? message : msg
+      )
+    })
+    set({ messages })
+    
+    // Update lastMessage in chats if this is the last message
+    set(state => ({
+      chats: state.chats.map(chat => {
+        if (chat.lastMessage?._id === message._id) {
+          return {
+            ...chat,
+            lastMessage: {
+              ...chat.lastMessage,
+              message: message.message,
+            }
+          }
+        }
+        return chat
+      })
+    }))
+  },
+
+  removeMessage: (messageId: string, chatId: string) => {
+    const messages = { ...get().messages }
+    if (messages[chatId]) {
+      messages[chatId] = messages[chatId].filter(msg => msg._id !== messageId)
+      set({ messages })
+    }
+    // Refresh chats to update lastMessage
+    get().getChats()
+  },
+
+  updateChat: (chat: Chat) => {
+    const chats = get().chats
+    const existingChatIndex = chats.findIndex(c => c._id === chat._id)
+    if (existingChatIndex >= 0) {
+      chats[existingChatIndex] = chat
+    } else {
+      chats.unshift(chat)
+    }
+    set({ chats })
+  },
+
+  removeChat: (chatId: string) => {
+    set(state => ({
+      chats: state.chats.filter(chat => chat._id !== chatId),
+      selectedChat: state.selectedChat?._id === chatId ? null : state.selectedChat,
+      messages: Object.fromEntries(
+        Object.entries(state.messages).filter(([id]) => id !== chatId)
+      )
+    }))
   },
 }))
 

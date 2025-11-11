@@ -13,13 +13,23 @@ apiClient.interceptors.request.use(
     (config:any) => {
         const requiresAuth = config.requiresAuth ?? true;
 
+        // Log API request for debugging
+        const fullUrl = `${config.baseURL || ''}${config.url || ''}`
+        console.log('🌐 [NETWORK] API Request:', {
+            method: config.method?.toUpperCase(),
+            url: fullUrl,
+            requiresAuth,
+            hasToken: !!localStorage.getItem('token')
+        })
+
         // Add Authorization header if required
         if (requiresAuth) {
             const token = localStorage.getItem('token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
+                console.log('🌐 [NETWORK] Authorization header added')
             } else {
-                console.log("No token found, proceeding without authorization header.");
+                console.log("🌐 [NETWORK] No token found, proceeding without authorization header.");
             }
         }
 
@@ -27,20 +37,35 @@ apiClient.interceptors.request.use(
             config.headers['Content-Type'] = config.contentType;
         }
 
-        // console.log(config)
         return config;
     },
     (error) => {
+        console.error('🌐 [NETWORK] Request interceptor error:', error)
         return Promise.reject(error);
     }
 );
 
 
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Log successful API response
+        console.log('🌐 [NETWORK] API Response Success:', {
+            url: response.config.url,
+            status: response.status,
+            data: response.data
+        })
+        return response;
+    },
     (error) => {
-        if (error.response) {
+        // Log API error
+        console.error('🌐 [NETWORK] API Response Error:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            message: error.response?.data?.message || error.message,
+            data: error.response?.data
+        })
 
+        if (error.response) {
             const { status, data } = error.response;
             let errorMessage = 'An error occurred';
             console.log(status, data?.message)
@@ -65,6 +90,7 @@ apiClient.interceptors.response.use(
             return Promise.reject(customError);
         }
         else if (error.request) {
+            console.error('🌐 [NETWORK] No response received from server')
             return Promise.reject(new Error('Network error. Please check your connection.'));
         }
         else {

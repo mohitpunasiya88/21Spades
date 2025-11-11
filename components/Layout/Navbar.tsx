@@ -50,6 +50,10 @@ export default function Navbar() {
     },
   ]
 
+  const  handleclick = () => {
+    router.push('/profile')
+  }
+
   return (
     <nav
       className="backdrop-blur-sm border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 bg-[#020019]"
@@ -160,7 +164,10 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {/* Profile Picture and Email */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600 bg-purple-600 shadow-md flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600 bg-purple-600 shadow-md flex items-center justify-center flex-shrink-0"
+                onClick={handleclick}
+
+              >
                 {user.profilePicture ? (
                   <img
                     src={user.profilePicture}

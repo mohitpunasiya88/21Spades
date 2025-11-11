@@ -174,7 +174,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 ) : (
                   <button
                     onClick={() => handleNavigation(item.path)}
-                    className={`relative flex items-center ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                    className={`relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
                       isActive
                         ? 'text-[#FFB600] bg-[#7E6BEF0A]'
                         : 'text-white hover:bg-white/5'
@@ -256,7 +256,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     <span className="text-gray-400 text-xs whitespace-nowrap">{chat.time}</span>
                     {chat.unread > 0 ? (
                       <div className="w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center">
-                        <span className="text-white text-[10px] font-semibold">{chat.unread}</span>
+                        <span className="text-white text-[10px] font-exo2">{chat.unread}</span>
                       </div>
                     ) : (
                       <ChevronDown className="w-4 h-4 text-gray-400" />

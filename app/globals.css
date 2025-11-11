@@ -207,4 +207,354 @@ body {
   .logo-marquee .marquee-track:last-child {
     animation: marquee-scroll 20s linear infinite alternate;
   }
+
+  /* Slide up animation for bottom sheet */
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+/* Ant Design Collapse Dark Theme Styling */
+.ant-collapse {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.ant-collapse-item {
+  border: none !important;
+  background-color: transparent !important;
+  margin-bottom: 0 !important;
+}
+
+.ant-collapse-header {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  color: #ffffff !important;
+}
+
+.ant-collapse-header:hover {
+  background-color: transparent !important;
+}
+
+.ant-collapse-content {
+  background-color: transparent !important;
+  border: none !important;
+  border-top: none !important;
+}
+
+.ant-collapse-content-box {
+  padding: 16px 0 !important;
+}
+
+/* Hide Collapse Icon/Arrow - COMPLETE REMOVAL */
+.ant-collapse-expand-icon {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-collapse-arrow {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-collapse-icon {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-collapse-header .ant-collapse-arrow {
+  display: none !important;
+}
+
+.ant-collapse-header .ant-collapse-expand-icon {
+  display: none !important;
+}
+
+/* Ant Design Steps Dark Theme Styling - Matching Image Design */
+.ant-steps {
+  background-color: transparent !important;
+  position: relative !important;
+}
+
+.ant-steps-item-container {
+  background-color: transparent !important;
+  position: relative !important;
+}
+
+.ant-steps-item-title {
+  color: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+}
+
+.ant-steps-item-description {
+  color: #9ca3af !important;
+  font-size: 12px !important;
+}
+
+/* Hide default Step Icons - We use custom content (teal speech bubble) */
+.ant-steps-item-icon {
+  display: none !important;
+}
+
+.ant-steps-item-finish .ant-steps-item-icon {
+  display: none !important;
+}
+
+.ant-steps-item-process .ant-steps-item-icon {
+  display: none !important;
+}
+
+.ant-steps-item-wait .ant-steps-item-icon {
+  display: none !important;
+}
+
+/* Hide Steps icons for custom steps */
+.custom-steps-no-icon .ant-steps-item-icon,
+.custom-steps-no-icon .ant-steps-item-icon-wrapper,
+.custom-steps-no-icon .ant-steps-item-icon > * {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-steps-item-wait .ant-steps-item-title {
+  color: #9ca3af !important;
+}
+
+/* Vertical connecting lines - Grey color (matching Figma EXACTLY) */
+.ant-steps-vertical {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.ant-steps-vertical .ant-steps-item {
+  position: relative !important;
+  padding-bottom: 20px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: visible !important;
+  margin-bottom: 0 !important;
+}
+
+/* Adjust Steps container to remove icon space */
+.ant-steps-vertical .ant-steps-item-container {
+  padding-left: 0 !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Vertical line - Aligned with teal speech bubble icon - EXACT FIGMA */
+.ant-steps-vertical .ant-steps-item-tail {
+  position: absolute !important;
+  left: 10px !important;
+  top: 20px !important;
+  width: 1px !important;
+  height: calc(100% - 20px) !important;
+  min-height: 30px !important;
+  background-color: #9ca3af !important;
+  background: #9ca3af !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  content: '' !important;
+}
+
+.ant-steps-vertical .ant-steps-item-tail::after {
+  display: none !important;
+}
+
+/* Grey line for finished step */
+.ant-steps-item-finish .ant-steps-item-tail {
+  background-color: #9ca3af !important;
+  border: none !important;
+}
+
+/* Grey line for process step */
+.ant-steps-item-process .ant-steps-item-tail {
+  background-color: #9ca3af !important;
+  border: none !important;
+}
+
+/* Grey line for wait step */
+.ant-steps-item-wait .ant-steps-item-tail {
+  background-color: #9ca3af !important;
+  border: none !important;
+}
+
+/* Ensure tail is visible for all items except last - EXACT FIGMA MATCH */
+.ant-steps-item:not(:last-child) .ant-steps-item-tail {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: 100% !important;
+  min-height: 40px !important;
+}
+
+/* Make sure all step items show their tail */
+.ant-steps-item-finish:not(:last-child) .ant-steps-item-tail,
+.ant-steps-item-process:not(:last-child) .ant-steps-item-tail,
+.ant-steps-item-wait:not(:last-child) .ant-steps-item-tail {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: #9ca3af !important;
+  height: 100% !important;
+  min-height: 40px !important;
+}
+
+.ant-steps-item:last-child .ant-steps-item-tail {
+  display: none !important;
+}
+
+/* Force visibility - no exceptions - EXACT FIGMA MATCH */
+.ant-steps-vertical .ant-steps-item:not(:last-child) .ant-steps-item-tail {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #9ca3af !important;
+  background-color: #9ca3af !important;
+  width: 1px !important;
+  height: 100% !important;
+  min-height: 40px !important;
+  position: absolute !important;
+  left: 10px !important;
+  top: 20px !important;
+}
+
+/* Additional override to ensure visibility */
+.ant-steps-item-container .ant-steps-item-tail {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: #9ca3af !important;
+}
+
+.ant-steps-vertical .ant-steps-item-icon {
+  display: none !important;
+}
+
+.ant-steps-item-icon .ant-steps-icon {
+  display: none !important;
+}
+
+/* Custom Vertical Line for Comments - EXACT FIGMA MATCH - GUARANTEED VISIBLE */
+.comment-vertical-line,
+.figma-vertical-line {
+  position: absolute !important;
+  left: 10px !important;
+  top: 20px !important;
+  width: 1px !important;
+  height: 100% !important;
+  background-color: #9ca3af !important;
+  background: #9ca3af !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 60px !important;
+  border-left: 1px solid #9ca3af !important;
+}
+
+/* Force ALL vertical lines to be visible - EXACT FIGMA MATCH */
+div[style*="left: '10px'"],
+div[style*='left: "10px"'],
+div[style*="left: 10px"],
+div[style*='left:10px'],
+div[style*="left:10px"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: #9ca3af !important;
+  background: #9ca3af !important;
+}
+
+/* Ensure vertical lines are not hidden by any parent - EXACT FIGMA */
+.ant-collapse-content,
+.ant-collapse-content-box {
+  overflow: visible !important;
+}
+
+/* Force vertical lines to be visible - EXACT FIGMA MATCH */
+div[style*="backgroundColor: '#9ca3af'"],
+div[style*="backgroundColor: \"#9ca3af\""],
+div[style*="borderLeft"],
+div[style*="border-left"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: #9ca3af !important;
+  border-left: 1px solid #9ca3af !important;
+}
+
+/* Ensure comment container doesn't clip lines */
+.space-y-6 > div {
+  overflow: visible !important;
+}
+
+/* Force all vertical lines to render - EXACT FIGMA */
+[class*="relative"][style*="paddingLeft"] > div[style*="left: '10px'"],
+[class*="relative"][style*="paddingLeft"] > div[style*="left: 10px"],
+[class*="relative"] > div[style*="left: '10px'"],
+[class*="relative"] > div[style*="left: 10px"],
+.figma-vertical-line {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #9ca3af !important;
+  background-color: #9ca3af !important;
+  width: 1px !important;
+  border-left: 1px solid #9ca3af !important;
+}
+
+/* Ensure no parent clips the lines */
+.max-h-\[400px\],
+.space-y-6,
+.space-y-5 {
+  overflow-x: visible !important;
+}
+
+/* Final guarantee - make lines visible */
+div.figma-vertical-line {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: #9ca3af !important;
+  border-left: 1px solid #9ca3af !important;
+  width: 1px !important;
+  height: auto !important;
 }

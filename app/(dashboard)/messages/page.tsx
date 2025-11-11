@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Search, MoreVertical, Smile, Paperclip, Mic, Edit, Check, CheckCheck, Trash2, Send, Users, X } from 'lucide-react'
 import { useChatStore, type Chat, type Message } from '@/lib/store/chatStore'
 import { useAuthStore } from '@/lib/store/authStore'
+import { useSocket } from '@/lib/hooks/useSocket'
 
 export default function MessagesPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function MessagesPage() {
     isLoading,
     isSendingMessage,
     isSearchingUsers,
+    typingUsers,
     getChats,
     getMessages,
     createOrGetChat,
@@ -28,7 +30,12 @@ export default function MessagesPage() {
     sendMessage,
     clearSearchedUsers,
     setSelectedChat,
+    setSocket,
+    sendTypingIndicator,
   } = useChatStore()
+
+  // WebSocket integration
+  const { socket, isConnected } = useSocket()
 
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null)
   const [showPopup, setShowPopup] = useState(false)
@@ -45,9 +52,21 @@ export default function MessagesPage() {
   const popupRef = useRef<HTMLDivElement>(null)
   const editMenuRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Get current user ID - API uses _id format, but user object might have id
   // We need to check both formats for comparison
   const currentUserId = user?.id || (user as any)?._id || ''
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (socket && isConnected) {
+      console.log('Setting socket in store, socket connected:', socket.connected)
+      setSocket(socket)
+    }
+    return () => {
+      // Don't clear socket on unmount, let it persist
+    }
+  }, [socket, isConnected, setSocket])
 
   // Load chats on mount
   useEffect(() => {
@@ -95,25 +114,81 @@ export default function MessagesPage() {
     }
   }, [searchParams, chats, setSelectedChat, createOrGetChat, messages, getMessages])
 
-  // Search users when typing in new message search
+  // Search users when typing in new message search (Backend API Call)
   useEffect(() => {
+    console.log('🔍 [SEARCH] newMessageSearch changed:', newMessageSearch)
     const timeoutId = setTimeout(() => {
       if (newMessageSearch.trim()) {
-        searchUsers(newMessageSearch)
+        console.log('🔍 [SEARCH] Calling searchUsers API with:', newMessageSearch.trim())
+        searchUsers(newMessageSearch.trim()).catch((error) => {
+          console.error('🔍 [SEARCH] Error in searchUsers:', error)
+        })
       } else {
+        console.log('🔍 [SEARCH] Clearing searched users')
         clearSearchedUsers()
       }
     }, 300) // Debounce search
 
-    return () => clearTimeout(timeoutId)
-  }, [newMessageSearch, searchUsers, clearSearchedUsers])
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (selectedChat && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    return () => {
+      console.log('🔍 [SEARCH] Cleaning up timeout')
+      clearTimeout(timeoutId)
     }
-  }, [selectedChat, messages])
+  }, [newMessageSearch]) // Removed searchUsers and clearSearchedUsers from deps to avoid re-renders
+
+  // Search users when typing in main search input (Backend API Call)
+  useEffect(() => {
+    console.log('🔍 [SEARCH] searchQuery changed:', searchQuery)
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        console.log('🔍 [SEARCH] Calling searchUsers API from main search with:', searchQuery.trim())
+        searchUsers(searchQuery.trim()).catch((error) => {
+          console.error('🔍 [SEARCH] Error in searchUsers:', error)
+        })
+      } else {
+        console.log('🔍 [SEARCH] Clearing searched users from main search')
+        clearSearchedUsers()
+      }
+    }, 300) // Debounce search
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [searchQuery])
+
+  // Handle typing indicator (real-time typing status)
+  useEffect(() => {
+    if (!selectedChat || !messageInput.trim()) {
+      // Stop typing if input is empty
+      if (selectedChat && typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+        typingTimeoutRef.current = null
+        sendTypingIndicator(selectedChat._id, false)
+      }
+      return
+    }
+
+    // Send typing indicator in real-time
+    if (selectedChat && socket && socket.connected) {
+      sendTypingIndicator(selectedChat._id, true)
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      
+      // Set timeout to stop typing indicator after 1 second of no typing
+      typingTimeoutRef.current = setTimeout(() => {
+        sendTypingIndicator(selectedChat._id, false)
+        typingTimeoutRef.current = null
+      }, 1000)
+    }
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [messageInput, selectedChat, sendTypingIndicator, socket])
 
   const handleSelectChat = useCallback((chat: Chat) => {
     setSelectedChat(chat)
@@ -125,6 +200,17 @@ export default function MessagesPage() {
 
   // Get current chat's messages
   const currentMessages = selectedChat ? (messages[selectedChat._id] || []) : []
+
+  // Auto-scroll to bottom when messages change or new message arrives (real-time)
+  useEffect(() => {
+    if (selectedChat && messagesEndRef.current && currentMessages.length > 0) {
+      // Small delay to ensure DOM is updated with new message
+      const timeoutId = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [selectedChat, currentMessages.length, messages])
 
   // Get other participant - API returns only otherUser, so first participant is the other user
   const otherParticipant = selectedChat?.participants?.[0]
@@ -287,6 +373,13 @@ export default function MessagesPage() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedChat || isSendingMessage) return
     
+    // Stop typing indicator
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
+    }
+    sendTypingIndicator(selectedChat._id, false)
+    
     try {
       await sendMessage(selectedChat._id, messageInput.trim())
       setMessageInput('')
@@ -302,6 +395,7 @@ export default function MessagesPage() {
       setShowEditMenu(false)
       setNewMessageSearch('')
       clearSearchedUsers()
+      setSearchQuery('')
     } catch (error) {
       console.error('Error creating chat:', error)
     }
@@ -367,7 +461,10 @@ export default function MessagesPage() {
                       />
                     </div>
                     {/* Search Results */}
-                    {searchedUsers.length > 0 && (
+                    {isSearchingUsers && (
+                      <div className="text-center py-2 text-gray-400 text-sm">Searching...</div>
+                    )}
+                    {!isSearchingUsers && searchedUsers.length > 0 && (
                       <div className="max-h-60 overflow-y-auto mb-2">
                         {searchedUsers.map((user) => (
                           <button
@@ -375,21 +472,27 @@ export default function MessagesPage() {
                             onClick={() => handleUserSelect(user._id)}
                             className="w-full text-left px-4 py-2 text-white hover:bg-[#090721] rounded-lg transition-colors flex items-center gap-3"
                           >
-                            <img
-                              src={user.profilePicture || '/assets/avatar.jpg'}
-                              alt={user.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <div>
+                            <div className="relative">
+                              <img
+                                src={user.profilePicture || '/assets/avatar.jpg'}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              {user.isOnline && (
+                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border border-gray-900"></div>
+                              )}
+                            </div>
+                            <div className="flex-1">
                               <p className="text-sm font-semibold">{user.name}</p>
                               <p className="text-xs text-gray-400">@{user.username}</p>
                             </div>
+                            <div className="text-xs text-purple-400">Start Chat</div>
                           </button>
                         ))}
                       </div>
                     )}
-                    {isSearchingUsers && (
-                      <div className="text-center py-2 text-gray-400 text-sm">Searching...</div>
+                    {!isSearchingUsers && newMessageSearch.trim() && searchedUsers.length === 0 && (
+                      <div className="text-center py-2 text-gray-400 text-sm">No users found</div>
                     )}
                     <button 
                       onClick={() => {
@@ -427,13 +530,48 @@ export default function MessagesPage() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto min-h-0">
-          {isLoading && chats.length === 0 ? (
+          {/* Show search results if searching */}
+          {searchQuery.trim() && searchedUsers.length > 0 ? (
+            <div>
+              <div className="px-2 py-2 text-xs text-gray-400 font-semibold">Search Results</div>
+              {searchedUsers.map((user) => (
+                <button
+                  key={user._id}
+                  onClick={() => handleUserSelect(user._id)}
+                  className="w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A]"
+                >
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full items-center justify-center">
+                      <img 
+                        src={user.profilePicture || '/assets/avatar.jpg'} 
+                        alt={user.name || 'User'}  
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    </div>
+                    {user.isOnline && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
+                    )}
+                  </div>
+                  <div className="flex flex-col w-full text-left">
+                    <p className="text-white text-[18px] font-semibold">{user.name || 'Unknown'}</p>
+                    <p className="text-[#FFFFFF73] text-[14px] font-normal">@{user.username}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : searchQuery.trim() && isSearchingUsers ? (
+            <div className="text-center py-8 text-gray-400">Searching users...</div>
+          ) : searchQuery.trim() && !isSearchingUsers && searchedUsers.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">No users found</div>
+          ) : isLoading && chats.length === 0 ? (
             <div className="text-center py-8 text-gray-400">Loading chats...</div>
           ) : chats.length === 0 ? (
             <div className="text-center py-8 text-gray-400">No chats yet</div>
           ) : (
             chats
               .filter((chat) => {
+                // If searchQuery is empty, show all chats
+                // If searchQuery has value, it will show search results above, so filter chats
                 if (searchQuery === '') return true
                 if (!chat.participants || !Array.isArray(chat.participants) || chat.participants.length === 0) return false
                 // API returns only otherUser, so first participant is the other user
@@ -719,6 +857,27 @@ export default function MessagesPage() {
                   )
                 })
               )}
+              
+              {/* Typing Indicator */}
+              {selectedChat && typingUsers[selectedChat._id] && typingUsers[selectedChat._id].length > 0 && (
+                <div className="flex justify-start">
+                  <div className="max-w-md px-4 py-2.5 rounded-2xl bg-[#FFFFFF29] text-white rounded-bl-sm shadow-md">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {typingUsers[selectedChat._id].some(id => id !== currentUserId) 
+                          ? `${otherParticipant?.name || 'Someone'} is typing...`
+                          : 'Typing...'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div ref={messagesEndRef} />
 
               {/* Popup for Edit/Delete */}

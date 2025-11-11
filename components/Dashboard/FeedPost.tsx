@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, X } from 'lucide-react'
-import { useFeedStore } from '@/lib/store/authStore'
+import { useState, useEffect, useRef } from 'react'
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon } from 'lucide-react'
+import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
+import { Avatar, Button, Collapse, Tooltip, Steps } from 'antd'
 
 interface FeedPostProps {
   post: {
@@ -25,9 +26,12 @@ interface FeedPostProps {
     isReposted?: boolean
   }
 }
-
+const UserList = ['U', 'Lucy', 'Tom', 'Edward'];
+const ColorList = ['#f56a00', '#7265e6', '#ffbf00', '#00a2ae'];
+const GapList = [4, 3, 2, 1];
 export default function FeedPost({ post }: FeedPostProps) {
   const { likePost, sharePost, savePost, commentPost, getComments, repostPost } = useFeedStore()
+  const { user: currentUser } = useAuthStore()
   const [liked, setLiked] = useState(post.isLiked || false)
   const [saved, setSaved] = useState(post.isSaved || false)
   const [localLikes, setLocalLikes] = useState(post.likes)
@@ -35,7 +39,6 @@ export default function FeedPost({ post }: FeedPostProps) {
   const [localShares, setLocalShares] = useState(post.shares)
   const [localReposts, setLocalReposts] = useState(post.reposts || 0)
   const [reposted, setReposted] = useState(post.isReposted || false)
-  
   // Update repost state when post data changes
   useEffect(() => {
     if (post.isReposted !== undefined) {
@@ -45,12 +48,29 @@ export default function FeedPost({ post }: FeedPostProps) {
       setLocalReposts(post.reposts)
     }
   }, [post.isReposted, post.reposts])
-  const [showComments, setShowComments] = useState(false)
+  const [activeKey, setActiveKey] = useState<string | string[]>([])
   const [commentText, setCommentText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [comments, setComments] = useState<any[]>([])
   const [localComments, setLocalComments] = useState(post.comments)
   const [loadingComments, setLoadingComments] = useState(false)
+  const [commentsPage, setCommentsPage] = useState(1)
+  // Show 3-4 initially (use 4), then paginate with 10 subsequently
+  const INITIAL_COMMENTS_LIMIT = 4
+  const COMMENTS_LIMIT = 10
+  const [hasMoreComments, setHasMoreComments] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [commentsTotal, setCommentsTotal] = useState<number | null>(null)
+  const [commentsTotalPages, setCommentsTotalPages] = useState<number | null>(null)
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
+  const likerNamePool = ['Benjamin', 'Ava', 'Noah', 'Mia', 'Ethan', 'Liam']
+  const likerInitialPool = ['B', 'A', 'N', 'M', 'E', 'L']
+  const displayedLikerCount = Math.min(Math.max(localLikes, 1), likerNamePool.length)
+  const likerDisplayData = Array.from({ length: displayedLikerCount }).map((_, idx) => ({
+    name: likerNamePool[idx % likerNamePool.length],
+    initial: likerInitialPool[idx % likerInitialPool.length],
+    color: ['#F97316', '#8B5CF6', '#FACF5A', '#22D3EE', '#10B981', '#3B82F6'][idx % 6],
+  }))
   const [isSharing, setIsSharing] = useState(false)
   const [isReposting, setIsReposting] = useState(false)
   
@@ -187,16 +207,31 @@ export default function FeedPost({ post }: FeedPostProps) {
   }
 
   const handleCommentClick = async () => {
-    setShowComments(true)
-    // Load comments when modal opens
-    setLoadingComments(true)
-    try {
-      const result = await getComments(post.id)
-      setComments(result.comments)
-    } catch (error) {
-      console.error('Error loading comments:', error)
-    } finally {
-      setLoadingComments(false)
+    // Toggle accordion
+    const currentKeys = Array.isArray(activeKey) ? activeKey : activeKey ? [activeKey] : []
+    const isOpen = currentKeys.includes('comments')
+    if (isOpen) {
+      setActiveKey([])
+    } else {
+      setActiveKey(['comments'])
+      // Load first page when accordion opens
+      setLoadingComments(true)
+      try {
+        const result = await getComments(post.id, { page: 1, limit: 10 } as any)
+        const fetched = (result as any)?.data?.comments ?? (result as any)?.comments ?? []
+        const pagination = (result as any)?.data?.pagination ?? (result as any)?.pagination
+        setComments(fetched)
+        setCommentsPage(1)
+        if (pagination) {
+          setCommentsTotal(pagination.total ?? null)
+          setCommentsTotalPages(pagination.pages ?? null)
+          setHasMoreComments(pagination.page < pagination.pages)
+        } 
+      } catch (error) {
+        console.error('Error loading comments:', error)
+      } finally {
+        setLoadingComments(false)
+      }
     }
   }
 
@@ -211,18 +246,30 @@ export default function FeedPost({ post }: FeedPostProps) {
       
       // Update comment count from store
       const updatedPost = useFeedStore.getState().posts.find(p => p._id === post.id)
+      console.log('updatedPost', updatedPost)
       if (updatedPost) {
         setLocalComments(updatedPost.commentsCount || localComments + 1)
       } else {
         setLocalComments(localComments + 1)
       }
       
-      // Refresh comments if modal is open
-      if (showComments) {
+      // Refresh comments list if accordion is open (refetch first page)
+      const currentKeys = Array.isArray(activeKey) ? activeKey : activeKey ? [activeKey] : []
+      if (currentKeys.includes('comments')) {
         setLoadingComments(true)
         try {
-          const result = await getComments(post.id)
-          setComments(result.comments)
+          const result = await getComments(post.id, { page: 1, limit: 10 } as any)
+          const fetched = (result as any)?.data?.comments ?? (result as any)?.comments ?? []
+          const pagination = (result as any)?.data?.pagination ?? (result as any)?.pagination
+          setComments(fetched)
+          setCommentsPage(1)
+          if (pagination) {
+            setCommentsTotal(pagination.total ?? null)
+            setCommentsTotalPages(pagination.pages ?? null)
+            setHasMoreComments(pagination.page < pagination.pages)
+          } else {
+            setHasMoreComments(fetched.length >= 10)
+          }
         } catch (error) {
           console.error('Error refreshing comments:', error)
         } finally {
@@ -235,8 +282,72 @@ export default function FeedPost({ post }: FeedPostProps) {
       setIsSubmitting(false)
     }
   }
+
+  // Load more comments (next page)
+  const loadMoreComments = async () => {
+    if (isLoadingMore || !hasMoreComments) return
+    setIsLoadingMore(true)
+    try {
+      const nextPage = commentsPage + 1
+      const result = await getComments(post.id, { page: nextPage, limit: COMMENTS_LIMIT } as any)
+      const dataObj = (result as any)?.data ?? result
+      const fetched = dataObj?.comments ?? []
+      const pagination = dataObj?.pagination
+      if (fetched.length > 0) {
+        setComments(prev => [...prev, ...fetched])
+        setCommentsPage(nextPage)
+        if (pagination) {
+          setCommentsTotal(pagination.total ?? commentsTotal)
+          setCommentsTotalPages(pagination.pages ?? commentsTotalPages)
+          setHasMoreComments(pagination.page < pagination.pages)
+        } else {
+          setHasMoreComments(fetched.length >= COMMENTS_LIMIT)
+        }
+      } else {
+        setHasMoreComments(false)
+      }
+    } catch (error) {
+      console.error('Error loading more comments:', error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
+
+  // Attach intersection observer to sentinel to auto-load next page
+  useEffect(() => {
+    // Only observe when comments accordion is open and more pages remain
+    const isOpen = Array.isArray(activeKey) ? activeKey.includes('comments') : activeKey === 'comments'
+    if (!isOpen || !hasMoreComments) return
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel) return
+    const io = new IntersectionObserver((entries) => {
+      const entry = entries[0]
+      if (entry.isIntersecting) {
+        loadMoreComments()
+      }
+    }, { root: null, rootMargin: '400px 0px 400px 0px', threshold: 0.2 })
+    io.observe(sentinel)
+    return () => {
+      io.disconnect()
+    }
+  }, [activeKey, commentsPage, hasMoreComments, comments.length])
+  // Format relative time from ISO date string (e.g., 1h, 2d)
+  const formatRelativeTime = (isoDate?: string) => {
+    if (!isoDate) return ''
+    const created = new Date(isoDate).getTime()
+    const now = Date.now()
+    const diffSeconds = Math.max(0, Math.floor((now - created) / 1000))
+    if (diffSeconds < 60) return `${diffSeconds}s`
+    const diffMinutes = Math.floor(diffSeconds / 60)
+    if (diffMinutes < 60) return `${diffMinutes}m`
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours < 24) return `${diffHours}h`
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays}d`
+  }
   return (
     <div className="rounded-xl sm:rounded-2xl border border-[#FFFFFF33] bg-[#090721] p-4 sm:p-6 md:p-8 font-exo2">
+      
       {/* Top Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div
@@ -273,149 +384,268 @@ export default function FeedPost({ post }: FeedPostProps) {
       {/* Media */}
       {post.image && (
         <div className="overflow-hidden rounded-lg sm:rounded-xl w-full mb-3 sm:mb-4">
-          <img src={post.image} alt="Post Image" className="w-full h-auto object-cover" />
+          <img 
+            src={post.image} 
+            alt="Post Image" 
+            className="w-full h-auto object-fill max-h-[500px]"
+            style={{ display: 'block' }}
+          />
       </div>
       )}
-      <div className="border-b-2 border-[#FFFFFF33] mb-2 sm:mb-3 p-1 sm:p-2" ></div>
+      <div className="border-b border-[#6B757E4D] mb-2 sm:mb-3" />
       {/* Actions */}
       <div className="flex justify-between items-center gap-1.5 sm:gap-2 md:gap-3 text-gray-400 flex-wrap">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.6px solid #FFFFFF0D] hover:bg-gray-800/70 ${liked ? 'text-[#FF5500]' : ''
-            }`}
+          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${liked ? 'text-[#FF5500]' : ''}`}
         >
           <Heart className="w-4 h-4 sm:w-5 sm:h-5" fill={liked ? '#FF5500' : 'none'} />
           <span className="text-xs sm:text-sm">{localLikes >= 1000 ? (localLikes / 1000).toFixed(1) + 'k' : localLikes}</span>
         </button>
         {/* vertical line */}
-        <div className="w-px h-[16px] sm:h-[19px] bg-[#6B757E4D] hidden sm:block" />
+        <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
         {/* <div className='border-s-4'></div> */}
         <button 
           onClick={handleCommentClick}
-          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.6px solid #FFFFFF0D] hover:bg-gray-800/70 hover:text-blue-400"
+          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] hover:text-blue-400"
         >
           <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-xs sm:text-sm">{localComments}</span>
         </button>
         {/* vertical line */}
-        <div className="w-px h-[16px] sm:h-[19px] bg-[#6B757E4D] hidden sm:block" />
+        <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
         <button 
           onClick={handleRepost}
           disabled={reposted || isReposting}
-          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.6px solid #FFFFFF0D] hover:bg-gray-800/70 disabled:opacity-50 disabled:cursor-not-allowed ${reposted ? 'text-green-400' : 'hover:text-green-400'}`}
+          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed ${reposted ? 'text-green-400' : 'hover:text-green-400'}`}
         >
           <RefreshCcwIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-xs sm:text-sm">{localReposts}</span>
         </button>
         {/* vertical line */}
-        <div className="w-px h-[16px] sm:h-[19px] bg-[#6B757E4D] hidden sm:block" />
+        <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
         <button 
           onClick={handleShare}
           disabled={isSharing}
-          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.6px solid #FFFFFF0D] hover:bg-gray-800/70 disabled:opacity-50 disabled:cursor-not-allowed hover:text-green-400"
+          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed hover:text-green-400"
         >
           <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-xs sm:text-sm">{localShares}</span>
         </button>
         {/* vertical line */}
-        <div className="w-px h-[16px] sm:h-[19px] bg-[#6B757E4D] hidden sm:block" />
+        <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
         <button 
           onClick={handleSave}
-          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.6px solid #FFFFFF0D] hover:bg-gray-800/70 ${saved ? 'text-yellow-400' : 'hover:text-yellow-400'}`}
+          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${saved ? 'text-yellow-400' : 'hover:text-yellow-400'}`}
         >
           <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" fill={saved ? 'currentColor' : 'none'} />
           <span className="text-xs sm:text-sm">{localSaves}</span>
         </button>
       </div>
 
-      {/* Comment Modal */}
-      {showComments && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#090721] rounded-xl sm:rounded-2xl border border-[#FFFFFF33] w-full max-w-2xl max-h-[85vh] sm:max-h-[80vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#FFFFFF33]">
-              <h2 className="text-white text-lg sm:text-xl font-semibold">Comments</h2>
-              <button
-                onClick={() => setShowComments(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-            </div>
-
-            {/* Comment Form */}
-            <div className="p-4 sm:p-6 border-b border-[#FFFFFF33]">
-              <form onSubmit={handleSubmitComment} className="flex gap-2 sm:gap-3">
-                <input
-                  type="text"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Write a comment..."
-                  className="flex-1 bg-[#FFFFFF08] border border-[#FFFFFF33] rounded-lg px-3 sm:px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-sm sm:text-base"
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="submit"
-                  disabled={!commentText.trim() || isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base whitespace-nowrap"
-                >
-                  {isSubmitting ? 'Posting...' : 'Post'}
-                </button>
-              </form>
-            </div>
-
-            {/* Comments List */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              {loadingComments ? (
-                <div className="text-center text-gray-400 py-4 text-sm sm:text-base">Loading comments...</div>
-              ) : comments.length === 0 ? (
-                <div className="text-center text-gray-400 py-4 text-sm sm:text-base">No comments yet. Be the first to comment!</div>
-              ) : (
-                <div className="space-y-3 sm:space-y-4">
-                  {comments.map((comment) => (
-                    <div key={comment._id} className="flex gap-2 sm:gap-3">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                        {comment.author?.profilePicture ? (
-                          <img 
-                            src={comment.author.profilePicture} 
-                            alt={comment.author.username} 
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover" 
-                          />
-                        ) : (
-                          <span className="text-white text-[10px] sm:text-xs font-semibold">
-                            {comment.author?.username?.charAt(0).toUpperCase() || 'U'}
-                          </span>
-                        )}
+      {/* Comments Accordion */}
+      <div className="mt-3 sm:mt-4">
+        <Collapse
+        bordered={false}
+          activeKey={activeKey}
+          onChange={setActiveKey}
+          ghost
+          items={[
+            {
+              key: 'comments',
+              label: (
+                ''
+              ),
+              children: (
+                <div className="space-y-5">
+                  {/* Likes Section */}
+                  {localLikes > 0 && (
+                    <div className="flex items-start gap-3 mb-5">
+                      {/* Large Purple Heart Icon */}
+                      <div className="flex-shrink-0">
+                        <img 
+                          src="/assets/Solid.png" 
+                          alt="Heart" 
+                          className="w-10 h-10 object-contain"
+                        />
                       </div>
+                      
+                      {/* Avatars and Text Container */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                          <span className="text-white font-semibold text-xs sm:text-sm">
-                            {comment.author?.username || 'Unknown'}
-                          </span>
-                          <span className="text-gray-500 text-[10px] sm:text-xs">
-                            {new Date(comment.createdAt).toLocaleDateString()}
-                          </span>
+                        <div className='ml-4 mt-2'>
+                          <div className="border-l-2 w-full border-[#6B757E] pl-8 py-3 min-h-[56px]  flex flex-col gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex -space-x-2">
+                                {likerDisplayData.map((liker, idx) => (
+                                  <Avatar
+                                    key={`${liker.name}-${idx}`}
+                                    size={34}
+                                    style={{
+                                      backgroundColor: '#0F1035',
+                                      border: `2px solid ${liker.color}`,
+                                      color: liker.color,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {liker.initial}
+                                  </Avatar>
+                                ))}
+                              </div>
+                              <p className="text-gray-300 text-sm">
+                                <span className="font-semibold text-white">
+                                  {likerDisplayData[0]?.name || post.username}
+                                </span>
+                                {localLikes > 1 ? (
+                                  <>
+                                    <span className="text-gray-400"> and </span>
+                                    <span className="font-semibold text-white">{localLikes - 1}</span>
+                                    <span className="text-gray-400"> {localLikes - 1 === 1 ? 'other' : 'others'} liked your article</span>
+                                  </>
+                                ) : (
+                                  <span className="text-gray-400"> liked your article</span>
+                                )}
+                                <span className="text-gray-500 ml-1">{post.timeAgo}</span>
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-gray-300 text-xs sm:text-sm break-words">{comment.text}</p>
-                        <div className="flex items-center gap-3 sm:gap-4 mt-1.5 sm:mt-2">
-                          <button className="text-gray-500 hover:text-purple-400 text-[10px] sm:text-xs">
-                            Like ({comment.likesCount || 0})
-                          </button>
-                          {comment.repliesCount > 0 && (
-                            <span className="text-gray-500 text-[10px] sm:text-xs">
-                              {comment.repliesCount} replies
-                            </span>
-                          )}
+                        {/* Comment Section with Teal Icons and Vertical Line */}
+                        <div className="flex gap-4 mt-8 relative">
+                          {/* Overlapping Teal Speech Bubble Icons at Top with Vertical Line */}
+                          <div className="flex-shrink-0 relative" style={{ width: '28px' }}>
+                            <div className="absolute top-0 left-0" style={{ zIndex: 2 }}>
+                              <svg width="22" height="22" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M16.2153 12H23.7847C24.4876 12 25.0939 12 25.5934 12.0408C26.1205 12.0838 26.6448 12.1789 27.1493 12.436C27.9019 12.8195 28.5139 13.4314 28.8974 14.184C29.1544 14.6885 29.2495 15.2128 29.2926 15.74C29.3334 16.2394 29.3334 16.8458 29.3333 17.5486V21.2617C29.3333 21.8466 29.3334 22.3512 29.3049 22.7689C29.2749 23.2087 29.2089 23.6485 29.0289 24.0831C28.6229 25.0632 27.8442 25.8419 26.8641 26.2479C26.4295 26.4279 25.9896 26.4939 25.5498 26.5239C25.4801 26.5287 25.4079 26.5326 25.3333 26.5359V28C25.3333 28.4964 25.0576 28.9517 24.6176 29.1817C24.1777 29.4116 23.6465 29.3781 23.2389 29.0948L20.337 27.0773C19.89 26.7665 19.7996 26.7098 19.7142 26.6711C19.6157 26.6265 19.5121 26.5941 19.4058 26.5745C19.3135 26.5575 19.2069 26.5524 18.6626 26.5524H16.2153C15.5124 26.5524 14.9061 26.5524 14.4066 26.5116C13.8795 26.4686 13.3552 26.3735 12.8507 26.1164C12.0981 25.7329 11.4861 25.121 11.1026 24.3683C10.8456 23.8638 10.7505 23.3395 10.7074 22.8124C10.6666 22.313 10.6666 21.7066 10.6667 21.0038V17.5486C10.6666 16.8457 10.6666 16.2394 10.7074 15.74C10.7505 15.2128 10.8456 14.6885 11.1026 14.184C11.4861 13.4314 12.0981 12.8195 12.8507 12.436C13.3552 12.1789 13.8795 12.0838 14.4066 12.0408C14.9061 12 15.5124 12 16.2153 12Z" fill="#4FCAA7"/>
+                                <path d="M17.6551 5.49055e-07H7.67831C6.60502 -1.594e-05 5.71919 -2.9544e-05 4.9976 0.0589265C4.24814 0.12016 3.5592 0.251579 2.91209 0.5813C1.90856 1.09262 1.09266 1.90852 0.581338 2.91205C0.251617 3.55917 0.120198 4.2481 0.0589648 4.99757C8.33968e-06 5.71916 2.23285e-05 6.60498 3.93357e-05 7.67827L1.94675e-05 14.0278C-0.000158234 14.6166 -0.00029016 15.053 0.0563514 15.4396C0.397864 17.7711 2.22892 19.6022 4.5604 19.9437C4.65572 19.9577 4.71515 19.9934 4.74078 20.0148L4.74078 22.1185C4.74072 22.482 4.74067 22.8385 4.76603 23.1253C4.78856 23.3799 4.84757 23.9075 5.22239 24.3447C5.64022 24.832 6.2666 25.0892 6.90637 25.0361C7.48028 24.9884 7.89296 24.6545 8.08795 24.4892C8.14349 24.4421 8.20102 24.3906 8.26011 24.3359C8.13668 23.8549 8.08064 23.4089 8.04965 23.0296C7.99969 22.4182 7.99986 21.7118 8.00002 21.0603V17.4922C7.99986 16.8407 7.99969 16.1343 8.04965 15.5228C8.10619 14.8308 8.24613 13.9165 8.72666 12.9734C9.36581 11.719 10.3857 10.6991 11.6401 10.06C12.5832 9.57946 13.4975 9.43953 14.1895 9.38298C14.8009 9.33303 15.5073 9.3332 16.1588 9.33335H23.8412C24.3288 9.33323 24.8471 9.33311 25.3334 9.354V7.67824C25.3334 6.60496 25.3334 5.71915 25.2744 4.99757C25.2132 4.2481 25.0818 3.55917 24.7521 2.91205C24.2407 1.90852 23.4249 1.09263 22.4213 0.5813C21.7742 0.251579 21.0853 0.12016 20.3358 0.0589265C19.6142 -2.9544e-05 18.7284 -1.594e-05 17.6551 5.49055e-07Z" fill="#4FCAA7"/>
+                              </svg>
+                            </div>
+                            <div className="absolute top-[2px] left-[10px]" style={{ zIndex: 1, opacity: 0.9 }}>
+                              <svg width="18" height="18" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M16.2153 12H23.7847C24.4876 12 25.0939 12 25.5934 12.0408C26.1205 12.0838 26.6448 12.1789 27.1493 12.436C27.9019 12.8195 28.5139 13.4314 28.8974 14.184C29.1544 14.6885 29.2495 15.2128 29.2926 15.74C29.3334 16.2394 29.3334 16.8458 29.3333 17.5486V21.2617C29.3333 21.8466 29.3334 22.3512 29.3049 22.7689C29.2749 23.2087 29.2089 23.6485 29.0289 24.0831C28.6229 25.0632 27.8442 25.8419 26.8641 26.2479C26.4295 26.4279 25.9896 26.4939 25.5498 26.5239C25.4801 26.5287 25.4079 26.5326 25.3333 26.5359V28C25.3333 28.4964 25.0576 28.9517 24.6176 29.1817C24.1777 29.4116 23.6465 29.3781 23.2389 29.0948L20.337 27.0773C19.89 26.7665 19.7996 26.7098 19.7142 26.6711C19.6157 26.6265 19.5121 26.5941 19.4058 26.5745C19.3135 26.5575 19.2069 26.5524 18.6626 26.5524H16.2153C15.5124 26.5524 14.9061 26.5524 14.4066 26.5116C13.8795 26.4686 13.3552 26.3735 12.8507 26.1164C12.0981 25.7329 11.4861 25.121 11.1026 24.3683C10.8456 23.8638 10.7505 23.3395 10.7074 22.8124C10.6666 22.313 10.6666 21.7066 10.6667 21.0038V17.5486C10.6666 16.8457 10.6666 16.2394 10.7074 15.74C10.7505 15.2128 10.8456 14.6885 11.1026 14.184C11.4861 13.4314 12.0981 12.8195 12.8507 12.436C13.3552 12.1789 13.8795 12.0838 14.4066 12.0408C14.9061 12 15.5124 12 16.2153 12Z" fill="#4FCAA7"/>
+                                <path d="M17.6551 5.49055e-07H7.67831C6.60502 -1.594e-05 5.71919 -2.9544e-05 4.9976 0.0589265C4.24814 0.12016 3.5592 0.251579 2.91209 0.5813C1.90856 1.09262 1.09266 1.90852 0.581338 2.91205C0.251617 3.55917 0.120198 4.2481 0.0589648 4.99757C8.33968e-06 5.71916 2.23285e-05 6.60498 3.93357e-05 7.67827L1.94675e-05 14.0278C-0.000158234 14.6166 -0.00029016 15.053 0.0563514 15.4396C0.397864 17.7711 2.22892 19.6022 4.5604 19.9437C4.65572 19.9577 4.71515 19.9934 4.74078 20.0148L4.74078 22.1185C4.74072 22.482 4.74067 22.8385 4.76603 23.1253C4.78856 23.3799 4.84757 23.9075 5.22239 24.3447C5.64022 24.832 6.2666 25.0892 6.90637 25.0361C7.48028 24.9884 7.89296 24.6545 8.08795 24.4892C8.14349 24.4421 8.20102 24.3906 8.26011 24.3359C8.13668 23.8549 8.08064 23.4089 8.04965 23.0296C7.99969 22.4182 7.99986 21.7118 8.00002 21.0603V17.4922C7.99986 16.8407 7.99969 16.1343 8.04965 15.5228C8.10619 14.8308 8.24613 13.9165 8.72666 12.9734C9.36581 11.719 10.3857 10.6991 11.6401 10.06C12.5832 9.57946 13.4975 9.43953 14.1895 9.38298C14.8009 9.33303 15.5073 9.3332 16.1588 9.33335H23.8412C24.3288 9.33323 24.8471 9.33311 25.3334 9.354V7.67824C25.3334 6.60496 25.3334 5.71915 25.2744 4.99757C25.2132 4.2481 25.0818 3.55917 24.7521 2.91205C24.2407 1.90852 23.4249 1.09263 22.4213 0.5813C21.7742 0.251579 21.0853 0.12016 20.3358 0.0589265C19.6142 -2.9544e-05 18.7284 -1.594e-05 17.6551 5.49055e-07Z" fill="#4FCAA7"/>
+                              </svg>
+                            </div>
+                          </div>
+                          
+                          {/* Comment Content (mapped with same design) */}
+                          <div className="flex-1 min-w-0"  style={{height:"200px",overflowY:"scroll"}}>
+                            {(!comments || comments.length === 0) ? (
+                              <p className="text-gray-400 text-sm ml-[52px]">No comments yet.</p>
+                            ) : (
+                              comments?.map((c: any, idx: number) => (
+                                <div key={c?._id || idx} className="mb-4">
+                                  <div className="flex items-start gap-3">
+                                    <Avatar
+                                      size={40}
+                                      src={c?.author?.profilePicture || undefined}
+                                      style={{ backgroundColor: '#FACC15', border: '2px solid #FACC15' }}
+                                    >
+                                      {!c?.author?.profilePicture && (
+                                        c?.author?.name?.[0]?.toUpperCase() ||
+                                        c?.author?.username?.[0]?.toUpperCase() ||
+                                        'U'
+                                      )}
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0 relative">
+                                      <p className="text-gray-300 text-[15px] leading-6 mb-2">
+                                        <span className="font-semibold text-white text-base">
+                                          {c?.author?.name || c?.author?.username || 'User'}
+                                        </span>
+                                        <span className="text-gray-400"> commented on </span>
+                                        <span className="font-semibold text-white">21Spades</span>
+                                        <span className="text-gray-500 ml-2">
+                                          {formatRelativeTime(c?.createdAt)}
+                                        </span>
+                                      </p>
+                                      <p className="text-gray-200 text-base leading-[1.75] break-words ml-[52px]">
+                                        {c?.text}
+                                      </p>
+                                      {/* Orange Heart with Like Count (right aligned) */}
+                                      <div className="flex flex-col items-center gap-1 absolute right-0 top-0">
+                                        <Heart
+                                          className="w-5 h-5 text-[#FF7A1A]"
+                                          fill={c?.isLiked ? '#F97316' : 'none'}
+                                        />
+                                        <span className="text-[#9AA4B2] text-xs font-semibold">
+                                          {c?.likesCount ?? 0}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {/* Vertical connector between stacked comments */}
+                                  {idx < comments.length - 1 && (
+                                    <div className="absolute left-[12px] top-[42px] w-px bg-[#6B757E]" style={{ height: '58px' }}></div>
+                                  )}
+                                </div>
+                              ))
+                            )}
+
+                            {/* Load more sentinel */}
+                            <div ref={loadMoreSentinelRef} className="h-4 w-full" />
+                            {isLoadingMore && (
+                              <p className="text-gray-400 text-xs ml-[52px]">Loading more...</p>
+                            )}
+                           
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )}
+                  
+
+                  {/* Comments List */}
+                  
+
+                  {/* Comment Form */}
+                  <div className="pt-6 border-t border-[#FFFFFF1A] mt-6">
+                    <form onSubmit={handleSubmitComment} className="flex items-center gap-3">
+                      {/* User Profile Picture */}
+                      <Avatar
+                        src={currentUser?.profilePicture || currentUser?.avatar}
+                        size={40}
+                        style={{ backgroundColor: '#8B5CF6' }}
+                      >
+                        {!currentUser?.profilePicture && !currentUser?.avatar && (
+                          currentUser?.username?.charAt(0).toUpperCase() || currentUser?.name?.charAt(0).toUpperCase() || 'U'
+                        )}
+                      </Avatar>
+                      
+                      {/* Input Field with Emoji Icon Inside */}
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Write a comment"
+                          className="w-full bg-[#120C35] border border-[#FFFFFF1A] rounded-xl px-4 py-2.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-sm"
+                          disabled={isSubmitting}
+                        />
+                        {/* Emoji Icon Inside Input - Right Side */}
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                          aria-label="Add emoji"
+                        >
+                          <Smile className="w-5 h-5" />
+                        </button>
+                      </div>
+                      
+                      {/* Send Button - White as per Figma */}
+                      <button
+                        type="submit"
+                        disabled={!commentText.trim() || isSubmitting}
+                        className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-xl disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:bg-gray-100 flex-shrink-0"
+                      >
+                        {isSubmitting ? 'Sending...' : 'Send'}
+                      </button>
+                    </form>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+              ),
+            },
+          ]}
+        />
+      </div>
     </div>
   )
 }
