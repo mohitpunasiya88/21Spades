@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon } from 'lucide-react'
 import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
 import { Avatar, Button, Collapse, Tooltip, Steps } from 'antd'
+import EmojiPicker from 'emoji-picker-react'
+import { useChatStore } from '@/lib/store/chatStore'
 
 interface FeedPostProps {
   post: {
@@ -26,12 +28,14 @@ interface FeedPostProps {
     isReposted?: boolean
   }
 }
+
 const UserList = ['U', 'Lucy', 'Tom', 'Edward'];
 const ColorList = ['#f56a00', '#7265e6', '#ffbf00', '#00a2ae'];
 const GapList = [4, 3, 2, 1];
 
 export default function FeedPost({ post }: FeedPostProps) {
   const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes } = useFeedStore()
+  const { searchUsers, searchedUsers, clearSearchedUsers } = useChatStore()
   const { user: currentUser } = useAuthStore()
   const [liked, setLiked] = useState(post.isLiked || false)
   const [saved, setSaved] = useState(post.isSaved || false)
@@ -76,6 +80,12 @@ export default function FeedPost({ post }: FeedPostProps) {
   const [likersTotal, setLikersTotal] = useState<number>(0)
   const [isSharing, setIsSharing] = useState(false)
   const [isReposting, setIsReposting] = useState(false)
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
+  const emojiPickerRef = useRef<HTMLDivElement | null>(null)
+  const [mentionQuery, setMentionQuery] = useState('')
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
+  const [mentionStartPos, setMentionStartPos] = useState<number | null>(null)
+  const mentionDropdownRef = useRef<HTMLDivElement | null>(null)
 
   const handleLike = async () => {
     const newLiked = !liked
@@ -361,6 +371,28 @@ export default function FeedPost({ post }: FeedPostProps) {
       io.disconnect()
     }
   }, [activeKey, commentsPage, hasMoreComments, comments.length])
+
+  useEffect(() => {
+    const handleDocClick = (e: MouseEvent) => {
+      const target = e.target as Node
+      
+      // Handle emoji picker
+      if (isEmojiPickerOpen && emojiPickerRef.current && !emojiPickerRef.current.contains(target)) {
+        setIsEmojiPickerOpen(false)
+      }
+      
+      // Handle mention dropdown
+      if (showMentionSuggestions && mentionDropdownRef.current && !mentionDropdownRef.current.contains(target)) {
+        setShowMentionSuggestions(false)
+        setMentionQuery('')
+        setMentionStartPos(null)
+      }
+    }
+    document.addEventListener('mousedown', handleDocClick)
+    return () => {
+      document.removeEventListener('mousedown', handleDocClick)
+    }
+  }, [isEmojiPickerOpen, showMentionSuggestions])
   // Format relative time from ISO date string (e.g., 1h, 2d)
   const formatRelativeTime = (isoDate?: string) => {
     if (!isoDate) return ''
@@ -374,6 +406,64 @@ export default function FeedPost({ post }: FeedPostProps) {
     if (diffHours < 24) return `${diffHours}h`
     const diffDays = Math.floor(diffHours / 24)
     return `${diffDays}d`
+  }
+
+  // Handle comment input change with mention detection
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    const cursorPos = e.target.selectionStart || 0
+    
+    setCommentText(value)
+    
+    // Find the last @ before cursor
+    const textBeforeCursor = value.slice(0, cursorPos)
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@')
+    
+    if (lastAtIndex !== -1) {
+      // Check if there's a space between @ and cursor (if so, stop suggesting)
+      const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1)
+      if (textAfterAt.includes(' ')) {
+        setShowMentionSuggestions(false)
+        setMentionQuery('')
+        setMentionStartPos(null)
+        clearSearchedUsers()
+        return
+      }
+      
+      // Extract query after @
+      const query = textAfterAt
+      setMentionQuery(query)
+      setMentionStartPos(lastAtIndex)
+      setShowMentionSuggestions(true)
+      
+      // Search users
+      if (query.length > 0) {
+        searchUsers(query)
+      } else {
+        clearSearchedUsers()
+      }
+    } else {
+      setShowMentionSuggestions(false)
+      setMentionQuery('')
+      setMentionStartPos(null)
+      clearSearchedUsers()
+    }
+  }
+  
+  // Handle user selection from mention dropdown
+  const handleUserSelect = (username: string) => {
+    if (mentionStartPos === null) return
+    
+    // Replace @query with @username
+    const before = commentText.slice(0, mentionStartPos)
+    const after = commentText.slice(mentionStartPos + mentionQuery.length + 1)
+    const newText = `${before}@${username} ${after}`
+    
+    setCommentText(newText)
+    setShowMentionSuggestions(false)
+    setMentionQuery('')
+    setMentionStartPos(null)
+    clearSearchedUsers()
   }
 
   // Render comment text with mentions and URLs stylized to match design
@@ -532,66 +622,66 @@ export default function FeedPost({ post }: FeedPostProps) {
 
                   {/* --- Likes Section --- */}
                   {/* {localLikes > 0 && ( */}
-                    <div className="flex items-start gap-3">
-                      {/* Like Icon */}
-                      <div className="w-8 h-8 flex-shrink-0">
-                        <img src="/assets/Solid.png" alt="Heart" className="w-8 h-8 object-contain" />
-                      </div>
-
-                      {/* Avatars + Like Text */}
-                      <div className="flex flex-col gap-2">
-                        {/* Avatars group */}
-                        <Avatar.Group maxCount={6} size={30}>
-                          {(likers.length > 0 ? likers : []).slice(0, 6).map((item: any, idx: number) => {
-                            const color = ['#F97316', '#8B5CF6', '#FACF5A', '#22D3EE', '#10B981', '#3B82F6'][idx % 6]
-                            const isAPI = !!item?.user
-                            const name = isAPI ? (item.user.name || item.user.username || 'User') : item.name
-                            const initial = isAPI ? ((item.user.name?.[0] || item.user.username?.[0] || 'U').toUpperCase()) : item.initial
-                            const src = isAPI ? item.user.profilePicture : undefined
-                            return (
-                              <Avatar
-                                key={`${name}-${idx}`}
-                                src={src}
-                                style={{
-                                  backgroundColor: '#0F1035',
-                                  border: `2px solid ${color}`,
-                                  color: color,
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {!src && initial}
-                              </Avatar>
-                            )
-                          })}
-                        </Avatar.Group>
-
-                        {/* Like paragraph */}
-                        <p className="text-gray-300  border-l border-[#6B757E4D] pl-3 text-sm mt-1">
-                          {(() => {
-                            const firstName = (likers[0]?.user?.name || likers[0]?.user?.username) ?? post.username
-                            const total = likersTotal || localLikes || 0
-                            const others = Math.max(0, total - 1)
-                            return (
-                              <>
-                                <span className="font-semibold text-white">{firstName}</span>
-                                {others > 0 ? (
-                                  <>
-                                    <span className="text-gray-400"> and </span>
-                                    <span className="font-semibold text-white">{others}</span>
-                                    <span className="text-gray-400"> {others === 1 ? 'other' : 'others'} liked your article</span>
-                                  </>
-                                ) : (
-                                  <span className="text-gray-400"> liked your article</span>
-                                )}
-                                <span className="text-gray-500 ml-2 text-xs">
-                                  {post.timeAgo?.endsWith('.') ? post.timeAgo : `${post.timeAgo}.`}
-                                </span>
-                              </>
-                            )
-                          })()}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    {/* Like Icon */}
+                    <div className="w-8 h-8 flex-shrink-0">
+                      <img src="/assets/Solid.png" alt="Heart" className="w-8 h-8 object-contain" />
                     </div>
+
+                    {/* Avatars + Like Text */}
+                    <div className="flex flex-col gap-2">
+                      {/* Avatars group */}
+                      <Avatar.Group maxCount={6} size={30}>
+                        {(likers.length > 0 ? likers : []).slice(0, 6).map((item: any, idx: number) => {
+                          const color = ['#F97316', '#8B5CF6', '#FACF5A', '#22D3EE', '#10B981', '#3B82F6'][idx % 6]
+                          const isAPI = !!item?.user
+                          const name = isAPI ? (item.user.name || item.user.username || 'User') : item.name
+                          const initial = isAPI ? ((item.user.name?.[0] || item.user.username?.[0] || 'U').toUpperCase()) : item.initial
+                          const src = isAPI ? item.user.profilePicture : undefined
+                          return (
+                            <Avatar
+                              key={`${name}-${idx}`}
+                              src={src}
+                              style={{
+                                backgroundColor: '#0F1035',
+                                border: `2px solid ${color}`,
+                                color: color,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {!src && initial}
+                            </Avatar>
+                          )
+                        })}
+                      </Avatar.Group>
+
+                      {/* Like paragraph */}
+                      <p className="text-gray-300  border-l border-[#6B757E4D] pl-3 text-sm mt-1">
+                        {(() => {
+                          const firstName = (likers[0]?.user?.name || likers[0]?.user?.username) ?? post.username
+                          const total = likersTotal || localLikes || 0
+                          const others = Math.max(0, total - 1)
+                          return (
+                            <>
+                              <span className="font-semibold text-white">{firstName}</span>
+                              {others > 0 ? (
+                                <>
+                                  <span className="text-gray-400"> and </span>
+                                  <span className="font-semibold text-white">{others}</span>
+                                  <span className="text-gray-400"> {others === 1 ? 'other' : 'others'} liked your article</span>
+                                </>
+                              ) : (
+                                <span className="text-gray-400"> liked your article</span>
+                              )}
+                              <span className="text-gray-500 ml-2 text-xs">
+                                {post.timeAgo?.endsWith('.') ? post.timeAgo : `${post.timeAgo}.`}
+                              </span>
+                            </>
+                          )
+                        })()}
+                      </p>
+                    </div>
+                  </div>
                   {/* )} */}
 
                   {/* --- Comments Section --- */}
@@ -758,19 +848,68 @@ export default function FeedPost({ post }: FeedPostProps) {
                             <input
                               type="text"
                               value={commentText}
-                              onChange={(e) => setCommentText(e.target.value)}
+                              onChange={handleCommentChange}
                               placeholder="Write a comment"
                               className="w-full rounded-full px-4 py-2 pr-12 text-white placeholder-gray-500 focus:outline-none text-sm"
                               disabled={isSubmitting}
                             />
+                            
+                            {/* User Mention Suggestions Dropdown */}
+                            {showMentionSuggestions && searchedUsers.length > 0 && (
+                              <div 
+                                ref={mentionDropdownRef}
+                                className="absolute left-0 bottom-full mb-2 w-full max-w-xs bg-[#1a1a2e] border border-[#FFFFFF33] rounded-lg shadow-lg max-h-48 overflow-y-auto z-50"
+                              >
+                                {searchedUsers.map((user) => (
+                                  <button
+                                    key={user._id}
+                                    type="button"
+                                    onClick={() => handleUserSelect(user.username)}
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#2a2a3e] transition-colors text-left"
+                                  >
+                                    <Avatar
+                                      size={32}
+                                      src={user.profilePicture}
+                                      style={{
+                                        backgroundColor: '#8B5CF6',
+                                        border: '2px solid #8B5CF6',
+                                      }}
+                                    >
+                                      {!user.profilePicture && (user.name?.[0]?.toUpperCase() || user.username?.[0]?.toUpperCase() || 'U')}
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-white text-sm font-semibold truncate">
+                                        {user.name || user.username}
+                                      </p>
+                                      <p className="text-gray-400 text-xs truncate">@{user.username}</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                             {/* Emoji Icon Inside Input - Right Side */}
-                            <button
-                              type="button"
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors flex-shrink-0"
-                              aria-label="Add emoji"
-                            >
-                              <Smile className="w-5 h-5" />
-                            </button>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2" ref={emojiPickerRef}>
+                              <button
+                                type="button"
+                                onClick={() => setIsEmojiPickerOpen(v => !v)}
+                                className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                                aria-label="Add emoji"
+                              >
+                                <Smile className="w-5 h-5" />
+                              </button>
+                              {isEmojiPickerOpen && (
+                                <div className="absolute top-full right-0 mt-2 z-50">
+                                  <EmojiPicker
+                                    onEmojiClick={(emojiData) => {
+                                      setCommentText(prev => prev + (emojiData.emoji || ''))
+                                      setIsEmojiPickerOpen(false)
+                                    }}
+                                    width={360}
+                                    height={400}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* Send Button */}
@@ -784,12 +923,8 @@ export default function FeedPost({ post }: FeedPostProps) {
                         </form>
                       </div>
                     </div>
-                    {/* avatar - input bar - send button */}
-
                   </div>
                 </div>
-
-
               ),
             },
           ]}
