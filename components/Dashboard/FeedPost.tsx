@@ -29,8 +29,9 @@ interface FeedPostProps {
 const UserList = ['U', 'Lucy', 'Tom', 'Edward'];
 const ColorList = ['#f56a00', '#7265e6', '#ffbf00', '#00a2ae'];
 const GapList = [4, 3, 2, 1];
+
 export default function FeedPost({ post }: FeedPostProps) {
-  const { likePost, sharePost, savePost, commentPost, getComments, repostPost } = useFeedStore()
+  const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes } = useFeedStore()
   const { user: currentUser } = useAuthStore()
   const [liked, setLiked] = useState(post.isLiked || false)
   const [saved, setSaved] = useState(post.isSaved || false)
@@ -63,14 +64,16 @@ export default function FeedPost({ post }: FeedPostProps) {
   const [commentsTotal, setCommentsTotal] = useState<number | null>(null)
   const [commentsTotalPages, setCommentsTotalPages] = useState<number | null>(null)
   const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
-  const likerNamePool = ['Benjamin', 'Ava', 'Noah', 'Mia', 'Ethan', 'Liam']
-  const likerInitialPool = ['B', 'A', 'N', 'M', 'E', 'L']
-  const displayedLikerCount = Math.min(Math.max(localLikes, 1), likerNamePool.length)
-  const likerDisplayData = Array.from({ length: displayedLikerCount }).map((_, idx) => ({
-    name: likerNamePool[idx % likerNamePool.length],
-    initial: likerInitialPool[idx % likerInitialPool.length],
-    color: ['#F97316', '#8B5CF6', '#FACF5A', '#22D3EE', '#10B981', '#3B82F6'][idx % 6],
-  }))
+  // const likerNamePool = ['Benjamin', 'Ava', 'Noah', 'Mia', 'Ethan', 'Liam']
+  // const likerInitialPool = ['B', 'A', 'N', 'M', 'E', 'L']
+  // const displayedLikerCount = Math.min(Math.max(localLikes, 1), likerNamePool.length)
+  // const likerDisplayData = Array.from({ length: displayedLikerCount }).map((_, idx) => ({
+  //   name: likerNamePool[idx % likerNamePool.length],
+  //   initial: likerInitialPool[idx % likerInitialPool.length],
+  //   color: ['#F97316', '#8B5CF6', '#FACF5A', '#22D3EE', '#10B981', '#3B82F6'][idx % 6],
+  // }))
+  const [likers, setLikers] = useState<any[]>([])
+  const [likersTotal, setLikersTotal] = useState<number>(0)
   const [isSharing, setIsSharing] = useState(false)
   const [isReposting, setIsReposting] = useState(false)
 
@@ -114,6 +117,21 @@ export default function FeedPost({ post }: FeedPostProps) {
         setLocalLikes(post.likes)
       }
       console.error('Error liking post:', error)
+    }
+  }
+
+  const handleToggleCommentLike = async (commentId: string, index: number) => {
+    try {
+      const res = await likeComment(commentId)
+      setComments(prev => {
+        const next = [...prev]
+        if (next[index]) {
+          next[index] = { ...next[index], isLiked: res.isLiked, likesCount: res.likesCount }
+        }
+        return next
+      })
+    } catch (e) {
+      console.error('Error toggling comment like:', e)
     }
   }
 
@@ -226,6 +244,18 @@ export default function FeedPost({ post }: FeedPostProps) {
           setCommentsTotal(pagination.total ?? null)
           setCommentsTotalPages(pagination.pages ?? null)
           setHasMoreComments(pagination.page < pagination.pages)
+        }
+        // Fetch post likers
+        try {
+          const likeRes = await postLikes(post.id, 1, 20)
+          const users = likeRes?.users ?? []
+          const total = likeRes?.pagination?.total ?? users.length
+          setLikers(users)
+          setLikersTotal(total)
+        } catch (e) {
+          console.error('Error fetching post likers:', e)
+          setLikers([])
+          setLikersTotal(0)
         }
       } catch (error) {
         console.error('Error loading comments:', error)
@@ -501,7 +531,7 @@ export default function FeedPost({ post }: FeedPostProps) {
                 <div className="space-y-8">
 
                   {/* --- Likes Section --- */}
-                  {localLikes > 0 && (
+                  {/* {localLikes > 0 && ( */}
                     <div className="flex items-start gap-3">
                       {/* Like Icon */}
                       <div className="w-8 h-8 flex-shrink-0">
@@ -512,45 +542,57 @@ export default function FeedPost({ post }: FeedPostProps) {
                       <div className="flex flex-col gap-2">
                         {/* Avatars group */}
                         <Avatar.Group maxCount={6} size={30}>
-                          {likerDisplayData.map((liker, idx) => (
-                            <Avatar
-                              key={`${liker.name}-${idx}`}
-                              style={{
-                                backgroundColor: '#0F1035',
-                                border: `2px solid ${liker.color}`,
-                                color: liker.color,
-                                fontWeight: 600,
-                              }}
-                            >
-                              {liker.initial}
-                            </Avatar>
-                          ))}
+                          {(likers.length > 0 ? likers : []).slice(0, 6).map((item: any, idx: number) => {
+                            const color = ['#F97316', '#8B5CF6', '#FACF5A', '#22D3EE', '#10B981', '#3B82F6'][idx % 6]
+                            const isAPI = !!item?.user
+                            const name = isAPI ? (item.user.name || item.user.username || 'User') : item.name
+                            const initial = isAPI ? ((item.user.name?.[0] || item.user.username?.[0] || 'U').toUpperCase()) : item.initial
+                            const src = isAPI ? item.user.profilePicture : undefined
+                            return (
+                              <Avatar
+                                key={`${name}-${idx}`}
+                                src={src}
+                                style={{
+                                  backgroundColor: '#0F1035',
+                                  border: `2px solid ${color}`,
+                                  color: color,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {!src && initial}
+                              </Avatar>
+                            )
+                          })}
                         </Avatar.Group>
 
                         {/* Like paragraph */}
                         <p className="text-gray-300  border-l border-[#6B757E4D] pl-3 text-sm mt-1">
-                          <span className="font-semibold text-white">
-                            {likerDisplayData[0]?.name || post.username}
-                          </span>
-                          {localLikes > 1 ? (
-                            <>
-                              <span className="text-gray-400"> and </span>
-                              <span className="font-semibold text-white">{localLikes - 1}</span>
-                              <span className="text-gray-400">
-                                {' '}
-                                {localLikes - 1 === 1 ? 'other' : 'others'} liked your article
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-gray-400"> liked your article</span>
-                          )}
-                          <span className="text-gray-500 ml-2 text-xs">
-                            {post.timeAgo?.endsWith('.') ? post.timeAgo : `${post.timeAgo}.`}
-                          </span>
+                          {(() => {
+                            const firstName = (likers[0]?.user?.name || likers[0]?.user?.username) ?? post.username
+                            const total = likersTotal || localLikes || 0
+                            const others = Math.max(0, total - 1)
+                            return (
+                              <>
+                                <span className="font-semibold text-white">{firstName}</span>
+                                {others > 0 ? (
+                                  <>
+                                    <span className="text-gray-400"> and </span>
+                                    <span className="font-semibold text-white">{others}</span>
+                                    <span className="text-gray-400"> {others === 1 ? 'other' : 'others'} liked your article</span>
+                                  </>
+                                ) : (
+                                  <span className="text-gray-400"> liked your article</span>
+                                )}
+                                <span className="text-gray-500 ml-2 text-xs">
+                                  {post.timeAgo?.endsWith('.') ? post.timeAgo : `${post.timeAgo}.`}
+                                </span>
+                              </>
+                            )
+                          })()}
                         </p>
                       </div>
                     </div>
-                  )}
+                  {/* )} */}
 
                   {/* --- Comments Section --- */}
                   <div className="flex items-start gap-3 ml-10">
@@ -565,124 +607,135 @@ export default function FeedPost({ post }: FeedPostProps) {
                     {/* Comments */}
                     <div className="w-full ">
                       <div className="flex-1 flex flex-col h-[200px] overflow-y-auto gap-8 scrollbar-hide">
-                        {comments?.map((comment, idx) => (
-                          <div key={idx} className="relative flex gap-3">
-                            {/* Avatar with connecting line */}
-                            <div className="relative flex flex-col items-center">
-                              <Avatar
-                                size={32}
-                                src={comment?.author?.profilePicture}
-                                style={{
-                                  backgroundColor: '#FACC15',
-                                  border: '2px solid #FACC15',
-                                }}
-                              >
-                                {!comment?.author?.profilePicture &&
-                                  (comment?.author?.name?.[0]?.toUpperCase() ||
-                                    comment?.author?.username?.[0]?.toUpperCase() ||
-                                    'U')}
-                              </Avatar>
+                        {comments && comments.length > 0 ? (
+                          comments.map((comment: any, idx: number) => (
+                            <div key={idx} className="relative flex gap-3">
+                              {/* Avatar with connecting line */}
+                              <div className="relative flex flex-col items-center">
+                                <Avatar
+                                  size={32}
+                                  src={comment?.author?.profilePicture}
+                                  style={{
+                                    backgroundColor: '#FACC15',
+                                    border: '2px solid #FACC15',
+                                  }}
+                                >
+                                  {!comment?.author?.profilePicture &&
+                                    (comment?.author?.name?.[0]?.toUpperCase() ||
+                                      comment?.author?.username?.[0]?.toUpperCase() ||
+                                      'U')}
+                                </Avatar>
 
-                              {/* Connecting vertical line (only if not last comment) */}
-                              {idx < comments.length - 1 && (
-                                <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[1.5px] bg-[#6B757E]" style={{ height: 'calc(100% - 40px)' }} />
-                              )}
-                            </div>
-
-                            {/* Comment Content */}
-                            <div className="flex-1 flex flex-col">
-                              <div className="flex justify-between items-start">
-                                <p className="text-gray-300 text-[15px] leading-6">
-                                  <span className="font-semibold text-white text-base">
-                                    {comment?.author?.name || comment?.author?.username || 'User'}
-                                  </span>{' '}
-                                  <span className="text-gray-400">commented</span>{' '}
-                                  <span className="text-gray-500 text-sm">
-                                    {formatRelativeTime(comment?.createdAt)}.
-                                  </span>
-                                </p>
-
-                                {/* Like Icon */}
-                                <div className="flex flex-col items-center text-center">
-                                  <Heart
-                                    className="w-4 h-4 text-[#FF7A1A]"
-                                    fill={comment?.isLiked ? '#F97316' : 'none'}
-                                  />
-                                  <span className="text-[#9AA4B2] text-xs font-semibold">
-                                    {comment?.likesCount ?? 0}
-                                  </span>
-                                </div>
+                                {/* Connecting vertical line (only if not last comment) */}
+                                {idx < comments.length - 1 && (
+                                  <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[1.5px] bg-[#6B757E]" style={{ height: 'calc(100% - 40px)' }} />
+                                )}
                               </div>
 
-                              {/* Comment Text */}
-                              <p className="text-[#FCFCFC] text-[15px] font-[400] leading-[1.75] ml-[4px] font-exo2 mr-6">
-                                {renderCommentText(comment?.text)}
-                              </p>
+                              {/* Comment Content */}
+                              <div className="flex-1 flex flex-col">
+                                <div className="flex justify-between items-start">
+                                  <p className="text-gray-300 text-[15px] leading-6">
+                                    <span className="font-semibold text-white text-base">
+                                      {comment?.author?.name || comment?.author?.username || 'User'}
+                                    </span>{' '}
+                                    <span className="text-gray-400">commented</span>{' '}
+                                    <span className="text-gray-500 text-sm">
+                                      {formatRelativeTime(comment?.createdAt)}.
+                                    </span>
+                                  </p>
 
-                              {/* Replies Section */}
-                              {comment?.replies?.length > 0 && (
-                                <div className="mt-4 ml-10 flex flex-col gap-4 font-exo2">
-                                  {comment.replies.map((reply:any, i:number) => (
-                                    <div key={i} className="relative flex gap-3">
-                                      {/* Reply Avatar with connecting line */}
-                                      <div className="relative flex flex-col items-center">
-                                        <Avatar
-                                          size={20}
-                                          src={reply?.author?.profilePicture}
-                                          style={{
-                                            backgroundColor: '#8B5CF6',
-                                            border: '2px solid #8B5CF6',
-                                          }}
-                                        >
-                                          {!reply?.author?.profilePicture &&
-                                            (reply?.author?.name?.[0]?.toUpperCase() ||
-                                              reply?.author?.username?.[0]?.toUpperCase() ||
-                                              'U')}
-                                        </Avatar>
-
-                                        {/* Connecting line between replies */}
-                                        {i < comment.replies.length - 1 && (
-                                          <div
-                                            className="absolute top-[34px] left-1/2 -translate-x-1/2 w-[1.5px] bg-[#6B757E]"
-                                            style={{ height: 'calc(100% - 34px)' }}
-                                          />
-                                        )}
-                                      </div>
-
-                                      {/* Reply Content */}
-                                      <div className="flex-1 flex justify-between items-start font-exo2">
-                                        <div>
-                                          <p className="text-gray-300 text-sm leading-6 font-exo2">
-                                            <span className="font-semibold text-white">
-                                              {reply?.author?.name || reply?.author?.username || 'User'}
-                                            </span>{' '}
-                                            <span className="text-gray-400">replied</span>{' '}
-                                            <span className="text-gray-500 text-xs font-exo2">
-                                              {formatRelativeTime(reply?.createdAt)}.
-                                            </span>
-                                          </p>
-                                          <p className="text-[#FCFCFC] text-[12px] leading-[1.75] ml-[4px] w-[90%] font-exo2">
-                                            {renderCommentText(reply?.text)}
-                                          </p>
-                                        </div>
-
-                                        <div className="flex flex-col items-center">
-                                          <Heart
-                                            className="w-4 h-4 text-[#FF7A1A]"
-                                            fill={reply?.isLiked ? '#F97316' : 'none'}
-                                          />
-                                          <span className="text-[#9AA4B2] text-xs font-semibold">
-                                            {reply?.likesCount ?? 0}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
+                                  {/* Like Icon */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleCommentLike(comment?._id, idx)}
+                                    className="flex flex-col items-center text-center cursor-pointer"
+                                    aria-label="Like comment"
+                                  >
+                                    <Heart
+                                      className="w-4 h-4 text-[#FF7A1A]"
+                                      fill={comment?.isLiked ? '#F97316' : 'none'}
+                                    />
+                                    <span className="text-[#9AA4B2] text-xs font-semibold">
+                                      {comment?.likesCount ?? 0}
+                                    </span>
+                                  </button>
                                 </div>
-                              )}
+
+                                {/* Comment Text */}
+                                <p className="text-[#FCFCFC] text-[15px] font-[400] leading-[1.75] ml-[4px] font-exo2 mr-6">
+                                  {renderCommentText(comment?.text)}
+                                </p>
+
+                                {/* Replies Section */}
+                                {comment?.replies?.length > 0 && (
+                                  <div className="mt-4 ml-10 flex flex-col gap-4 font-exo2">
+                                    {comment.replies.map((reply: any, i: number) => (
+                                      <div key={i} className="relative flex gap-3">
+                                        {/* Reply Avatar with connecting line */}
+                                        <div className="relative flex flex-col items-center">
+                                          <Avatar
+                                            size={20}
+                                            src={reply?.author?.profilePicture}
+                                            style={{
+                                              backgroundColor: '#8B5CF6',
+                                              border: '2px solid #8B5CF6',
+                                            }}
+                                          >
+                                            {!reply?.author?.profilePicture &&
+                                              (reply?.author?.name?.[0]?.toUpperCase() ||
+                                                reply?.author?.username?.[0]?.toUpperCase() ||
+                                                'U')}
+                                          </Avatar>
+
+                                          {/* Connecting line between replies */}
+                                          {i < comment.replies.length - 1 && (
+                                            <div
+                                              className="absolute top-[34px] left-1/2 -translate-x-1/2 w-[1.5px] bg-[#6B757E]"
+                                              style={{ height: 'calc(100% - 34px)' }}
+                                            />
+                                          )}
+                                        </div>
+
+                                        {/* Reply Content */}
+                                        <div className="flex-1 flex justify-between items-start font-exo2">
+                                          <div>
+                                            <p className="text-gray-300 text-sm leading-6 font-exo2">
+                                              <span className="font-semibold text-white">
+                                                {reply?.author?.name || reply?.author?.username || 'User'}
+                                              </span>{' '}
+                                              <span className="text-gray-400">replied</span>{' '}
+                                              <span className="text-gray-500 text-xs font-exo2">
+                                                {formatRelativeTime(reply?.createdAt)}.
+                                              </span>
+                                            </p>
+                                            <p className="text-[#FCFCFC] text-[12px] leading-[1.75] ml-[4px] w-[90%] font-exo2">
+                                              {renderCommentText(reply?.text)}
+                                            </p>
+                                          </div>
+
+                                          <div className="flex flex-col items-center">
+                                            <Heart
+                                              className="w-4 h-4 text-[#FF7A1A]"
+                                              fill={reply?.isLiked ? '#F97316' : 'none'}
+                                            />
+                                            <span className="text-[#9AA4B2] text-xs font-semibold">
+                                              {reply?.likesCount ?? 0}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))
+                        ) : (
+                          <p className="text-gray-300 text-[15px] font-[400] leading-[1.75] ml-[4px] font-exo2 mr-6">
+                            No comments yet.
+                          </p>
+                        )}
                       </div>
 
 

@@ -121,6 +121,8 @@ interface FeedState {
   sharePost: (id: string) => Promise<void>
   savePost: (id: string) => Promise<void>
   getSavedPosts: () => Promise<void>
+  likeComment: (id: string) => Promise<{ isLiked: boolean; likesCount: number }>
+  postLikes: (id: string, page?: number, limit?: number) => Promise<{ users: any[]; pagination: Pagination | null }>
 }
 
 export interface Category {
@@ -148,6 +150,7 @@ interface MarketCap {
   priceChangePercentage24h: number,
   sparkline: number[],
 }
+
 interface MarketDataState {
   isLoading: boolean
   value: number,
@@ -159,7 +162,6 @@ interface MarketDataState {
   getCoinPrice: (coin: string) => Promise<void>
   getMarketCap: (coin: string) => Promise<void>
 }
-
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -390,7 +392,6 @@ export const useAuthStore = create<AuthState>()(
   )
 )
 
-
 export const useFeedStore = create<FeedState>()(
   (set, get) => ({
       posts: [],
@@ -512,6 +513,46 @@ export const useFeedStore = create<FeedState>()(
           }
         } catch (error) {
           console.error('Error liking post:', error)
+          throw error
+        }
+      },
+
+      likeComment: async (id: string) => {
+        try {
+          const response = await apiCaller('POST', `${authRoutes.likeComment}/${id}/like`)
+          console.log('likeComment response', response)
+          if (response.success) {
+            return {
+              isLiked: response.data.isLiked as boolean,
+              likesCount: response.data.likesCount as number,
+            }
+          }
+          throw new Error('Failed to like comment')
+        } catch (error) {
+          console.error('Error liking comment:', error)
+          throw error
+        }
+      },
+
+      postLikes: async (id: string, page?: number, limit?: number) => {
+        try {
+          const query = new URLSearchParams()
+          if (page) query.append('page', String(page))
+          if (limit) query.append('limit', String(limit))
+          const url = query.toString()
+            ? `${authRoutes.postLikes}/${id}/likes?${query.toString()}`
+            : `${authRoutes.postLikes}/${id}/likes`
+          const response = await apiCaller('GET', url)
+          console.log('postLikes response', response)
+          if (response.success) {
+            return {
+              users: response.data.users || [],
+              pagination: response.data.pagination || null,
+            }
+          }
+          throw new Error('Failed to get post likes')
+        } catch (error) {
+          console.error('Error getting post likes:', error)
           throw error
         }
       },
@@ -676,7 +717,6 @@ export const useCategoriesStore = create<CategoriesState>()(
       },
     })
 )
-
 
 export const useMarketDataStore = create<MarketDataState>()(
   (set, get) => ({

@@ -23,6 +23,8 @@ const authRoutes = {
     repostPost: 'posts', // Use with postId: `posts/${postId}/repost`
     sharePost: 'posts', // Use with postId: `posts/${postId}/share`
     savePost: 'posts', // Use with postId: `posts/${postId}/save`
+    likeComment: 'comments', // Use with postId: `posts/${postId}/like`
+    postLikes: 'posts', // Use with postId: `posts/${postId}/likes`
 
     categories: 'categories',
     
