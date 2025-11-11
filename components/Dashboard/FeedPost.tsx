@@ -73,25 +73,25 @@ export default function FeedPost({ post }: FeedPostProps) {
   }))
   const [isSharing, setIsSharing] = useState(false)
   const [isReposting, setIsReposting] = useState(false)
-  
+
   const handleLike = async () => {
     const newLiked = !liked
     const isRepost = !!post.originalPostId
-    
+
     // For reposts, don't do optimistic update - wait for API response
     if (!isRepost) {
       setLiked(newLiked)
       setLocalLikes(newLiked ? localLikes + 1 : Math.max(0, localLikes - 1))
     }
-    
+
     try {
       // For reposts, like the original post, otherwise like the current post
       const postIdToLike = post.originalPostId || post.id
       await likePost(postIdToLike)
-      
+
       // Update from store - the likePost function already updated the store
       const allPosts = useFeedStore.getState().posts
-      
+
       if (isRepost && post.originalPostId) {
         // For reposts, find the original post in the store (which was just updated by likePost)
         const originalPost = allPosts.find(p => p._id === post.originalPostId)
@@ -120,7 +120,7 @@ export default function FeedPost({ post }: FeedPostProps) {
   const handleRepost = async () => {
     // Prevent if already reposted or currently reposting
     if (reposted || isReposting) return
-    
+
     setIsReposting(true)
     try {
       await repostPost(post.id)
@@ -144,7 +144,7 @@ export default function FeedPost({ post }: FeedPostProps) {
   const handleShare = async () => {
     // Prevent multiple rapid clicks
     if (isSharing) return
-    
+
     setIsSharing(true)
     try {
       await sharePost(post.id)
@@ -166,21 +166,21 @@ export default function FeedPost({ post }: FeedPostProps) {
   const handleSave = async () => {
     const newSaved = !saved
     const isRepost = !!post.originalPostId
-    
+
     // For reposts, don't do optimistic update - wait for API response
     if (!isRepost) {
       setSaved(newSaved)
       setLocalSaves(newSaved ? localSaves + 1 : Math.max(0, localSaves - 1))
     }
-    
+
     try {
       // For reposts, save the original post, otherwise save the current post
       const postIdToSave = post.originalPostId || post.id
       await savePost(postIdToSave)
-      
+
       // Update from store - the savePost function already updated the store
       const allPosts = useFeedStore.getState().posts
-      
+
       if (isRepost && post.originalPostId) {
         // For reposts, find the original post in the store (which was just updated by savePost)
         const originalPost = allPosts.find(p => p._id === post.originalPostId)
@@ -226,7 +226,7 @@ export default function FeedPost({ post }: FeedPostProps) {
           setCommentsTotal(pagination.total ?? null)
           setCommentsTotalPages(pagination.pages ?? null)
           setHasMoreComments(pagination.page < pagination.pages)
-        } 
+        }
       } catch (error) {
         console.error('Error loading comments:', error)
       } finally {
@@ -243,7 +243,7 @@ export default function FeedPost({ post }: FeedPostProps) {
     try {
       await commentPost(post.id, { text: commentText.trim() })
       setCommentText('')
-      
+
       // Update comment count from store
       const updatedPost = useFeedStore.getState().posts.find(p => p._id === post.id)
       console.log('updatedPost', updatedPost)
@@ -252,7 +252,7 @@ export default function FeedPost({ post }: FeedPostProps) {
       } else {
         setLocalComments(localComments + 1)
       }
-      
+
       // Refresh comments list if accordion is open (refetch first page)
       const currentKeys = Array.isArray(activeKey) ? activeKey : activeKey ? [activeKey] : []
       if (currentKeys.includes('comments')) {
@@ -345,9 +345,50 @@ export default function FeedPost({ post }: FeedPostProps) {
     const diffDays = Math.floor(diffHours / 24)
     return `${diffDays}d`
   }
+
+  // Render comment text with mentions and URLs stylized to match design
+  const renderCommentText = (text?: string) => {
+    if (!text) return null
+    const regex = /(https?:\/\/[^\s]+)|(\bwww\.[^\s]+)|(\B@[a-zA-Z0-9_]+)/g
+    const parts: any[] = []
+    let lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = regex.exec(text)) !== null) {
+      const [full, httpUrl, wwwUrl, mention] = match
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`t-${lastIndex}`}>{text.slice(lastIndex, match.index)}</span>
+        )
+      }
+      if (httpUrl || wwwUrl) {
+        const url = httpUrl || `https://${wwwUrl}`
+        parts.push(
+          <a
+            key={`u-${match.index}`}
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[#3B82F6] hover:underline"
+          >
+            {full}
+          </a>
+        )
+      } else if (mention) {
+        parts.push(
+          <span key={`m-${match.index}`} className="text-[#3B82F6]">{mention}</span>
+        )
+      }
+      lastIndex = match.index + full.length
+    }
+    if (lastIndex < text.length) {
+      parts.push(<span key={`t-end`}>{text.slice(lastIndex)}</span>)
+    }
+    return parts
+  }
+
   return (
     <div className="rounded-xl sm:rounded-2xl border border-[#FFFFFF33] bg-[#090721] p-4 sm:p-6 md:p-8 font-exo2">
-      
+
       {/* Top Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div
@@ -358,13 +399,13 @@ export default function FeedPost({ post }: FeedPostProps) {
         >
           {/* Avatar */}
           {post.profilePicture ? (
-            <img 
-              src={post.profilePicture} 
-              alt={post.username} 
-              className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full object-cover" 
+            <img
+              src={post.profilePicture}
+              alt={post.username}
+              className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full object-cover"
             />
           ) : (
-          <img src="/post/card-21.png" alt="Avatar" className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] object-contain" />
+            <img src="/post/card-21.png" alt="Avatar" className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] object-contain" />
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -384,13 +425,13 @@ export default function FeedPost({ post }: FeedPostProps) {
       {/* Media */}
       {post.image && (
         <div className="overflow-hidden rounded-lg sm:rounded-xl w-full mb-3 sm:mb-4">
-          <img 
-            src={post.image} 
-            alt="Post Image" 
+          <img
+            src={post.image}
+            alt="Post Image"
             className="w-full h-auto object-fill max-h-[500px]"
             style={{ display: 'block' }}
           />
-      </div>
+        </div>
       )}
       <div className="border-b border-[#6B757E4D] mb-2 sm:mb-3" />
       {/* Actions */}
@@ -405,7 +446,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         {/* vertical line */}
         <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
         {/* <div className='border-s-4'></div> */}
-        <button 
+        <button
           onClick={handleCommentClick}
           className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] hover:text-blue-400"
         >
@@ -414,7 +455,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         </button>
         {/* vertical line */}
         <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
-        <button 
+        <button
           onClick={handleRepost}
           disabled={reposted || isReposting}
           className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed ${reposted ? 'text-green-400' : 'hover:text-green-400'}`}
@@ -424,7 +465,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         </button>
         {/* vertical line */}
         <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
-        <button 
+        <button
           onClick={handleShare}
           disabled={isSharing}
           className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed hover:text-green-400"
@@ -434,7 +475,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         </button>
         {/* vertical line */}
         <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
-        <button 
+        <button
           onClick={handleSave}
           className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${saved ? 'text-yellow-400' : 'hover:text-yellow-400'}`}
         >
@@ -446,7 +487,7 @@ export default function FeedPost({ post }: FeedPostProps) {
       {/* Comments Accordion */}
       <div className="mt-3 sm:mt-4">
         <Collapse
-        bordered={false}
+          bordered={false}
           activeKey={activeKey}
           onChange={setActiveKey}
           ghost
@@ -457,190 +498,245 @@ export default function FeedPost({ post }: FeedPostProps) {
                 ''
               ),
               children: (
-                <div className="space-y-5">
-                  {/* Likes Section */}
-                  {localLikes > 0 && (
-                    <div className="flex items-start gap-3 mb-5">
-                      {/* Large Purple Heart Icon */}
-                      <div className="flex-shrink-0">
-                        <img 
-                          src="/assets/Solid.png" 
-                          alt="Heart" 
-                          className="w-10 h-10 object-contain"
-                        />
-                      </div>
-                      
-                      {/* Avatars and Text Container */}
-                      <div className="flex-1 min-w-0">
-                        <div className='ml-4 mt-2'>
-                          <div className="border-l-2 w-full border-[#6B757E] pl-8 py-3 min-h-[56px]  flex flex-col gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="flex -space-x-2">
-                                {likerDisplayData.map((liker, idx) => (
-                                  <Avatar
-                                    key={`${liker.name}-${idx}`}
-                                    size={34}
-                                    style={{
-                                      backgroundColor: '#0F1035',
-                                      border: `2px solid ${liker.color}`,
-                                      color: liker.color,
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    {liker.initial}
-                                  </Avatar>
-                                ))}
-                              </div>
-                              <p className="text-gray-300 text-sm">
-                                <span className="font-semibold text-white">
-                                  {likerDisplayData[0]?.name || post.username}
-                                </span>
-                                {localLikes > 1 ? (
-                                  <>
-                                    <span className="text-gray-400"> and </span>
-                                    <span className="font-semibold text-white">{localLikes - 1}</span>
-                                    <span className="text-gray-400"> {localLikes - 1 === 1 ? 'other' : 'others'} liked your article</span>
-                                  </>
-                                ) : (
-                                  <span className="text-gray-400"> liked your article</span>
-                                )}
-                                <span className="text-gray-500 ml-1">{post.timeAgo}</span>
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        {/* Comment Section with Teal Icons and Vertical Line */}
-                        <div className="flex gap-4 mt-8 relative">
-                          {/* Overlapping Teal Speech Bubble Icons at Top with Vertical Line */}
-                          <div className="flex-shrink-0 relative" style={{ width: '28px' }}>
-                            <div className="absolute top-0 left-0" style={{ zIndex: 2 }}>
-                              <svg width="22" height="22" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M16.2153 12H23.7847C24.4876 12 25.0939 12 25.5934 12.0408C26.1205 12.0838 26.6448 12.1789 27.1493 12.436C27.9019 12.8195 28.5139 13.4314 28.8974 14.184C29.1544 14.6885 29.2495 15.2128 29.2926 15.74C29.3334 16.2394 29.3334 16.8458 29.3333 17.5486V21.2617C29.3333 21.8466 29.3334 22.3512 29.3049 22.7689C29.2749 23.2087 29.2089 23.6485 29.0289 24.0831C28.6229 25.0632 27.8442 25.8419 26.8641 26.2479C26.4295 26.4279 25.9896 26.4939 25.5498 26.5239C25.4801 26.5287 25.4079 26.5326 25.3333 26.5359V28C25.3333 28.4964 25.0576 28.9517 24.6176 29.1817C24.1777 29.4116 23.6465 29.3781 23.2389 29.0948L20.337 27.0773C19.89 26.7665 19.7996 26.7098 19.7142 26.6711C19.6157 26.6265 19.5121 26.5941 19.4058 26.5745C19.3135 26.5575 19.2069 26.5524 18.6626 26.5524H16.2153C15.5124 26.5524 14.9061 26.5524 14.4066 26.5116C13.8795 26.4686 13.3552 26.3735 12.8507 26.1164C12.0981 25.7329 11.4861 25.121 11.1026 24.3683C10.8456 23.8638 10.7505 23.3395 10.7074 22.8124C10.6666 22.313 10.6666 21.7066 10.6667 21.0038V17.5486C10.6666 16.8457 10.6666 16.2394 10.7074 15.74C10.7505 15.2128 10.8456 14.6885 11.1026 14.184C11.4861 13.4314 12.0981 12.8195 12.8507 12.436C13.3552 12.1789 13.8795 12.0838 14.4066 12.0408C14.9061 12 15.5124 12 16.2153 12Z" fill="#4FCAA7"/>
-                                <path d="M17.6551 5.49055e-07H7.67831C6.60502 -1.594e-05 5.71919 -2.9544e-05 4.9976 0.0589265C4.24814 0.12016 3.5592 0.251579 2.91209 0.5813C1.90856 1.09262 1.09266 1.90852 0.581338 2.91205C0.251617 3.55917 0.120198 4.2481 0.0589648 4.99757C8.33968e-06 5.71916 2.23285e-05 6.60498 3.93357e-05 7.67827L1.94675e-05 14.0278C-0.000158234 14.6166 -0.00029016 15.053 0.0563514 15.4396C0.397864 17.7711 2.22892 19.6022 4.5604 19.9437C4.65572 19.9577 4.71515 19.9934 4.74078 20.0148L4.74078 22.1185C4.74072 22.482 4.74067 22.8385 4.76603 23.1253C4.78856 23.3799 4.84757 23.9075 5.22239 24.3447C5.64022 24.832 6.2666 25.0892 6.90637 25.0361C7.48028 24.9884 7.89296 24.6545 8.08795 24.4892C8.14349 24.4421 8.20102 24.3906 8.26011 24.3359C8.13668 23.8549 8.08064 23.4089 8.04965 23.0296C7.99969 22.4182 7.99986 21.7118 8.00002 21.0603V17.4922C7.99986 16.8407 7.99969 16.1343 8.04965 15.5228C8.10619 14.8308 8.24613 13.9165 8.72666 12.9734C9.36581 11.719 10.3857 10.6991 11.6401 10.06C12.5832 9.57946 13.4975 9.43953 14.1895 9.38298C14.8009 9.33303 15.5073 9.3332 16.1588 9.33335H23.8412C24.3288 9.33323 24.8471 9.33311 25.3334 9.354V7.67824C25.3334 6.60496 25.3334 5.71915 25.2744 4.99757C25.2132 4.2481 25.0818 3.55917 24.7521 2.91205C24.2407 1.90852 23.4249 1.09263 22.4213 0.5813C21.7742 0.251579 21.0853 0.12016 20.3358 0.0589265C19.6142 -2.9544e-05 18.7284 -1.594e-05 17.6551 5.49055e-07Z" fill="#4FCAA7"/>
-                              </svg>
-                            </div>
-                            <div className="absolute top-[2px] left-[10px]" style={{ zIndex: 1, opacity: 0.9 }}>
-                              <svg width="18" height="18" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M16.2153 12H23.7847C24.4876 12 25.0939 12 25.5934 12.0408C26.1205 12.0838 26.6448 12.1789 27.1493 12.436C27.9019 12.8195 28.5139 13.4314 28.8974 14.184C29.1544 14.6885 29.2495 15.2128 29.2926 15.74C29.3334 16.2394 29.3334 16.8458 29.3333 17.5486V21.2617C29.3333 21.8466 29.3334 22.3512 29.3049 22.7689C29.2749 23.2087 29.2089 23.6485 29.0289 24.0831C28.6229 25.0632 27.8442 25.8419 26.8641 26.2479C26.4295 26.4279 25.9896 26.4939 25.5498 26.5239C25.4801 26.5287 25.4079 26.5326 25.3333 26.5359V28C25.3333 28.4964 25.0576 28.9517 24.6176 29.1817C24.1777 29.4116 23.6465 29.3781 23.2389 29.0948L20.337 27.0773C19.89 26.7665 19.7996 26.7098 19.7142 26.6711C19.6157 26.6265 19.5121 26.5941 19.4058 26.5745C19.3135 26.5575 19.2069 26.5524 18.6626 26.5524H16.2153C15.5124 26.5524 14.9061 26.5524 14.4066 26.5116C13.8795 26.4686 13.3552 26.3735 12.8507 26.1164C12.0981 25.7329 11.4861 25.121 11.1026 24.3683C10.8456 23.8638 10.7505 23.3395 10.7074 22.8124C10.6666 22.313 10.6666 21.7066 10.6667 21.0038V17.5486C10.6666 16.8457 10.6666 16.2394 10.7074 15.74C10.7505 15.2128 10.8456 14.6885 11.1026 14.184C11.4861 13.4314 12.0981 12.8195 12.8507 12.436C13.3552 12.1789 13.8795 12.0838 14.4066 12.0408C14.9061 12 15.5124 12 16.2153 12Z" fill="#4FCAA7"/>
-                                <path d="M17.6551 5.49055e-07H7.67831C6.60502 -1.594e-05 5.71919 -2.9544e-05 4.9976 0.0589265C4.24814 0.12016 3.5592 0.251579 2.91209 0.5813C1.90856 1.09262 1.09266 1.90852 0.581338 2.91205C0.251617 3.55917 0.120198 4.2481 0.0589648 4.99757C8.33968e-06 5.71916 2.23285e-05 6.60498 3.93357e-05 7.67827L1.94675e-05 14.0278C-0.000158234 14.6166 -0.00029016 15.053 0.0563514 15.4396C0.397864 17.7711 2.22892 19.6022 4.5604 19.9437C4.65572 19.9577 4.71515 19.9934 4.74078 20.0148L4.74078 22.1185C4.74072 22.482 4.74067 22.8385 4.76603 23.1253C4.78856 23.3799 4.84757 23.9075 5.22239 24.3447C5.64022 24.832 6.2666 25.0892 6.90637 25.0361C7.48028 24.9884 7.89296 24.6545 8.08795 24.4892C8.14349 24.4421 8.20102 24.3906 8.26011 24.3359C8.13668 23.8549 8.08064 23.4089 8.04965 23.0296C7.99969 22.4182 7.99986 21.7118 8.00002 21.0603V17.4922C7.99986 16.8407 7.99969 16.1343 8.04965 15.5228C8.10619 14.8308 8.24613 13.9165 8.72666 12.9734C9.36581 11.719 10.3857 10.6991 11.6401 10.06C12.5832 9.57946 13.4975 9.43953 14.1895 9.38298C14.8009 9.33303 15.5073 9.3332 16.1588 9.33335H23.8412C24.3288 9.33323 24.8471 9.33311 25.3334 9.354V7.67824C25.3334 6.60496 25.3334 5.71915 25.2744 4.99757C25.2132 4.2481 25.0818 3.55917 24.7521 2.91205C24.2407 1.90852 23.4249 1.09263 22.4213 0.5813C21.7742 0.251579 21.0853 0.12016 20.3358 0.0589265C19.6142 -2.9544e-05 18.7284 -1.594e-05 17.6551 5.49055e-07Z" fill="#4FCAA7"/>
-                              </svg>
-                            </div>
-                          </div>
-                          
-                          {/* Comment Content (mapped with same design) */}
-                          <div className="flex-1 min-w-0"  style={{height:"200px",overflowY:"scroll"}}>
-                            {(!comments || comments.length === 0) ? (
-                              <p className="text-gray-400 text-sm ml-[52px]">No comments yet.</p>
-                            ) : (
-                              comments?.map((c: any, idx: number) => (
-                                <div key={c?._id || idx} className="mb-4">
-                                  <div className="flex items-start gap-3">
-                                    <Avatar
-                                      size={40}
-                                      src={c?.author?.profilePicture || undefined}
-                                      style={{ backgroundColor: '#FACC15', border: '2px solid #FACC15' }}
-                                    >
-                                      {!c?.author?.profilePicture && (
-                                        c?.author?.name?.[0]?.toUpperCase() ||
-                                        c?.author?.username?.[0]?.toUpperCase() ||
-                                        'U'
-                                      )}
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0 relative">
-                                      <p className="text-gray-300 text-[15px] leading-6 mb-2">
-                                        <span className="font-semibold text-white text-base">
-                                          {c?.author?.name || c?.author?.username || 'User'}
-                                        </span>
-                                        <span className="text-gray-400"> commented on </span>
-                                        <span className="font-semibold text-white">21Spades</span>
-                                        <span className="text-gray-500 ml-2">
-                                          {formatRelativeTime(c?.createdAt)}
-                                        </span>
-                                      </p>
-                                      <p className="text-gray-200 text-base leading-[1.75] break-words ml-[52px]">
-                                        {c?.text}
-                                      </p>
-                                      {/* Orange Heart with Like Count (right aligned) */}
-                                      <div className="flex flex-col items-center gap-1 absolute right-0 top-0">
-                                        <Heart
-                                          className="w-5 h-5 text-[#FF7A1A]"
-                                          fill={c?.isLiked ? '#F97316' : 'none'}
-                                        />
-                                        <span className="text-[#9AA4B2] text-xs font-semibold">
-                                          {c?.likesCount ?? 0}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  {/* Vertical connector between stacked comments */}
-                                  {idx < comments.length - 1 && (
-                                    <div className="absolute left-[12px] top-[42px] w-px bg-[#6B757E]" style={{ height: '58px' }}></div>
-                                  )}
-                                </div>
-                              ))
-                            )}
+                <div className="space-y-8">
 
-                            {/* Load more sentinel */}
-                            <div ref={loadMoreSentinelRef} className="h-4 w-full" />
-                            {isLoadingMore && (
-                              <p className="text-gray-400 text-xs ml-[52px]">Loading more...</p>
-                            )}
-                           
-                          </div>
-                        </div>
+                  {/* --- Likes Section --- */}
+                  {localLikes > 0 && (
+                    <div className="flex items-start gap-3">
+                      {/* Like Icon */}
+                      <div className="w-8 h-8 flex-shrink-0">
+                        <img src="/assets/Solid.png" alt="Heart" className="w-8 h-8 object-contain" />
+                      </div>
+
+                      {/* Avatars + Like Text */}
+                      <div className="flex flex-col gap-2">
+                        {/* Avatars group */}
+                        <Avatar.Group maxCount={6} size={30}>
+                          {likerDisplayData.map((liker, idx) => (
+                            <Avatar
+                              key={`${liker.name}-${idx}`}
+                              style={{
+                                backgroundColor: '#0F1035',
+                                border: `2px solid ${liker.color}`,
+                                color: liker.color,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {liker.initial}
+                            </Avatar>
+                          ))}
+                        </Avatar.Group>
+
+                        {/* Like paragraph */}
+                        <p className="text-gray-300  border-l border-[#6B757E4D] pl-3 text-sm mt-1">
+                          <span className="font-semibold text-white">
+                            {likerDisplayData[0]?.name || post.username}
+                          </span>
+                          {localLikes > 1 ? (
+                            <>
+                              <span className="text-gray-400"> and </span>
+                              <span className="font-semibold text-white">{localLikes - 1}</span>
+                              <span className="text-gray-400">
+                                {' '}
+                                {localLikes - 1 === 1 ? 'other' : 'others'} liked your article
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-gray-400"> liked your article</span>
+                          )}
+                          <span className="text-gray-500 ml-2 text-xs">
+                            {post.timeAgo?.endsWith('.') ? post.timeAgo : `${post.timeAgo}.`}
+                          </span>
+                        </p>
                       </div>
                     </div>
                   )}
-                  
 
-                  {/* Comments List */}
-                  
+                  {/* --- Comments Section --- */}
+                  <div className="flex items-start gap-3 ml-10">
+                    {/* Comment Icon */}
+                    <div className="w-7 h-7 flex-shrink-0 mt-1">
+                      <svg width="18" height="18" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M16.2153 12H23.7847C24.4876 12 25.0939 12 25.5934 12.0408C26.1205 12.0838 26.6448 12.1789 27.1493 12.436C27.9019 12.8195 28.5139 13.4314 28.8974 14.184C29.1544 14.6885 29.2495 15.2128 29.2926 15.74C29.3334 16.2394 29.3334 16.8458 29.3333 17.5486V21.2617C29.3333 21.8466 29.3334 22.3512 29.3049 22.7689C29.2749 23.2087 29.2089 23.6485 29.0289 24.0831C28.6229 25.0632 27.8442 25.8419 26.8641 26.2479C26.4295 26.4279 25.9896 26.4939 25.5498 26.5239C25.4801 26.5287 25.4079 26.5326 25.3333 26.5359V28C25.3333 28.4964 25.0576 28.9517 24.6176 29.1817C24.1777 29.4116 23.6465 29.3781 23.2389 29.0948L20.337 27.0773C19.89 26.7665 19.7996 26.7098 19.7142 26.6711C19.6157 26.6265 19.5121 26.5941 19.4058 26.5745C19.3135 26.5575 19.2069 26.5524 18.6626 26.5524H16.2153C15.5124 26.5524 14.9061 26.5524 14.4066 26.5116C13.8795 26.4686 13.3552 26.3735 12.8507 26.1164C12.0981 25.7329 11.4861 25.121 11.1026 24.3683C10.8456 23.8638 10.7505 23.3395 10.7074 22.8124C10.6666 22.313 10.6666 21.7066 10.6667 21.0038V17.5486C10.6666 16.8457 10.6666 16.2394 10.7074 15.74C10.7505 15.2128 10.8456 14.6885 11.1026 14.184C11.4861 13.4314 12.0981 12.8195 12.8507 12.436C13.3552 12.1789 13.8795 12.0838 14.4066 12.0408C14.9061 12 15.5124 12 16.2153 12Z" fill="#4FCAA7" />
+                        <path d="M17.6551 5.49055e-07H7.67831C6.60502 -1.594e-05 5.71919 -2.9544e-05 4.9976 0.0589265C4.24814 0.12016 3.5592 0.251579 2.91209 0.5813C1.90856 1.09262 1.09266 1.90852 0.581338 2.91205C0.251617 3.55917 0.120198 4.2481 0.0589648 4.99757C8.33968e-06 5.71916 2.23285e-05 6.60498 3.93357e-05 7.67827L1.94675e-05 14.0278C-0.000158234 14.6166 -0.00029016 15.053 0.0563514 15.4396C0.397864 17.7711 2.22892 19.6022 4.5604 19.9437C4.65572 19.9577 4.71515 19.9934 4.74078 20.0148L4.74078 22.1185C4.74072 22.482 4.74067 22.8385 4.76603 23.1253C4.78856 23.3799 4.84757 23.9075 5.22239 24.3447C5.64022 24.832 6.2666 25.0892 6.90637 25.0361C7.48028 24.9884 7.89296 24.6545 8.08795 24.4892C8.14349 24.4421 8.20102 24.3906 8.26011 24.3359C8.13668 23.8549 8.08064 23.4089 8.04965 23.0296C7.99969 22.4182 7.99986 21.7118 8.00002 21.0603V17.4922C7.99986 16.8407 7.99969 16.1343 8.04965 15.5228C8.10619 14.8308 8.24613 13.9165 8.72666 12.9734C9.36581 11.719 10.3857 10.6991 11.6401 10.06C12.5832 9.57946 13.4975 9.43953 14.1895 9.38298C14.8009 9.33303 15.5073 9.3332 16.1588 9.33335H23.8412C24.3288 9.33323 24.8471 9.33311 25.3334 9.354V7.67824C25.3334 6.60496 25.3334 5.71915 25.2744 4.99757C25.2132 4.2481 25.0818 3.55917 24.7521 2.91205C24.2407 1.90852 23.4249 1.09263 22.4213 0.5813C21.7742 0.251579 21.0853 0.12016 20.3358 0.0589265C19.6142 -2.9544e-05 18.7284 -1.594e-05 17.6551 5.49055e-07Z" fill="#4FCAA7" />
+                      </svg>
+                    </div>
 
-                  {/* Comment Form */}
-                  <div className="pt-6 border-t border-[#FFFFFF1A] mt-6">
-                    <form onSubmit={handleSubmitComment} className="flex items-center gap-3">
-                      {/* User Profile Picture */}
-                      <Avatar
-                        src={currentUser?.profilePicture || currentUser?.avatar}
-                        size={40}
-                        style={{ backgroundColor: '#8B5CF6' }}
-                      >
-                        {!currentUser?.profilePicture && !currentUser?.avatar && (
-                          currentUser?.username?.charAt(0).toUpperCase() || currentUser?.name?.charAt(0).toUpperCase() || 'U'
-                        )}
-                      </Avatar>
-                      
-                      {/* Input Field with Emoji Icon Inside */}
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                          placeholder="Write a comment"
-                          className="w-full bg-[#120C35] border border-[#FFFFFF1A] rounded-xl px-4 py-2.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-sm"
-                          disabled={isSubmitting}
-                        />
-                        {/* Emoji Icon Inside Input - Right Side */}
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors flex-shrink-0"
-                          aria-label="Add emoji"
-                        >
-                          <Smile className="w-5 h-5" />
-                        </button>
+                    {/* Comments */}
+                    <div className="w-full ">
+                      <div className="flex-1 flex flex-col h-[200px] overflow-y-auto gap-8">
+                        {comments?.map((comment, idx) => (
+                          <div key={idx} className="relative flex gap-3">
+                            {/* Avatar with connecting line */}
+                            <div className="relative flex flex-col items-center">
+                              <Avatar
+                                size={32}
+                                src={comment?.author?.profilePicture}
+                                style={{
+                                  backgroundColor: '#FACC15',
+                                  border: '2px solid #FACC15',
+                                }}
+                              >
+                                {!comment?.author?.profilePicture &&
+                                  (comment?.author?.name?.[0]?.toUpperCase() ||
+                                    comment?.author?.username?.[0]?.toUpperCase() ||
+                                    'U')}
+                              </Avatar>
+
+                              {/* Connecting vertical line (only if not last comment) */}
+                              {idx < comments.length - 1 && (
+                                <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[1.5px] bg-[#6B757E]" style={{ height: 'calc(100% - 40px)' }} />
+                              )}
+                            </div>
+
+                            {/* Comment Content */}
+                            <div className="flex-1 flex flex-col">
+                              <div className="flex justify-between items-start">
+                                <p className="text-gray-300 text-[15px] leading-6">
+                                  <span className="font-semibold text-white text-base">
+                                    {comment?.author?.name || comment?.author?.username || 'User'}
+                                  </span>{' '}
+                                  <span className="text-gray-400">commented</span>{' '}
+                                  <span className="text-gray-500 text-sm">
+                                    {formatRelativeTime(comment?.createdAt)}.
+                                  </span>
+                                </p>
+
+                                {/* Like Icon */}
+                                <div className="flex flex-col items-center text-center">
+                                  <Heart
+                                    className="w-4 h-4 text-[#FF7A1A]"
+                                    fill={comment?.isLiked ? '#F97316' : 'none'}
+                                  />
+                                  <span className="text-[#9AA4B2] text-xs font-semibold">
+                                    {comment?.likesCount ?? 0}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Comment Text */}
+                              <p className="text-[#FCFCFC] text-[15px] font-[400] leading-[1.75] ml-[4px] font-exo2 mr-6">
+                                {renderCommentText(comment?.text)}
+                              </p>
+
+                              {/* Replies Section */}
+                              {comment?.replies?.length > 0 && (
+                                <div className="mt-4 ml-10 flex flex-col gap-4 font-exo2">
+                                  {comment.replies.map((reply, i) => (
+                                    <div key={i} className="relative flex gap-3">
+                                      {/* Reply Avatar with connecting line */}
+                                      <div className="relative flex flex-col items-center">
+                                        <Avatar
+                                          size={20}
+                                          src={reply?.author?.profilePicture}
+                                          style={{
+                                            backgroundColor: '#8B5CF6',
+                                            border: '2px solid #8B5CF6',
+                                          }}
+                                        >
+                                          {!reply?.author?.profilePicture &&
+                                            (reply?.author?.name?.[0]?.toUpperCase() ||
+                                              reply?.author?.username?.[0]?.toUpperCase() ||
+                                              'U')}
+                                        </Avatar>
+
+                                        {/* Connecting line between replies */}
+                                        {i < comment.replies.length - 1 && (
+                                          <div
+                                            className="absolute top-[34px] left-1/2 -translate-x-1/2 w-[1.5px] bg-[#6B757E]"
+                                            style={{ height: 'calc(100% - 34px)' }}
+                                          />
+                                        )}
+                                      </div>
+
+                                      {/* Reply Content */}
+                                      <div className="flex-1 flex justify-between items-start font-exo2">
+                                        <div>
+                                          <p className="text-gray-300 text-sm leading-6 font-exo2">
+                                            <span className="font-semibold text-white">
+                                              {reply?.author?.name || reply?.author?.username || 'User'}
+                                            </span>{' '}
+                                            <span className="text-gray-400">replied</span>{' '}
+                                            <span className="text-gray-500 text-xs font-exo2">
+                                              {formatRelativeTime(reply?.createdAt)}.
+                                            </span>
+                                          </p>
+                                          <p className="text-[#FCFCFC] text-[12px] leading-[1.75] ml-[4px] w-[90%] font-exo2">
+                                            {renderCommentText(reply?.text)}
+                                          </p>
+                                        </div>
+
+                                        <div className="flex flex-col items-center">
+                                          <Heart
+                                            className="w-4 h-4 text-[#FF7A1A]"
+                                            fill={reply?.isLiked ? '#F97316' : 'none'}
+                                          />
+                                          <span className="text-[#9AA4B2] text-xs font-semibold">
+                                            {reply?.likesCount ?? 0}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      
-                      {/* Send Button - White as per Figma */}
-                      <button
-                        type="submit"
-                        disabled={!commentText.trim() || isSubmitting}
-                        className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-xl disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:bg-gray-100 flex-shrink-0"
-                      >
-                        {isSubmitting ? 'Sending...' : 'Send'}
-                      </button>
-                    </form>
+
+
+                      {/* comment Input Section */}
+                      <div className="mt-4">
+                        <form onSubmit={handleSubmitComment} className="flex items-center gap-3">
+                          {/* User Profile Picture */}
+                          <Avatar
+                            src={currentUser?.profilePicture || currentUser?.avatar}
+                            size={30}
+                            style={{ backgroundColor: '#8B5CF6' }}
+                          >
+                            {!currentUser?.profilePicture && !currentUser?.avatar && (
+                              currentUser?.username?.charAt(0).toUpperCase() || currentUser?.name?.charAt(0).toUpperCase() || 'U'
+                            )}
+                          </Avatar>
+
+                          {/* Input Field with Emoji Icon Inside */}
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              value={commentText}
+                              onChange={(e) => setCommentText(e.target.value)}
+                              placeholder="Write a comment"
+                              className="w-full rounded-full px-4 py-2 pr-12 text-white placeholder-gray-500 focus:outline-none text-sm"
+                              disabled={isSubmitting}
+                            />
+                            {/* Emoji Icon Inside Input - Right Side */}
+                            <button
+                              type="button"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                              aria-label="Add emoji"
+                            >
+                              <Smile className="w-5 h-5" />
+                            </button>
+                          </div>
+
+                          {/* Send Button */}
+                          <button
+                            type="submit"
+                            disabled={!commentText.trim() || isSubmitting}
+                            className="bg-white text-gray-900 font-semibold px-4 py-2 rounded-full disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:bg-gray-100 flex-shrink-0"
+                          >
+                            {isSubmitting ? 'Sending...' : 'Send'}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                    {/* avatar - input bar - send button */}
+
                   </div>
                 </div>
+
+
               ),
             },
           ]}
