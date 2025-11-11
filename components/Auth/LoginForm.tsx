@@ -9,10 +9,62 @@ import type { LoginData, SignUpData } from '@/types/auth'
 import { Eye, XIcon } from 'lucide-react'
 import { message } from 'antd'
 import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
+import { usePrivy, useLogin } from '@privy-io/react-auth'
+import { apiCaller } from '@/app/interceptors/apicall/apicall'
+import authRoutes from '@/app/routes/route'
 
 export default function LoginForm() {
   const router = useRouter()
   const { login, isLoading, user, isAuthenticated } = useAuthStore()
+  const { ready, authenticated: privyAuthenticated, user: privyUser, getAccessToken } = usePrivy()
+  const { login: privyLogin } = useLogin({
+    onComplete: async (user: any) => {
+      try {
+        // Get Privy access token using getAccessToken() method
+        const privyAccessToken = await getAccessToken()
+        
+        if (!privyAccessToken) {
+          throw new Error('Failed to get Privy access token')
+        }
+        
+        // Backend ko Privy access token send karo
+        // Backend Privy SDK se user verify karega aur database mein save karega
+        const response = await apiCaller(
+          'POST', 
+          authRoutes.googleLogin, 
+          { privyAccessToken: privyAccessToken }, // Sirf token send karo
+          false // Don't require auth token for login
+        )
+        
+        if (response.success) {
+          // Save JWT token from backend response
+          if (response.data.token) {
+            localStorage.setItem('token', response.data.token)
+          }
+          
+          // Update auth store with backend user data
+          useAuthStore.setState({
+            user: response.data.user,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+          
+          message.success('Login successful! Redirecting...')
+          router.replace('/feed')
+        } else {
+          throw new Error(response.message || 'Failed to authenticate')
+        }
+      } catch (error: any) {
+        console.error('Error authenticating with backend:', error)
+        const errorMessage = error?.response?.data?.message || error?.message || 'Authentication failed'
+        message.error(errorMessage)
+      }
+    },
+    onError: (error: any) => {
+      console.error('Privy login error:', error)
+      message.error('Google login failed. Please try again.')
+    },
+  })
 
   // Redirect to feed when authenticated
   useEffect(() => {
@@ -20,6 +72,29 @@ export default function LoginForm() {
       router.replace('/feed')
     }
   }, [isAuthenticated, isLoading, router])
+
+  // Sync Privy authentication state
+  useEffect(() => {
+    if (ready && privyAuthenticated && privyUser && !isAuthenticated) {
+      const userData = {
+        id: privyUser.id,
+        name: privyUser.google?.name || privyUser.email?.address || 'User',
+        username: privyUser.google?.email?.split('@')[0] || privyUser.email?.address?.split('@')[0] || 'user',
+        email: privyUser.google?.email || privyUser.email?.address || '',
+        // profilePicture: privyUser.google?.picture || undefined,
+      }
+      
+      useAuthStore.setState({
+        user: userData,
+        isAuthenticated: true,
+        isLoading: false,
+      })
+      
+      if (privyUser.id) {
+        localStorage.setItem('token', privyUser.id)
+      }
+    }
+  }, [ready, privyAuthenticated, privyUser, isAuthenticated])
 
   const [formData, setFormData] = useState<LoginData>({
 
@@ -209,7 +284,12 @@ export default function LoginForm() {
                   Continue with Facebook
                 </button>
 
-                <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+                <button 
+                  type="button"
+                  onClick={() => privyLogin()}
+                  disabled={!ready || isLoading}
+                  className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <GoogleIcon />
                   Continue with Google
                 </button>

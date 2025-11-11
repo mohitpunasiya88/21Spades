@@ -3,6 +3,7 @@ const authRoutes = {
     signup: 'auth/signup',
     verifyOtp: 'auth/verify-otp',
     sendOtp: 'auth/login-phone',
+    googleLogin: 'auth/google-login', // Privy/Google login endpoint
     logout: 'auth/logout',
     getUser: 'auth/user',
     updateUser: 'auth/update-user',

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Audiowide, Asul, Exo_2 } from "next/font/google";
 import "./globals.css";
+import PrivyProvider from "@/components/PrivyProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,7 +38,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${audiowide.variable} ${asul.variable} ${exo2.variable} antialiased`}>
-        {children}
+        <PrivyProvider>
+          {children}
+        </PrivyProvider>
       </body>
     </html>
   );
