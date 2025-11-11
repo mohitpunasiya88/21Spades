@@ -564,7 +564,7 @@ export default function FeedPost({ post }: FeedPostProps) {
 
                     {/* Comments */}
                     <div className="w-full ">
-                      <div className="flex-1 flex flex-col h-[200px] overflow-y-auto gap-8">
+                      <div className="flex-1 flex flex-col h-[200px] overflow-y-auto gap-8 scrollbar-hide">
                         {comments?.map((comment, idx) => (
                           <div key={idx} className="relative flex gap-3">
                             {/* Avatar with connecting line */}
@@ -622,7 +622,7 @@ export default function FeedPost({ post }: FeedPostProps) {
                               {/* Replies Section */}
                               {comment?.replies?.length > 0 && (
                                 <div className="mt-4 ml-10 flex flex-col gap-4 font-exo2">
-                                  {comment.replies.map((reply, i) => (
+                                  {comment.replies.map((reply:any, i:number) => (
                                     <div key={i} className="relative flex gap-3">
                                       {/* Reply Avatar with connecting line */}
                                       <div className="relative flex flex-col items-center">
