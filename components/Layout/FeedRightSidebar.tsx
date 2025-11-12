@@ -92,7 +92,7 @@ export default function FeedRightSidebar() {
   return (
     <aside
       id="right-sidebar"
-      className="rounded-2xl h-full p-2 mt-5 mb-5 font-exo2 bg-[#090721] border-[0.5px] border-[#FFFFFF33]"
+      className="h-full p-2 mt-5 mb-5 font-exo2 "
     >
       {/* Fear & Greed Index */}
       <div className="mb-6 p-4 pb-0 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">

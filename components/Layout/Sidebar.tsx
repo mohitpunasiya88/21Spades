@@ -97,7 +97,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   ]
 
   return (
-    <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} h-full overflow-y-auto scrollbar-hide bg-[#020019] transition-all duration-300 mt-6`}>
+    <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} h-full overflow-y-auto scrollbar-hide bg-transparent transition-all duration-300 mt-25 md:mt-6 `}>
       {/* Combined Container */}
       <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4`}>
         <div className="rounded-lg bg-[#090721] border border-[#2A2F4A]">

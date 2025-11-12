@@ -268,11 +268,11 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 relative">
+    <div className="p-3 sm:p-4 md:p-6 relative mt-10 md:mt-0 lg:mt-0 xl:mt-0">
       {/* Mobile Floating Button for Right Sidebar */}
       <button
         onClick={() => setIsMobileRightSidebarOpen(true)}
-        className="lg:hidden fixed top-20 right-6 text-white position-fixed p-2 rounded-full  transition-all duration-300  border-2 border-purple-400/30 fixed"
+        className="lg:hidden fixed top-16 right-6 text-white position-fixed p-2 rounded-full  transition-all duration-300  border-2 border-purple-400/30 fixed"
         aria-label="Open sidebar"
       >
         {/* <SidebarIcon className="w-6 h-6" /> */}
@@ -288,11 +288,7 @@ export default function FeedPage() {
         width={320}
         styles={{
           header: {
-            background: '#020019',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-            color: 'white',
             display: 'none',
-            top: '64px',
           },
           body: {
             background: '#020019',
@@ -301,6 +297,7 @@ export default function FeedPage() {
           footer: {
             display: 'none',
           },
+          
           
         }}
       >

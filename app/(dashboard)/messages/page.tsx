@@ -217,7 +217,7 @@ export default function MessagesPage() {
   return (
     <div className="flex h-[calc(100vh-120px)] mt-10 font-exo2 w-full overflow-hidden min-h-0 relative">
       {/* Chat List */}
-      <div className={`w-full md:w-80 bg-[#090721] border border-[#FFFFFF33] rounded-[21px] mx-2 md:mx-5 font-exo2 px-2 flex flex-col h-full min-h-0 transition-all duration-300 ${
+      <div className={`w-full md:w-80 bg-[#090721] scrollbar-hide border border-[#FFFFFF33] rounded-[21px] mx-2 md:mx-5 font-exo2 px-2 flex flex-col h-full min-h-0 transition-all duration-300 ${
         isMobileChatOpen ? 'hidden md:flex' : 'flex'
       }`}>
         <div>
@@ -316,7 +316,7 @@ export default function MessagesPage() {
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto  min-h-0">
           {/* Show search results if searching */}
           {searchQuery.trim() && searchedUsers.length > 0 ? (
             <div>
@@ -397,14 +397,14 @@ export default function MessagesPage() {
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
                       )}
                     </div>
-                    <div className="flex flex-col w-full">
-                      <div className="flex text-left justify-between w-full items-center">
-                        <p className="text-white text-[18px] font-semibold">{otherUser?.name || 'Unknown'}</p>
-                        <p className="text-gray-400 text-[14px]">
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex text-left justify-between w-full items-center gap-2">
+                        <p className="text-white text-[18px] font-semibold truncate">{otherUser?.name || 'Unknown'}</p>
+                        <p className="text-gray-400 text-[14px] flex-shrink-0 whitespace-nowrap">
                           {chat.lastMessage ? formatTimestamp(chat.lastMessage.timestamp) : formatTimestamp(chat.updatedAt)}
                         </p>
                       </div>
-                      <div className="flex text-left justify-between w-full items-center">
+                      <div className="flex text-left items-center gap-2">
                         {/* Show typing indicator if someone is typing, otherwise show last message */}
                         {(() => {
                           const chatTypingUsers = typingUsers[chat._id] || []
@@ -417,28 +417,28 @@ export default function MessagesPage() {
                           
                           if (otherTypingUsers.length > 0) {
                             return (
-                              <p className="text-[#CC66FF] text-[14px] font-normal italic flex items-center gap-1">
-                                <span className="flex gap-0.5">
+                              <p className="text-[#CC66FF] text-[14px] font-normal italic flex items-center gap-1 truncate">
+                                <span className="flex gap-0.5 flex-shrink-0">
                                   <span className="w-1 h-1 bg-[#CC66FF] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                                   <span className="w-1 h-1 bg-[#CC66FF] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
                                   <span className="w-1 h-1 bg-[#CC66FF] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                                 </span>
-                                {otherUser?.name || 'Someone'} is typing...
+                                <span className="truncate">{otherUser?.name || 'Someone'} is typing...</span>
                               </p>
                             )
                           }
                           
                           return (
-                            <>
-                              <p className="text-[#FFFFFF73] text-[14px] font-normal truncate">
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                              <p className="text-[#FFFFFF73] text-[14px] font-normal truncate flex-1 min-w-0">
                                 {chat.lastMessage?.message || 'No messages yet'}
                               </p>
                               {chat.lastMessage?.isRead && (
-                                <p className="text-gray-400 text-[14px]">
+                                <div className="text-gray-400 text-[14px] flex-shrink-0">
                                   <Check className={`w-5 h-5 ${otherUser?.isOnline ? 'text-purple-500' : 'text-gray-400'}`} />
-                                </p>
+                                </div>
                               )}
-                            </>
+                            </div>
                           )
                         })()}
                       </div>
