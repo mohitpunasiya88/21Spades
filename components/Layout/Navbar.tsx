@@ -197,7 +197,7 @@ export default function Navbar() {
                 open={open}
                 onOpenChange={setOpen}
                 menu={{ items: menuItems }}
-                dropdownRender={(menu) => (
+                popupRender={(menu) => (
                   <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-2 min-w-[120px]">{menu}</div>
                 )}
               >

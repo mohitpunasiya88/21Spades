@@ -134,7 +134,7 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
               e.stopPropagation()
               setIsFavorite(!isFavorite)
             }}
-            className="absolute top-3.5 right-3.5 z-10 p-2 rounded-full transition-colors ring-1 ring-white/25"
+            className="absolute top-7.5 right-7.5 z-10 p-2 rounded-full transition-colors ring-1 ring-white/25"
             style={{
               background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
             }}
@@ -361,11 +361,10 @@ const TokenizedCollectionCard: React.FC = () => {
           </Dropdown>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 mt-10 lg:grid-cols-3 gap-8 mb-12 mx-auto max-w-7xl">
+        <div className=" grid grid-cols-1 md:grid-cols-2 mt-10 lg:grid-cols-3 gap-8 mb-12 mx-auto max-w-7xl">
           {filteredNfts.length > 0 ? (
             filteredNfts.slice(0, 6).map((nft, index) => (
               <NFTCard 
-                
                 key={index} 
                 title={nft.title}
                 creator={nft.creator}

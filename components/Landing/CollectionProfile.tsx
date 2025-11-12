@@ -6,7 +6,7 @@ import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, Grid3x3 } from 'lucide-r
 import { Dropdown, Space, Avatar } from 'antd'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import spadesImage from '../assets/Spades-image-21.png'
+import spadesImage from '../assets/21spades.png'
 import { useRouter } from 'next/navigation'
 
 interface NFT {
@@ -27,6 +27,7 @@ interface CollectionProfileProps {
   totalVolume?: string
   items?: string
   owners?: string
+  nftCount2?: string
 }
 
 // NFT Card Component for the grid
@@ -40,9 +41,9 @@ function NFTCard({ name, price, floorPrice, image }: NFT) {
       onClick={() => router.push(`/marketplace/nft/${name}`)}
     >
       <div 
-        className="relative rounded-2xl overflow-hidden transition-transform hover:scale-[1.03] m-2 p-3 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
+        className="relative rounded-2xl overflow-hidden transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
         style={{
-          minHeight: '370px',
+          height: '325px',
           boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
         }}
       >
@@ -54,11 +55,12 @@ function NFTCard({ name, price, floorPrice, image }: NFT) {
               e.stopPropagation()
               setIsFavorite(!isFavorite)
             }}
-            className="absolute top-3.5 right-3.5 z-10 p-2 rounded-full transition-colors ring-1 ring-white/25"
+            className="absolute top-7.5 right-7.5 z-10 p-2 rounded-full transition-colors ring-1 ring-white/25"
             style={{
               background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
             }}
           >
+            
             <Heart 
               className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
             />
@@ -79,8 +81,8 @@ function NFTCard({ name, price, floorPrice, image }: NFT) {
                 <Image 
                   src={spadesImage} 
                   alt="21 Spade" 
-                  width={145} 
-                  height={145} 
+                  width={125} 
+                  height={125} 
                   priority
                   className="object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
                 />
@@ -115,7 +117,8 @@ function NFTCard({ name, price, floorPrice, image }: NFT) {
 export default function CollectionProfile({
   collectionId = '21-nft-spades',
   collectionName = '21 Nft Spades',
-  nftCount = '2.2M NFTs',
+  nftCount = '2.2M',
+  nftCount2 = ' NFTs',
   description = '21 spades domains are secure domain names for the decentralized world. Easy to access...',
   floorPrice = '0.01 AVAX',
   volume24h = '0.8',
@@ -155,106 +158,102 @@ export default function CollectionProfile({
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#0F0F23]">
+    <div className="w-full min-h-screen ">
       {/* Header Section with Radial Gradient */}
       <div 
-        className="relative w-full h-[400px] overflow-hidden"
-        style={{
-          background: 'radial-gradient(ellipse at top center, #4A02D8 0%, #0F0F23 70%)',
-        }}
+        className="relative w-full h-auto min-h-[350px] sm:min-h-[400px] overflow-hidden"
+       
       >
-        <div className="relative z-10 px-8 pt-12 pb-8">
-          {/* Collection Title with Spade Icon and Verified Badge */}
-          <div className="flex items-center gap-4 mb-3">
-            {/* Spade Icon */}
-            <div className="relative w-16 h-16 flex-shrink-0">
-              <Image 
-                src={spadesImage} 
-                alt="21 Spades" 
-                width={64} 
-                height={64} 
-                className="object-contain"
-                priority
-              />
+        <div className="relative z-10 px-4 sm:px-6 md:px-8 pt-8 sm:pt-10 md:pt-12 pb-6 md:pb-8">
+          {/* Card/Box Container with Border */}
+          <div 
+            className="relative rounded-2xl overflow-hidden p-6 sm:p-8 border border-white/10"
+            style={{
+              background: 'radial-gradient(ellipse at top center, #4A02D8 0%, #0F0F23 70%)',
+            }}
+          >
+            {/* Collection Title with Spade Icon and Verified Badge */}
+            <div className="flex items-start gap-4 mb-3">
+              {/* Spade Icon */}
+              <div className="relative w-16 h-16 flex-shrink-0">
+                <Image 
+                  src={spadesImage} 
+                  alt="21 Spades" 
+                  width={64} 
+                  height={64} 
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <div className="flex flex-col flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-exo2 font-bold">{collectionName}</h1>
+                  <Avatar
+                    size={32}
+                    icon={<CheckOutlined />}
+                    // className="!bg-gradient-to-br !from-[#3B82F6] !to-[#2563EB] !flex !items-center !justify-center"
+                    style={{
+                    //   background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                    //   boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                    }}
+                  />
+                </div>
+                {/* NFT Count - Right below title and avatar */}
+                <p className="text-white text-lg font-exo2">{nftCount} <span className="text-gray-400 text-base text-blue-500 font-exo2">{nftCount2}</span></p>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-white text-4xl font-exo2 font-bold">{collectionName}</h1>
-              <Avatar
-                size={32}
-                icon={<CheckOutlined />}
-                className="!bg-gradient-to-br !from-[#3B82F6] !to-[#2563EB] !flex !items-center !justify-center !shadow-[0_2px_8px_rgba(59,130,246,0.4)]"
-                style={{
-                  background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                }}
-              />
-            </div>
-          </div>
 
-          {/* NFT Count */}
-          <p className="text-[#C084FC] text-lg mb-4 font-exo2">{nftCount}</p>
+            {/* Description */}
+            <p className="text-white text-base mb-6 font-exo2 max-w-[300px]">
+              {description}
+              <span className="text-[#C084FC] ml-2 hover:underline cursor-pointer font-exo2">More</span>
+            </p>
 
-          {/* Description */}
-          <p className="text-gray-300 text-base max-w-3xl mb-6 font-exo2">
-            {description}
-            <button className="text-[#C084FC] ml-2 hover:underline font-exo2">More</button>
-          </p>
-
-          {/* Stats Pill */}
-          <div className="mt-6">
-            <div
-              className="relative inline-flex items-center gap-6 px-8 py-4 backdrop-blur-xl ring-1 ring-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-              style={{
-                // background: 'linear-gradient(180deg, rgba(20,20,30,0.75) 0%, rgba(20,20,30,0.60) 100%)',
-                // clipPath: 'polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%)',
-                WebkitClipPath: 'polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%)',
-              }}
-            >
-              {/* Floor Price */}
-              <div className="flex flex-col items-center min-w-[100px]">
-                <div className="flex items-center gap-1.5 text-white text-sm font-bold font-exo2">
-                  <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
-                  <span>{floorPrice}</span>
+            {/* Stats Pill */}
+            <div className="mt-6">
+              <div
+                className="relative inline-flex items-center gap-6 py-4"
+              >
+                {/* Floor Price */}
+                <div className="flex flex-col items-center min-w-[100px]">
+                  <div className="flex items-center gap-1.5 text-white text-sm font-bold font-exo2">
+                    <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
+                    <span>{floorPrice}</span>
+                  </div>
+                  <span className="text-gray-400 text-xs mt-0.5 font-exo2">Floor 0%</span>
                 </div>
-                <span className="text-gray-400 text-xs mt-0.5 font-exo2">Floor 0%</span>
-              </div>
 
-              <div className="w-px h-12 bg-white/20" />
-
-              {/* 24h Volume */}
-              <div className="flex flex-col items-center min-w-[80px]">
-                <div className="flex items-center gap-1.5 text-white text-sm font-bold font-exo2">
-                  <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
-                  <span>{volume24h}</span>
+                {/* 24h Volume */}
+                <div className="flex flex-col items-center min-w-[80px]">
+                  <div className="flex items-center gap-1.5 text-white text-sm font-bold font-exo2">
+                    <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
+                    <span>{volume24h}</span>
+                  </div>
+                  <span className="text-gray-400 text-xs mt-0.5 font-exo2">24h Vol 0%</span>
                 </div>
-                <span className="text-gray-400 text-xs mt-0.5 font-exo2">24h Vol 0%</span>
-              </div>
 
-              <div className="w-px h-12 bg-white/20" />
-
-              {/* Total Volume */}
-              <div className="flex flex-col items-center min-w-[90px]">
-                <div className="flex items-center gap-1.5 text-white text-sm font-bold font-exo2">
-                  <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
-                  <span>{totalVolume}</span>
+                {/* Total Volume */}
+                <div className="flex flex-col items-center min-w-[90px]">
+                  <div className="flex items-center gap-1.5 text-white text-sm font-bold font-exo2">
+                    <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
+                    <span>{totalVolume}</span>
+                  </div>
+                  <span className="text-gray-400 text-xs mt-0.5 font-exo2">Total Vol</span>
                 </div>
-                <span className="text-gray-400 text-xs mt-0.5 font-exo2">Total Vol</span>
-              </div>
 
-              <div className="w-px h-12 bg-white/20" />
+                <div className="w-px h-12 bg-white/20" />
 
-              {/* Items */}
-              <div className="flex flex-col items-center min-w-[70px]">
-                <span className="text-white text-sm font-bold font-exo2">{items}</span>
-                <span className="text-gray-400 text-xs mt-0.5 font-exo2">Items</span>
-              </div>
+                {/* Items */}
+                <div className="flex flex-col items-center min-w-[70px]">
+                  <span className="text-white text-sm font-bold font-exo2">{items}</span>
+                  <span className="text-gray-400 text-xs mt-0.5 font-exo2">Items</span>
+                </div>
 
-              <div className="w-px h-12 bg-white/20" />
-
-              {/* Owners */}
-              <div className="flex flex-col items-center min-w-[70px]">
-                <span className="text-white text-sm font-bold font-exo2">{owners}</span>
-                <span className="text-gray-400 text-xs mt-0.5 font-exo2">Owners</span>
+                {/* Owners */}
+                <div className="flex flex-col items-center min-w-[70px]">
+                  <span className="text-white text-sm font-bold font-exo2">{owners}</span>
+                  <span className="text-gray-400 text-xs mt-0.5 font-exo2">Owners</span>
+                </div>
               </div>
             </div>
           </div>
@@ -262,15 +261,15 @@ export default function CollectionProfile({
       </div>
 
       {/* Navigation and Filter Bar */}
-      <div className="px-8 py-6 border-b border-white/10">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           {/* Tabs */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 w-full sm:w-auto overflow-x-auto">
             {['Items', 'Live', 'Activity'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`text-base font-medium transition-colors font-exo2 ${
+                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${
                   activeTab === tab
                     ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
                     : 'text-gray-400 hover:text-white'
@@ -282,12 +281,12 @@ export default function CollectionProfile({
           </div>
 
           {/* Sort and Layout Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
             {/* Sort Dropdown */}
             <Dropdown menu={{ items: sortItems, onClick: handleSortClick }} trigger={['click']} placement="bottomRight">
               <a onClick={(e) => e.preventDefault()}>
                 <Space 
-                  className='bg-[#1A1A2E] text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-[#252540] transition-colors border border-white/10 font-exo2'
+                  className='bg-[#1A1A2E] text-white px-4 py-2 rounded-full cursor-pointer hover:bg-[#252540] transition-colors border border-white/10 font-exo2'
                 >
                   {selectedSort}
                   <DownOutlined />
@@ -296,7 +295,7 @@ export default function CollectionProfile({
             </Dropdown>
 
             {/* Layout Toggles */}
-            <div className="flex items-center gap-2 border border-white/10 rounded-lg p-1 bg-[#1A1A2E]">
+            <div className="flex items-center gap-2 border border-white/10 rounded-full pr-3 pl-3 p-1 bg-[#1A1A2E]">
               <button
                 onClick={() => setLayoutView('list')}
                 className={`p-2 rounded transition-colors ${
@@ -327,17 +326,18 @@ export default function CollectionProfile({
       </div>
 
       {/* NFT Cards Grid */}
-      <div className="px-8 py-8">
-        <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {nfts.map((nft) => (
+            <div key={nft.id} className="border border-gray-700 rounded-2xl">
             <NFTCard 
-              key={nft.id}
               id={nft.id}
               name={nft.name}
               price={nft.price}
               floorPrice={nft.floorPrice}
               image={nft.image}
             />
+            </div>
           ))}
         </div>
       </div>

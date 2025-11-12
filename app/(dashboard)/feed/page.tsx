@@ -81,9 +81,12 @@ function transformPost(post: Post) {
 export default function FeedPage() {
   const { posts, isLoading, getPosts, createPost } = useFeedStore()
   const { categories, getCategories } = useCategoriesStore()
-  const [selectedCategory, setSelectedCategory] = useState('All')
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState('All') // For filtering posts
+  const [postCategory, setPostCategory] = useState('All') // For post creation
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false) // For post creation
+  const [isFilterCategoriesOpen, setIsFilterCategoriesOpen] = useState(false) // For filtering
   const categoriesRef = useRef<HTMLDivElement>(null)
+  const filterCategoriesRef = useRef<HTMLDivElement>(null)
   
   // Mobile right sidebar state
   const [isMobileRightSidebarOpen, setIsMobileRightSidebarOpen] = useState(false)
@@ -135,14 +138,19 @@ export default function FeedPage() {
 
   // Close categories dropdown and emoji picker on outside click
   useEffect(() => {
-    if (!isCategoriesOpen && !isEmojiPickerOpen) return
+    if (!isCategoriesOpen && !isFilterCategoriesOpen && !isEmojiPickerOpen) return
 
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       
-      // Close categories dropdown
+      // Close post creation categories dropdown
       if (isCategoriesOpen && categoriesRef.current && !categoriesRef.current.contains(target)) {
         setIsCategoriesOpen(false)
+      }
+      
+      // Close filter categories dropdown
+      if (isFilterCategoriesOpen && filterCategoriesRef.current && !filterCategoriesRef.current.contains(target)) {
+        setIsFilterCategoriesOpen(false)
       }
       
       // Close emoji picker - check if click is outside the emoji picker container
@@ -164,7 +172,7 @@ export default function FeedPage() {
     
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
-  }, [isCategoriesOpen, isEmojiPickerOpen])
+  }, [isCategoriesOpen, isFilterCategoriesOpen, isEmojiPickerOpen])
 
   // Handle image selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,10 +232,10 @@ export default function FeedPage() {
 
     setIsPosting(true)
     try {
-      // Get category ID if a category is selected
-      const categoryId = selectedCategory === 'All' 
+      // Get category ID if a category is selected for post creation
+      const categoryId = postCategory === 'All' 
         ? undefined 
-        : categories.find(cat => cat.name === selectedCategory)?._id
+        : categories.find(cat => cat.name === postCategory)?._id
 
       // Use first image preview URL if available (for now using data URL)
       // In production, you'd upload to S3 first and get the URL
@@ -243,7 +251,7 @@ export default function FeedPage() {
       setPostText('')
       setSelectedImages([])
       setImagePreviews([])
-      setSelectedCategory('All')
+      setPostCategory('All')
       
       // Refresh posts to show the new post
       await getPosts({ 
@@ -399,7 +407,7 @@ export default function FeedPage() {
                       style={{ backdropFilter: 'blur(4px)' }}
                     >
                       <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span className="text-[#FFFFFFCC] text-xs sm:text-sm">Categories</span>
+                      {postCategory === 'All' ? <span className="text-[#FFFFFFCC] text-xs sm:text-sm">Categories</span> : <span className="text-[#FFFFFFCC] text-xs sm:text-sm"> {postCategory} </span>}
                       <ChevronDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400 ml-0.5 sm:ml-1 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`} />
                     </button>
 
@@ -418,7 +426,7 @@ export default function FeedPage() {
                           <button
                             key={cat}
                             onClick={() => {
-                              setSelectedCategory(cat)
+                              setPostCategory(cat)
                               setIsCategoriesOpen(false)
                             }}
                             className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center justify-between group"
@@ -427,7 +435,7 @@ export default function FeedPage() {
                             }}
                           >
                             <span className="group-hover:text-purple-300 transition-colors">{cat}</span>
-                            {cat === selectedCategory && (
+                            {cat === postCategory && (
                               <span className="text-green-400 text-sm font-bold">✓</span>
                             )}
                           </button>
@@ -449,47 +457,7 @@ export default function FeedPage() {
 
           <div className="border-b-1 border-[#FFFFFF33] mb-4" ></div>
 
-          {/* Featured (Ticket) banner */}
-          {/* <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#0F1429] to-[#0B0F1E] p-6 mb-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-purple-300 px-2 py-1 rounded bg-purple-500/15 border border-purple-500/30">D-DROP</span>
-                  <span className="text-xs text-blue-300 px-2 py-1 rounded bg-blue-500/15 border border-blue-500/30">99% VERIFIED</span>
-                </div>
-                <h3 className="text-white text-2xl font-extrabold leading-tight mb-1">Win a Ferrari</h3>
-                <p className="text-purple-300 font-bold text-lg mb-2">Purosangue</p>
-                <p className="text-gray-300 mb-4 max-w-[520px]">Buy a 50 NFT ticket in USDC for your chance to win the ultimate luxury SUV.</p>
-                <div className="flex items-center gap-3 mb-5">
-                  <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-semibold shadow">Buy Ticket</button>
-                  <button className="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-lg border border-white/20">Cart</button>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-gray-300">
-                  <span><b className="text-white">{dd}</b> Days</span>
-                  <span><b className="text-white">{hh}</b> Hours</span>
-                  <span><b className="text-white">{mm}</b> Minutes</span>
-                </div>
-              </div>
-              <div className="hidden md:block w-72 h-36 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 ml-6 shadow-lg" />
-            </div>
-          </div> */}
-
-          {/* Discover banner */}
-          {/* <div className="relative overflow-hidden rounded-2xl border border-[#2A2F4A] bg-gradient-to-br from-[#19103a] via-[#2a1e70] to-[#0b0f1e] p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 max-w-xl">
-                <h4 className="text-white text-xl font-bold mb-2">Discover and sell your own tokenized assets</h4>
-                <p className="text-gray-300 mb-4">Create, trade, and showcase what's uniquely yours from digital art to real‑world experiences.</p>
-                <button className="bg-white text-gray-900 font-semibold px-5 py-2 rounded-lg">Discover Now</button>
-              </div>
-              <div className="hidden md:flex items-end gap-6 pr-2">
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-yellow-400 flex items-center justify-center text-white font-bold">21</div>
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-yellow-400 flex items-center justify-center text-white font-bold">♠</div>
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-yellow-400 flex items-center justify-center text-white font-bold">21</div>
-              </div>
-            </div>
-          </div> */}
-
+         
           {/* Explore Feed Section */}
           <div className="mb-4 sm:mb-6">
             <div className="mb-2 sm:mb-3">
@@ -497,7 +465,7 @@ export default function FeedPage() {
               <p className="text-gray-400 text-sm sm:text-base">Explore Feed, the premier Web3 marketplace for securely buying, selling, and trading digital assets.</p>
             </div>
 
-            {/* Category Tabs */}
+            {/* Category Filter Tabs */}
             <div className="flex gap-2 mb-3 sm:mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2">
               {categoriesList.map((cat) => (
                 <button
