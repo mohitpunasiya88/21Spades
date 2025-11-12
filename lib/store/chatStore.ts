@@ -334,70 +334,48 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (chatId: string, message: string, images?: string[]) => {
+    const socket = get().socket
+    if (!socket || !socket.connected) {
+      console.error('Socket not connected, cannot send message')
+      set({ isSendingMessage: false })
+      throw new Error('Socket not connected')
+    }
+
     set({ isSendingMessage: true })
+    
     try {
-      const response = await apiCaller('POST', `${authRoutes.sendMessage}/${chatId}/messages`, {
-        message,
-        images: images || []
-      })
-      console.log('sendMessage response', response)
-      if (response.success) {
-        const apiMessage = response.data.message
-        console.log('API message response:', apiMessage)
-        
-        // Transform API response to match Message interface
-        // Backend might return 'text' instead of 'message', or 'sender' object instead of 'senderId'
-        const newMessage: Message = {
-          _id: apiMessage._id,
-          chatId: apiMessage.chatId || apiMessage.chat || chatId,
-          senderId: apiMessage.senderId || apiMessage.sender?._id || apiMessage.sender || '',
-          message: apiMessage.message || apiMessage.text || message, // Use original message as fallback
-          images: apiMessage.images || (apiMessage.imageUrl ? [apiMessage.imageUrl] : []),
-          timestamp: apiMessage.timestamp || apiMessage.createdAt || new Date().toISOString(),
-          isRead: apiMessage.isRead !== undefined ? apiMessage.isRead : false,
-          createdAt: apiMessage.createdAt || apiMessage.timestamp || new Date().toISOString(),
-        }
-        
-        console.log('Transformed message:', newMessage)
-        
-        // Add message to local state
-        const messages = { ...get().messages }
-        if (!messages[chatId]) {
-          messages[chatId] = []
-        }
-        // Check if message already exists (avoid duplicates)
-        const messageExists = messages[chatId].some(msg => msg._id === newMessage._id)
-        if (!messageExists) {
-          messages[chatId] = [...messages[chatId], newMessage]
-        }
-        
-        set({ 
-          messages,
-          isSendingMessage: false 
-        })
-        
-        // Update chat's lastMessage in chats list
-        set(state => ({
-          chats: state.chats.map(chat => 
-            chat._id === chatId 
-              ? { 
-                  ...chat, 
-                  lastMessage: {
-                    _id: newMessage._id,
-                    message: newMessage.message,
-                    senderId: newMessage.senderId,
-                    timestamp: newMessage.timestamp,
-                    isRead: newMessage.isRead,
-                  },
-                  updatedAt: newMessage.timestamp,
-                }
-              : chat
-          )
-        }))
-        
-        return newMessage
+      // Send message via WebSocket (no API call needed)
+      const messageData: any = {
+        chatId: chatId,
+        text: message
       }
-      return null
+      
+      // Add images if provided
+      if (images && images.length > 0) {
+        messageData.imageUrl = images[0] // Backend might expect single imageUrl
+        messageData.images = images
+      }
+      
+      console.log('📤 [WEBSOCKET] Sending message via socket:', messageData)
+      socket.emit('send_message', messageData)
+      
+      // Reset sending state immediately (message will be added via socket event)
+      set({ isSendingMessage: false })
+      
+      // Return a temporary message object (will be replaced by socket event)
+      // This allows optimistic UI updates
+      const tempMessage: Message = {
+        _id: `temp-${Date.now()}`,
+        chatId: chatId,
+        senderId: '', // Will be set by socket response
+        message: message,
+        images: images || [],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }
+      
+      return tempMessage
     } catch (error) {
       console.error('Error sending message:', error)
       set({ isSendingMessage: false })
@@ -407,8 +385,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   editMessage: async (messageId: string, message: string) => {
     try {
-      const response = await apiCaller('PUT', `${authRoutes.editMessage}/${messageId}`, { message })
-      console.log('editMessage response', response)
+      // API expects 'text' field, not 'message'
+      const response = await apiCaller('PUT', `${authRoutes.editMessage}/${messageId}`, { text: message })
       if (response.success) {
         const updatedMessage = response.data.message
         // Update message in local state
@@ -603,7 +581,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Listen for typing indicators (real-time typing status)
     socket.on('user_typing', (data: { chatId: string; userId: string; isTyping: boolean }) => {
-      console.log('⌨️ [REAL-TIME] User typing event:', data)
+      console.log('⌨️ [REAL-TIME] Received user_typing event:', data)
       const { chatId, userId, isTyping } = data
       const typingUsers = { ...get().typingUsers }
       
@@ -614,14 +592,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (isTyping) {
         if (!typingUsers[chatId].includes(userId)) {
           typingUsers[chatId] = [...typingUsers[chatId], userId]
+          console.log('⌨️ [REAL-TIME] Added user to typing list. Chat:', chatId, 'User:', userId, 'Total typing:', typingUsers[chatId].length)
         }
-        console.log('⌨️ [REAL-TIME] User is typing in chat:', chatId)
       } else {
         typingUsers[chatId] = typingUsers[chatId].filter(id => id !== userId)
-        console.log('⌨️ [REAL-TIME] User stopped typing in chat:', chatId)
+        console.log('⌨️ [REAL-TIME] Removed user from typing list. Chat:', chatId, 'User:', userId, 'Remaining:', typingUsers[chatId].length)
       }
       
       set({ typingUsers })
+      console.log('⌨️ [REAL-TIME] Updated typingUsers state:', typingUsers)
     })
 
     // Listen for errors
@@ -633,7 +612,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendTypingIndicator: (chatId: string, isTyping: boolean) => {
     const socket = get().socket
     if (socket && socket.connected) {
+      console.log('⌨️ [SOCKET] Emitting typing event:', { chatId, isTyping })
       socket.emit('typing', { chatId, isTyping })
+    } else {
+      console.warn('⌨️ [SOCKET] Socket not connected, cannot send typing indicator')
     }
   },
 
