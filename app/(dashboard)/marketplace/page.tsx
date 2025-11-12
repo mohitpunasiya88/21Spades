@@ -134,7 +134,7 @@ import TokenizedCollectionCard from "@/components/Landing/TokenizedCollectionCar
 //     </>
     
 //   )
-// }/
+// }
 
 export default function MarketplacePage() {
   return (
