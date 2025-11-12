@@ -16,7 +16,7 @@ const countries = [
 ]
 
 export default function ProfilePage() {
-  const { user } = useAuthStore()
+  const { user, updateUser, isLoading } = useAuthStore()
   const [editing, setEditing] = useState(false)
   const [activeTab, setActiveTab] = useState('Items')
   const [form] = Form.useForm()
@@ -49,11 +49,28 @@ export default function ProfilePage() {
   const onSave = async () => {
     try {
       const values = await form.validateFields()
-      // Persist values to backend here
-      message.success("Profile saved")
+      
+      // Prepare user data with privyId preserved
+      const updatedUserData = {
+        ...user, // Preserve all existing user data
+        name: values.name,
+        username: values.username,
+        email: values.email,
+        country: values.country,
+        phone: values.phone,
+        profession: values.profession,
+        interests: values.interests,
+        bio: values.bio,
+        // privyId will be automatically preserved by updateUser function
+      }
+      
+      await updateUser(updatedUserData)
+      message.success("Profile saved successfully!")
       setEditing(false)
-    } catch (e) {
-      // validation errors surfaced by antd
+    } catch (e: any) {
+      console.error('Profile update error:', e)
+      const errorMessage = e?.response?.data?.message || e?.message || 'Failed to update profile. Please try again.'
+      message.error(errorMessage)
     }
   }
 

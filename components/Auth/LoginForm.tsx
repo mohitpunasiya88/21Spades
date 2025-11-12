@@ -2,17 +2,21 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
 import { Eye, XIcon } from 'lucide-react'
 import { message } from 'antd'
 import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
+import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
 
 export default function LoginForm() {
   const router = useRouter()
-  const { login, isLoading, user, isAuthenticated } = useAuthStore()
+  const { login, loginWithPrivy, isLoading, user, isAuthenticated } = useAuthStore()
+  const { initOAuth, state: oauthState } = useLoginWithOAuth()
+  const { ready: privyReady, authenticated: privyAuthenticated, user: privyUser, getAccessToken } = usePrivy()
+  const hasCompletedPrivyLoginRef = useRef(false)
 
   // Redirect to feed when authenticated
   useEffect(() => {
@@ -20,6 +24,42 @@ export default function LoginForm() {
       router.replace('/feed')
     }
   }, [isAuthenticated, isLoading, router])
+
+  useEffect(() => {
+    if (oauthState?.status === 'error') {
+      const errorMessage = (oauthState as any)?.error?.message || 'Social login failed. Please try again.'
+      message.error(errorMessage)
+    }
+  }, [oauthState])
+
+  useEffect(() => {
+    if (!privyReady || !privyAuthenticated || !privyUser) {
+      return
+    }
+
+    console.log('Privy OAuth user details:', privyUser)
+
+    if (hasCompletedPrivyLoginRef.current) {
+      return
+    }
+
+    const completePrivyLogin = async () => {
+      try {
+        const accessToken = await getAccessToken()
+        await loginWithPrivy(privyUser, accessToken ?? null)
+        message.success('Logged in successfully with Privy!')
+        router.replace('/feed')
+      } catch (error: any) {
+        console.error('Privy login completion error:', error)
+        hasCompletedPrivyLoginRef.current = false
+        const errorMessage = error?.message || 'Unable to complete Privy login. Please try again.'
+        message.error(errorMessage)
+      }
+    }
+
+    hasCompletedPrivyLoginRef.current = true
+    void completePrivyLogin()
+  }, [getAccessToken, loginWithPrivy, privyAuthenticated, privyReady, privyUser, router])
 
   const [formData, setFormData] = useState<LoginData>({
 
@@ -31,6 +71,8 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [rememberMe, setRememberMe] = useState(false);
+  const oauthLoading = oauthState?.status === 'loading'
+  const oauthProvider = (oauthState as any)?.provider
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -69,6 +111,23 @@ export default function LoginForm() {
     } catch (error: any) {
       console.error('Login error:', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Login failed. Please check your credentials and try again.'
+      message.error(errorMessage)
+    }
+  }
+
+  const handleOAuthLogin = async (provider: 'google' | 'twitter') => {
+    if (!privyReady) {
+      message.warning('Login is still initializing. Please try again in a moment.')
+      return
+    }
+
+    try {
+      hasCompletedPrivyLoginRef.current = false
+      console.log(`Starting Privy OAuth login for provider: ${provider}`)
+      await initOAuth({ provider })
+    } catch (error: any) {
+      console.error(`OAuth login error for ${provider}:`, error)
+      const errorMessage = error?.message || 'Unable to start social login. Please try again.'
       message.error(errorMessage)
     }
   }
@@ -199,9 +258,14 @@ export default function LoginForm() {
 
               {/* Action Buttons */}
               <div className="pt-1 md:pt-1.5 space-y-1.5 sm:space-y-2">
-                <button className="w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('twitter')}
+                  disabled={oauthLoading}
+                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
+                >
                   <XIcon />
-                  Continue with X
+                  {oauthLoading && oauthProvider === 'twitter' ? 'Connecting...' : 'Continue with X'}
                 </button>
 
                 <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
@@ -209,9 +273,14 @@ export default function LoginForm() {
                   Continue with Facebook
                 </button>
 
-                <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  disabled={oauthLoading}
+                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
+                >
                   <GoogleIcon />
-                  Continue with Google
+                  {oauthLoading && oauthProvider === 'google' ? 'Connecting...' : 'Continue with Google'}
                 </button>
 
                 <button

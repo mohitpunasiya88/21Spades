@@ -1,10 +1,16 @@
-'use client'
+"use client"
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, SignUpData, LoginData, OTPData } from '@/types/auth'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/app/routes/route'
+
+type PrivyUserLike = {
+  id?: string
+  userId?: string
+  [key: string]: unknown
+}
 
 interface AuthState {
   user: User | null
@@ -13,6 +19,7 @@ interface AuthState {
 
   sendOtp: (data: OTPData) => Promise<void>
   login: (data: LoginData) => Promise<void>
+  loginWithPrivy: (privyUser: unknown, accessToken?: string | null) => Promise<void>
   signup: (data: SignUpData) => Promise<void>
   verifyOTP: (data: OTPData) => Promise<void>
   logout: () => void
@@ -163,6 +170,69 @@ interface MarketDataState {
   getMarketCap: (coin: string) => Promise<void>
 }
 
+const mapPrivyUserToUser = (privyUser: unknown): User => {
+  const privyUserAny = (privyUser ?? {}) as PrivyUserLike & {
+    email?: { address?: string; verified?: boolean; name?: string }
+    twitter?: { username?: string; profileImageUrl?: string; name?: string; verified?: boolean }
+    username?: string
+    name?: string
+    displayName?: string
+    avatar?: string
+    nickname?: string
+    google?: { email?: string; name?: string }
+    linkedAccounts?: Array<{ email?: string; type?: string }>
+  }
+
+  const linkedAccountEmail = privyUserAny.linkedAccounts?.find((account) => account.email)?.email
+
+  const emailAddressCandidates = [
+    privyUserAny.email?.address,
+    privyUserAny.email?.name,
+    privyUserAny.google?.email,
+    linkedAccountEmail,
+  ].filter((value): value is string => Boolean(value && !value.endsWith('@privy.id')))
+
+  const officialEmail = emailAddressCandidates[0]
+
+  const derivedUsername =
+    privyUserAny.twitter?.username ||
+    privyUserAny.username ||
+    (officialEmail ? officialEmail.split('@')[0] : '') ||
+    (typeof privyUserAny.id === 'string' ? privyUserAny.id : '') ||
+    (typeof privyUserAny.userId === 'string' ? privyUserAny.userId : '')
+
+  const displayName =
+    privyUserAny.name ||
+    privyUserAny.displayName ||
+    privyUserAny.twitter?.name ||
+    privyUserAny.nickname ||
+    (officialEmail ? officialEmail.split('@')[0] : '') ||
+    'Privy User'
+
+  const ensuredEmail = officialEmail || ''
+  const privyId =
+    (typeof privyUserAny.id === 'string' && privyUserAny.id) ||
+    (typeof privyUserAny.userId === 'string' && privyUserAny.userId) ||
+    ''
+  
+  const id =
+    privyId ||
+    derivedUsername ||
+    ensuredEmail ||
+    'unknown'
+
+  return {
+    id,
+    name: displayName,
+    username: derivedUsername,
+    email: ensuredEmail,
+    profilePicture: privyUserAny.twitter?.profileImageUrl || privyUserAny.avatar,
+    twitter: privyUserAny.twitter?.username,
+    isVerified: Boolean(privyUserAny.twitter?.verified || privyUserAny.email?.verified),
+    privyId, // Store Privy ID separately for backend lookup
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -188,6 +258,70 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           set({ isLoading: false })
+          throw error
+        }
+      },
+
+      loginWithPrivy: async (privyUser: unknown, accessToken?: string | null) => {
+        set({ isLoading: true })
+        try {
+          const mappedUser = mapPrivyUserToUser(privyUser)
+          // Prepare payload to send to backend API
+          const payload = {
+            privyId: mappedUser.privyId,
+            email: mappedUser.email,
+            name: mappedUser.name,
+            username: mappedUser.username,
+            profilePicture: mappedUser.profilePicture,
+            twitter: mappedUser.twitter,
+            isVerified: mappedUser.isVerified,
+          }
+
+          console.log(' ====== Sending Privy login payload to backend:', payload)
+          
+          // Call backend API - MANDATORY: User will only be logged in if backend responds successfully
+          const response = await apiCaller('POST', authRoutes.loginWithPrivy, payload, true)
+          console.log(' ======= Backend response for Privy login:', response)
+
+          // ONLY login if backend returns success response
+          if (response.success && response.data) {
+            // Use backend token (required)
+            const token = response.data?.token
+            if (!token) {
+              throw new Error('Backend did not return authentication token')
+            }
+
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('token', token)
+            }
+
+            // Use backend user data (required)
+            const backendUser = response.data?.user
+            if (!backendUser) {
+              throw new Error('Backend did not return user data')
+            }
+
+            set({
+              user: backendUser,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+          } else {
+            // Backend response was not successful - DO NOT LOGIN
+            const errorMessage = response?.message || 'Backend authentication failed'
+            console.error('Backend login failed:', errorMessage)
+            set({ isLoading: false })
+            throw new Error(errorMessage)
+          }
+        } catch (error: any) {
+          console.error('Privy login failed - user will NOT be logged in:', error)
+          // Clear any partial state
+          set({ 
+            user: null, 
+            isAuthenticated: false, 
+            isLoading: false 
+          })
+          // Re-throw error so UI can show error message
           throw error
         }
       },
@@ -347,14 +481,38 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUser: async (data: User) => {
+        set({ isLoading: true })
         try {
-          const response = await apiCaller('PUT', authRoutes.updateUser, data )
-          console.log('response8888888', response)
+          // Get current user to preserve privyId
+          const currentUser = get().user
+          
+          // Preserve privyId from current user if it exists (important for OAuth users)
+          const payload = {
+            ...data,
+            privyId: data.privyId || currentUser?.privyId, // Preserve privyId - don't let it be removed
+            // Also preserve id to ensure we're updating the correct user
+            id: data.id || currentUser?.id,
+          }
+
+          console.log(' ====== Updating user profile:', payload)
+          console.log(' ====== Current user privyId:', currentUser?.privyId)
+          
+          const response = await apiCaller('PUT', authRoutes.updateUser, payload)
+          console.log(' ====== Backend response for user update:', response)
+          
           if (response.success) {
-            set({ user: response.data.user })
+            // Ensure privyId is preserved in the updated user
+            const updatedUser = {
+              ...response.data.user,
+              privyId: response.data.user?.privyId || currentUser?.privyId,
+            }
+            set({ user: updatedUser, isLoading: false })
+          } else {
+            set({ isLoading: false })
           }
         }
         catch (error) {
+          console.error('Error updating user:', error)
           set({ isLoading: false })
           throw error
         }

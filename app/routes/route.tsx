@@ -1,6 +1,7 @@
 const authRoutes = {
     login: 'auth/login',
     signup: 'auth/signup',
+    loginWithPrivy: 'auth/login-privy', // New route for Privy OAuth login
     verifyOtp: 'auth/verify-otp',
     sendOtp: 'auth/login-phone',
     logout: 'auth/logout',

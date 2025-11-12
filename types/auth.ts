@@ -24,6 +24,7 @@ export interface User {
   isActive?: boolean
   isOnline?: boolean
   blocked?: boolean
+  privyId?: string // Privy user ID for OAuth logins
 }
 
 export interface SignUpData {
