@@ -4,7 +4,27 @@ export interface User {
   username: string
   email: string
   phone?: string
+  phoneNumber?: string
+  countryCode?: string
   avatar?: string
+  profilePicture?: string
+  role?: string
+  country?: string
+  interests?: string[]
+  portfolio?: string
+  facebook?: string
+  instagram?: string
+  discord?: string
+  twitter?: string
+  bio?: string
+  profileView?: number
+  projects?: number
+  contributions?: number
+  isVerified?: boolean
+  isActive?: boolean
+  isOnline?: boolean
+  blocked?: boolean
+  privyId?: string // Privy user ID for OAuth logins
 }
 
 export interface SignUpData {

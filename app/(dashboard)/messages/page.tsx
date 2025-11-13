@@ -1,135 +1,300 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Search, MoreVertical, Smile, Paperclip, Mic, Edit, Check } from 'lucide-react'
-
-interface Chat {
-  id: string
-  name: string
-  time: string
-  avatar: string
-  isOnline?: boolean
-}
-
-interface Message {
-  id: string
-  senderId: string
-  message: string
-  timestamp: string
-  isRead: boolean
-  images?: string[]
-}
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Search, MoreVertical, Edit, Check, Users } from 'lucide-react'
+import { useChatStore, type Chat } from '@/lib/store/chatStore'
+import { useAuthStore } from '@/lib/store/authStore'
+import { useSocket } from '@/lib/hooks/useSocket'
+import ChatWindow from '@/components/ChatWindow'
 
 export default function MessagesPage() {
-  const [chats, setChats] = useState<Chat[]>([])
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+  const searchParams = useSearchParams()
+  const { user } = useAuthStore()
+  const {
+    chats,
+    messages,
+    searchedUsers,
+    selectedChat,
+    isLoading,
+    isSearchingUsers,
+    typingUsers,
+    getChats,
+    getMessages,
+    createOrGetChat,
+    searchUsers,
+    clearSearchedUsers,
+    setSelectedChat,
+    setSocket,
+  } = useChatStore()
 
+  // WebSocket integration
+  const { socket, isConnected } = useSocket()
+  
+  // Get current user ID for filtering typing users
+  const currentUserId = user?.id || (user as any)?._id || ''
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showEditMenu, setShowEditMenu] = useState(false)
+  const [newMessageSearch, setNewMessageSearch] = useState('')
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
+  const editMenuRef = useRef<HTMLDivElement>(null)
+
+  // Initialize WebSocket connection
   useEffect(() => {
-    fetch('/api/chat')
-      .then((res) => res.json())
-      .then((data) => setChats(data.chats))
-  }, [])
+    if (socket && isConnected) {
+      console.log('Setting socket in store, socket connected:', socket.connected)
+      setSocket(socket)
+    }
+    return () => {
+      // Don't clear socket on unmount, let it persist
+    }
+  }, [socket, isConnected, setSocket])
 
-  const handleSelectChat = (chatId: string) => {
-    setSelectedChat(chatId)
-    // Load messages for this chat
-    setMessages([
-      {
-        id: '1',
-        senderId: '1',
-        message: 'coool',
-        timestamp: 'Yesterday, 18:04',
-        isRead: true,
-      },
-      {
-        id: '2',
-        senderId: '2',
-        message: "okay, see ya at 6",
-        timestamp: 'Yesterday, 18:04',
-        isRead: true,
-      },
-      {
-        id: '3',
-        senderId: '1',
-        message: 'heyy',
-        timestamp: 'Today, 12:21',
-        isRead: true,
-      },
-      {
-        id: '4',
-        senderId: '2',
-        message: "i've arived",
-        timestamp: 'Today, 12:21',
-        isRead: true,
-      },
-      {
-        id: '5',
-        senderId: '1',
-        message: 'heyyy',
-        timestamp: 'Today, 12:25',
-        isRead: true,
-      },
-      {
-        id: '6',
-        senderId: '1',
-        message: 'can you send me the photos from yesterday?',
-        timestamp: 'Today, 12:25',
-        isRead: true,
-      },
-      {
-        id: '7',
-        senderId: '1',
-        message: 'greg really likes them :)',
-        timestamp: 'Today, 12:25',
-        isRead: true,
-      },
-      {
-        id: '8',
-        senderId: '2',
-        message: 'here you go',
-        timestamp: 'Today, 12:30',
-        isRead: true,
-        images: ['/api/placeholder/200/200', '/api/placeholder/200/200'],
-      },
-      {
-        id: '9',
-        senderId: '2',
-        message: 'they look pretty good',
-        timestamp: 'Today, 12:30',
-        isRead: true,
-      },
-      {
-        id: '10',
-        senderId: '1',
-        message: 'hahaha sure',
-        timestamp: 'Today, 12:35',
-        isRead: true,
-      },
-      {
-        id: '11',
-        senderId: '1',
-        message: 'thanks a bunch!',
-        timestamp: 'Today, 12:35',
-        isRead: true,
-      },
-    ])
+  // Load chats on mount
+  useEffect(() => {
+    getChats()
+  }, [getChats])
+
+
+  // Handle URL query parameters for chat selection
+  useEffect(() => {
+    const chatId = searchParams.get('chat')
+    const userId = searchParams.get('userId')
+    
+    if (chatId && chats.length > 0) {
+      const chat = chats.find(c => c._id === chatId)
+      if (chat) {
+        setSelectedChat(chat)
+        setIsMobileChatOpen(true)
+        // Ensure messages are loaded for this chat
+        if (!messages[chatId] || messages[chatId]?.length === 0) {
+          getMessages(chatId)
+        }
+      }
+    } else if (userId && chats.length > 0) {
+      // Find chat by userId - check both _id and id formats
+      const chat = chats.find(c => 
+        c.participants && c.participants.some(p => 
+          p._id === userId || (p as any).id === userId
+        )
+      )
+      if (chat) {
+        setSelectedChat(chat)
+        setIsMobileChatOpen(true)
+        // Ensure messages are loaded for this chat
+        if (!messages[chat._id] || messages[chat._id]?.length === 0) {
+          getMessages(chat._id)
+        }
+      } else {
+        // Create new chat with this user
+        createOrGetChat(userId).then((chat) => {
+          if (chat) {
+            setIsMobileChatOpen(true)
+          }
+        })
+      }
+    }
+  }, [searchParams, chats, setSelectedChat, createOrGetChat, messages, getMessages])
+
+  // Search users when typing in new message search (Backend API Call)
+  useEffect(() => {
+    console.log('🔍 [SEARCH] newMessageSearch changed:', newMessageSearch)
+    const timeoutId = setTimeout(() => {
+      if (newMessageSearch.trim()) {
+        console.log('🔍 [SEARCH] Calling searchUsers API with:', newMessageSearch.trim())
+        searchUsers(newMessageSearch.trim()).catch((error) => {
+          console.error('🔍 [SEARCH] Error in searchUsers:', error)
+        })
+      } else {
+        console.log('🔍 [SEARCH] Clearing searched users')
+        clearSearchedUsers()
+      }
+    }, 300) // Debounce search
+
+    return () => {
+      console.log('🔍 [SEARCH] Cleaning up timeout')
+      clearTimeout(timeoutId)
+    }
+  }, [newMessageSearch]) // Removed searchUsers and clearSearchedUsers from deps to avoid re-renders
+
+  // Search users when typing in main search input (Backend API Call)
+  useEffect(() => {
+    console.log('🔍 [SEARCH] searchQuery changed:', searchQuery)
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        console.log('🔍 [SEARCH] Calling searchUsers API from main search with:', searchQuery.trim())
+        searchUsers(searchQuery.trim()).catch((error) => {
+          console.error('🔍 [SEARCH] Error in searchUsers:', error)
+        })
+      } else {
+        console.log('🔍 [SEARCH] Clearing searched users from main search')
+        clearSearchedUsers()
+      }
+    }, 300) // Debounce search
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [searchQuery])
+
+  const handleSelectChat = useCallback((chat: Chat) => {
+    setSelectedChat(chat)
+    // Ensure messages are loaded when chat is selected
+    if (!messages[chat._id] || messages[chat._id]?.length === 0) {
+      getMessages(chat._id)
+    }
+    // On mobile, open chat window and hide chat list
+    setIsMobileChatOpen(true)
+  }, [setSelectedChat, messages, getMessages])
+
+  // Handle back button - close chat on mobile
+  const handleBackToChatList = useCallback(() => {
+    setIsMobileChatOpen(false)
+    setSelectedChat(null)
+  }, [setSelectedChat])
+
+  // Format timestamp helper for date separators
+  const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) return 'Invalid Date'
+    try {
+      const date = new Date(timestamp)
+      if (isNaN(date.getTime())) {
+        console.error('Invalid timestamp:', timestamp)
+        return 'Invalid Date'
+      }
+      const now = new Date()
+      const diff = now.getTime() - date.getTime()
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+      
+      if (days === 0) {
+        return `Today, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+      } else if (days === 1) {
+        return `Yesterday, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }
+    } catch (error) {
+      console.error('Error formatting timestamp:', timestamp, error)
+      return 'Invalid Date'
+    }
   }
 
-  const selectedChatData = chats.find((c) => c.id === selectedChat)
+  // Handle user selection from search
+  const handleUserSelect = async (userId: string) => {
+    try {
+      const chat = await createOrGetChat(userId)
+      if (chat) {
+        setSelectedChat(chat)
+        setIsMobileChatOpen(true)
+      }
+      setShowEditMenu(false)
+      setNewMessageSearch('')
+      clearSearchedUsers()
+      setSearchQuery('')
+    } catch (error) {
+      console.error('Error creating chat:', error)
+    }
+  }
+
+  // Handle click outside edit menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editMenuRef.current && !editMenuRef.current.contains(event.target as Node)) {
+        setShowEditMenu(false)
+      }
+    }
+
+    if (showEditMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showEditMenu])
 
   return (
-    <div className="flex h-[calc(100vh-120px)] mt-10 font-exo2 w-full overflow-hidden min-h-0">
+    <div className="flex h-[calc(100vh-120px)] mt-10 font-exo2 w-full overflow-hidden min-h-0 relative">
       {/* Chat List */}
-      <div className="w-80 bg-[#090721] border border-[#FFFFFF33] rounded-[21px] mx-5 font-exo2 px-2 flex flex-col h-full min-h-0">
+      <div className={`w-full md:w-80 bg-[#090721] scrollbar-hide border border-[#FFFFFF33] rounded-[21px] mx-2 md:mx-5 font-exo2 px-2 flex flex-col h-full min-h-0 transition-all duration-300 ${
+        isMobileChatOpen ? 'hidden md:flex' : 'flex'
+      }`}>
         <div>
           <div className="flex items-center justify-between p-2 my-2">
             <h2 className="text-white text-[24px] font-[700]">Chats</h2>
-            <div className='gap-2 flex'>
-              <button className="text-[#787785] hover:text-white">
+            <div className='gap-2 flex relative'>
+              <button 
+                onClick={() => setShowEditMenu(!showEditMenu)}
+                className="text-[#787785] hover:text-white transition-colors"
+              >
                 <Edit className="w-[18px] h-[18px]" />
               </button>
-              <button className="text-[#787785] hover:text-white">
+              {showEditMenu && (
+                <div 
+                  ref={editMenuRef}
+                  className="absolute top-full right-0 mt-2 w-64 bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-lg z-50 overflow-hidden"
+                >
+                    <div className="p-2">
+                    <div className="relative mb-2">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#787785]" />
+                      <input
+                        type="text"
+                        value={newMessageSearch}
+                        onChange={(e) => setNewMessageSearch(e.target.value)}
+                        placeholder="To: search"
+                        className="w-full pl-10 pr-4 py-2 bg-[#090721] border border-[#FFFFFF33] rounded-lg text-white placeholder-[#787785] text-sm focus:outline-none focus:border-purple-500"
+                        autoFocus
+                      />
+                    </div>
+                    {/* Search Results */}
+                    {isSearchingUsers && (
+                      <div className="text-center py-2 text-gray-400 text-sm">Searching...</div>
+                    )}
+                    {!isSearchingUsers && searchedUsers.length > 0 && (
+                      <div className="max-h-60 overflow-y-auto mb-2">
+                        {searchedUsers.map((user) => (
+                          <button
+                            key={user._id}
+                            onClick={() => handleUserSelect(user._id)}
+                            className="w-full text-left px-4 py-2 text-white hover:bg-[#090721] rounded-lg transition-colors flex items-center gap-3"
+                          >
+                            <div className="relative">
+                              <img
+                                src={user.profilePicture || '/assets/avatar.jpg'}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              {user.isOnline && (
+                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border border-gray-900"></div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold">{user.name}</p>
+                              <p className="text-xs text-gray-400">@{user.username}</p>
+                            </div>
+                            <div className="text-xs text-purple-400">Start Chat</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {!isSearchingUsers && newMessageSearch.trim() && searchedUsers.length === 0 && (
+                      <div className="text-center py-2 text-gray-400 text-sm">No users found</div>
+                    )}
+                    <button 
+                      onClick={() => {
+                        setShowEditMenu(false)
+                        // TODO: Handle group chat creation
+                      }}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-[#090721] rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4" />
+                      <span>Group Chat</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+              <button className="text-[#787785] hover:text-white transition-colors">
                 <MoreVertical className="w-[18px] h-[18px]" />
               </button>
             </div>
@@ -144,136 +309,159 @@ export default function MessagesPage() {
             <div className="absolute left-10 top-1/2 -translate-y-1/2 w-px h-[22px] bg-[#FFFFFF33]"></div>
             <input
               type="text"
-              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search chats..."
               className="w-full h-[44px] bg-[#14122D] border border-[#FFFFFF1A] mb-2 rounded-lg text-white placeholder-[#787486] focus:outline-none focus:border-purple-500 pl-14 pr-3"
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {chats.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => handleSelectChat(chat.id)}
-              className={`w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A] ${selectedChat === chat.id ? 'bg-[#14122D]' : ''
-                }`}
-            >
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full items-center justify-center">
-                  <img src="/assets/avatar.jpg" alt="avatar"  className="w-full h-full rounded-full object-cover"/>
-                </div>
-                {chat.isOnline && (
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
-                )}
-              </div>
-              <div className="flex flex-col w-full">
-              <div className="flex text-left justify-between w-full items-center">
-                <p className="text-white text-[18px] font-semibold">{chat.name}</p>
-                <p className="text-gray-400 text-[14px]">{chat.time}</p>
-              </div>
-              <div className="flex text-left justify-between w-full items-center">
-                <p className="text-[#FFFFFF73] text-[14px] font-normal">{chat.name}</p>
-                <p className="text-gray-400 text-[14px]"><Check className={`w-5 h-5 ${chat.isOnline ? 'text-purple-500' : 'text-gray-400'}`} /></p>
-              </div>
-              </div>
-            </button>
-          ))}
+        <div className="flex-1 overflow-y-auto  min-h-0">
+          {/* Show search results if searching */}
+          {searchQuery.trim() && searchedUsers.length > 0 ? (
+            <div>
+              <div className="px-2 py-2 text-xs text-gray-400 font-semibold">Search Results</div>
+              {searchedUsers.map((user) => (
+                <button
+                  key={user._id}
+                  onClick={() => handleUserSelect(user._id)}
+                  className="w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A]"
+                >
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full items-center justify-center">
+                      <img 
+                        src={user.profilePicture || '/assets/avatar.jpg'} 
+                        alt={user.name || 'User'}  
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    </div>
+                    {user.isOnline && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
+                    )}
+                  </div>
+                  <div className="flex flex-col w-full text-left">
+                    <p className="text-white text-[18px] font-semibold">{user.name || 'Unknown'}</p>
+                    <p className="text-[#FFFFFF73] text-[14px] font-normal">@{user.username}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : searchQuery.trim() && isSearchingUsers ? (
+            <div className="text-center py-8 text-gray-400">Searching users...</div>
+          ) : searchQuery.trim() && !isSearchingUsers && searchedUsers.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">No users found</div>
+          ) : isLoading && chats.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">Loading chats...</div>
+          ) : chats.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">No chats yet</div>
+          ) : (
+            chats
+              .filter((chat) => {
+                // If searchQuery is empty, show all chats
+                // If searchQuery has value, it will show search results above, so filter chats
+                if (searchQuery === '') return true
+                if (!chat.participants || !Array.isArray(chat.participants) || chat.participants.length === 0) return false
+                // API returns only otherUser, so first participant is the other user
+                const otherUser = chat.participants[0]
+                const name = otherUser?.name || ''
+                return name.toLowerCase().includes(searchQuery.toLowerCase())
+              })
+              .map((chat) => {
+                if (!chat.participants || !Array.isArray(chat.participants) || chat.participants.length === 0) {
+                  console.log('Chat with no participants:', chat)
+                  return null
+                }
+                // API returns only otherUser in participants array, so first participant is the other user
+                const otherUser = chat.participants[0]
+                const isSelected = selectedChat?._id === chat._id
+                
+                if (!otherUser) {
+                  console.log('No other user found for chat:', chat)
+                  return null
+                }
+                return (
+                  <button
+                    key={chat._id}
+                    onClick={() => handleSelectChat(chat)}
+                    className={`w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A] ${isSelected ? 'bg-[#14122D]' : ''}`}
+                  >
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full items-center justify-center">
+                        <img 
+                          src={otherUser?.profilePicture || '/assets/avatar.jpg'} 
+                          alt={otherUser?.name || 'User'}  
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      </div>
+                      {otherUser?.isOnline && (
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
+                      )}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex text-left justify-between w-full items-center gap-2">
+                        <p className="text-white text-[18px] font-semibold truncate">{otherUser?.name || 'Unknown'}</p>
+                        <p className="text-gray-400 text-[14px] flex-shrink-0 whitespace-nowrap">
+                          {chat.lastMessage ? formatTimestamp(chat.lastMessage.timestamp) : formatTimestamp(chat.updatedAt)}
+                        </p>
+                      </div>
+                      <div className="flex text-left items-center gap-2">
+                        {/* Show typing indicator if someone is typing, otherwise show last message */}
+                        {(() => {
+                          const chatTypingUsers = typingUsers[chat._id] || []
+                          // Filter out current user from typing users
+                          const otherTypingUsers = chatTypingUsers.filter(id => {
+                            const idStr = String(id || '')
+                            const currentIdStr = String(currentUserId || '')
+                            return idStr !== currentIdStr
+                          })
+                          
+                          if (otherTypingUsers.length > 0) {
+                            return (
+                              <p className="text-[#CC66FF] text-[14px] font-normal italic flex items-center gap-1 truncate">
+                                <span className="flex gap-0.5 flex-shrink-0">
+                                  <span className="w-1 h-1 bg-[#CC66FF] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                  <span className="w-1 h-1 bg-[#CC66FF] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                  <span className="w-1 h-1 bg-[#CC66FF] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                </span>
+                                <span className="truncate">{otherUser?.name || 'Someone'} is typing...</span>
+                              </p>
+                            )
+                          }
+                          
+                          return (
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                              <p className="text-[#FFFFFF73] text-[14px] font-normal truncate flex-1 min-w-0">
+                                {chat.lastMessage?.message || 'No messages yet'}
+                              </p>
+                              {chat.lastMessage?.isRead && (
+                                <div className="text-gray-400 text-[14px] flex-shrink-0">
+                                  <Check className={`w-5 h-5 ${otherUser?.isOnline ? 'text-purple-500' : 'text-gray-400'}`} />
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+              .filter(Boolean) // Remove null entries
+          )}
         </div>
       </div>
 
       {/* Chat Window */}
-      <div className="flex-1 min-w-0 flex flex-col bg-[#090721] border border-[#FFFFFF33] rounded-[21px] mr-5 font-exo2 min-h-0">
-        {selectedChatData ? (
-          <>
-            {/* Chat Header */}
-            <div className="p-4 rounded-t-[21px] border-b border-[#14122D] bg-[#14122D] flex items-center justify-between font-exo2">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center">
-                    <img src="/assets/avatar.jpg" alt="avatar"  className="w-full h-full rounded-full object-cover"/>
-                  </div>
-                  {selectedChatData.isOnline && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-white text-[16px] font-semibold">{selectedChatData.name}</p>
-                  <p className="text-[#CC66FF] text-[14px]">
-                    {selectedChatData.isOnline ? 'Online' : 'Last seen 5 min ago'}
-                  </p>
-                </div>
-              </div>
-              <button className="text-gray-400 hover:text-white">
-                <MoreVertical className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.map((msg, idx) => {
-                const isMine = msg.senderId === '1'
-                const showTimestamp = idx === 0 || messages[idx - 1].timestamp !== msg.timestamp
-
-                return (
-                  <div key={msg.id}>
-                    {showTimestamp && (
-                      <p className="text-center text-gray-500 text-xs mb-2">{msg.timestamp}</p>
-                    )}
-                    <div
-                      className={`flex ${isMine ? 'justify-start' : 'justify-end'}`}
-                    >
-                      <div
-                        className={`max-w-md px-4 py-2.5 rounded-2xl ${isMine
-                            ? 'bg-[#FFFFFF29] text-white text-[16px] rounded-bl-sm'
-                            : 'bg-[#4E00E5] text-white text-[14px] rounded-br-sm'
-                          } shadow-md`}
-                      >
-                        <p className="text-sm leading-relaxed">{msg.message}</p>
-                        {msg.images && (
-                          <div className="grid grid-cols-2 gap-2 mt-3">
-                            {msg.images.map((img, i) => (
-                              <div
-                                key={i}
-                                className="w-32 h-32 bg-gradient-to-br from-orange-300 to-orange-500 rounded-lg overflow-hidden shadow-md"
-                              >
-                                <div className="w-full h-full bg-gradient-to-br from-orange-200/50 to-blue-200/50"></div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Message Input */}
-            <div className="p-4 border-t border-[#FFFFFF1A] bg-[#14122D] rounded-b-[21px]">
-              <div className="flex items-center gap-2 h-[24px]">
-                <button className="text-white ">
-                  <Smile className="w-5 h-5" />
-                </button>
-                <button className="text-white ">
-                  <Paperclip className="w-5 h-5" />
-                </button>
-                <input
-                  type="text"
-                  placeholder="Type your message here ..."
-                  className="flex-1 px-4 py-2 text-white placeholder-[#A3AED0B2] focus:outline-none"
-                />
-                
-                <button className="text-white">
-                  <Mic className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400">Select a chat to start messaging</p>
-          </div>
-        )}
-      </div>
+      <ChatWindow 
+        selectedChat={selectedChat} 
+        onChatDeleted={() => {
+          // Refresh chats list when a chat is deleted
+          getChats()
+          setIsMobileChatOpen(false)
+        }}
+        onBack={handleBackToChatList}
+        isMobileChatOpen={isMobileChatOpen}
+      />
     </div>
   )
 }

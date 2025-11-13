@@ -1,5 +1,6 @@
 'use client'
 
+import { useMarketDataStore } from '@/lib/store/authStore'
 import { useEffect, useState } from 'react'
 import GaugeComponent from 'react-gauge-component'
 interface MarketData {
@@ -16,22 +17,82 @@ interface MarketData {
 }
 
 export default function FeedRightSidebar() {
+  const { getFeedGreedIndex , value, getCoinPrice, coinAmount, coinCurrency, coinSymbol,getMarketCap,marketCap} = useMarketDataStore()
   const [marketData, setMarketData] = useState<MarketData | null>(null)
   const [selected, setSelected] = useState('AVAX')
+
   useEffect(() => {
-    fetch('/api/market')
-      .then((res) => res.json())
-      .then((data) => setMarketData(data))
+    const fetchMarketData = async () => {
+      const fearGreedData:any = await getFeedGreedIndex()
+      const marketCapData:any = await getMarketCap("bitcoin")
+    }
+    fetchMarketData()
   }, [])
 
-  const value = marketData?.fearGreed.value ?? 60
-  const label = marketData?.fearGreed.label ?? 'Greed'
-  const price = marketData?.fearGreed.price ?? '120,530.31 USD'
+  useEffect(() => {
+    const fetchCoinPrice = async () => {
+      const coinPriceData:any = await getCoinPrice(selected)
+    }
+    fetchCoinPrice()
+  }, [selected])
+
+  const formatMarketCap = (marketCap: number): string => {
+    if (marketCap >= 1e12) {
+      return `$${(marketCap / 1e12).toFixed(2)} T`
+    } else if (marketCap >= 1e9) {
+      return `$${(marketCap / 1e9).toFixed(2)} B`
+    } else if (marketCap >= 1e6) {
+      return `$${(marketCap / 1e6).toFixed(2)} M`
+    }
+    return `$${marketCap.toLocaleString()}`
+  }
+
+  const generateSparklinePath = (sparkline: number[], width: number = 240, height: number = 70): string => {
+    if (!sparkline || sparkline.length === 0) return ''
+    
+    const min = Math.min(...sparkline)
+    const max = Math.max(...sparkline)
+    const range = max - min || 1 // Avoid division by zero
+    
+    const points = sparkline.map((value, index) => {
+      const x = (index / (sparkline.length - 1)) * width
+      const y = height - ((value - min) / range) * (height - 10) - 5 // Leave some padding
+      return `${x},${y}`
+    }).join(' ')
+    
+    return points
+  }
+
+  // Generate area path for gradient fill
+  const generateAreaPath = (sparkline: number[], width: number = 240, height: number = 70): string => {
+    if (!sparkline || sparkline.length === 0) return ''
+    
+    const min = Math.min(...sparkline)
+    const max = Math.max(...sparkline)
+    const range = max - min || 1
+    
+    const points = sparkline.map((value, index) => {
+      const x = (index / (sparkline.length - 1)) * width
+      const y = height - ((value - min) / range) * (height - 10) - 5
+      return `${x},${y}`
+    }).join(' ')
+    
+    const lastX = width
+    const firstX = 0
+    const bottomY = height
+    
+    return `M${firstX},${bottomY} L${points.split(' ')[0]} L${points} L${lastX},${bottomY} Z`
+  }
+
+  // Dummy data values
+  const dummyPriceChange = marketCap?.priceChange24h || 0
+  const isPositive = dummyPriceChange >= 0
+  const marketCapFormatted = formatMarketCap(marketCap?.marketCap || 0)
 
   return (
     <aside
       id="right-sidebar"
-      className="rounded-2xl h-full p-2 mt-5 mb-5 font-exo2 bg-[#090721] border-[0.5px] border-[#FFFFFF33]"
+      className="h-full p-2 mt-5 mb-5 font-exo2 "
     >
       {/* Fear & Greed Index */}
       <div className="mb-6 p-4 pb-0 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
@@ -63,8 +124,9 @@ export default function FeedRightSidebar() {
         <div className="">
           <div className="w-full h-[0.5px] bg-[#FFFFFF1A] mb-2" />
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-white font-semibold">{price}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#5C09FF] text-white border border-[#5C09FF]">{label}</span>
+            <span className="text-white font-semibold">{coinAmount}</span>
+            <span className="px-2 py-0.5 rounded-full bg-[#5C09FF] text-white border border-[#5C09FF]">{coinCurrency}</span>
+            <span className="px-2 py-0.5 rounded-full bg-[#5C09FF] text-white border border-[#5C09FF]">{coinSymbol}</span>
           </div>
           <div className="relative w-full h-full">
             {/* Inner glow background */}
@@ -127,13 +189,13 @@ export default function FeedRightSidebar() {
             <h3 className="text-white font-semibold">Market Cap <span className="text-gray-500">›</span></h3>
             <button className="text-purple-400 text-sm">See All &gt;</button>
           </div>
-          {/* horizontal line */}
           <div className="w-full h-[0.5px] bg-[#FFFFFF33] mb-2" />
           <div className="flex items-end justify-between mb-1">
-            <p className="text-white text-2xl font-bold">{marketData?.marketCap.value || '$5.02 T'}</p>
-            <p className="text-green-400 text-sm">^ {marketData?.marketCap.change || '+0.50%'}</p>
+            <p className="text-white text-2xl font-bold">{marketCapFormatted}</p>
+            <p className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+              {isPositive ? '^' : '↓'} {isPositive ? '+' : ''}{dummyPriceChange.toFixed(2)}%
+            </p>
           </div>
-          {/* Area chart with glow */}
           <svg viewBox="0 0 240 70" className="w-full h-[70px]">
             <defs>
               <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -144,12 +206,22 @@ export default function FeedRightSidebar() {
                 </feMerge>
               </filter>
               <linearGradient id="area" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#22c55e" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
+                <stop offset="0%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity="0.25" />
+                <stop offset="100%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity="0" />
               </linearGradient>
             </defs>
-            <path d="M0,50 20,52 40,45 60,48 80,38 100,40 120,32 140,36 160,30 180,34 200,28 220,32 240,30 L240,70 L0,70 Z" fill="url(#area)" />
-            <polyline filter="url(#glow)" fill="none" stroke="#22c55e" strokeLinecap="round" strokeWidth="2" points="0,50 20,52 40,45 60,48 80,38 100,40 120,32 140,36 160,30 180,34 200,28 220,32 240,30" />
+            <path 
+              d={generateAreaPath(marketCap?.sparkline || [])} 
+              fill="url(#area)" 
+            />
+            <polyline 
+              filter="url(#glow)" 
+              fill="none" 
+              stroke={isPositive ? "#22c55e" : "#ef4444"} 
+              strokeLinecap="round" 
+              strokeWidth="2" 
+              points={generateSparklinePath(marketCap?.sparkline || [])} 
+            />
           </svg>
         </div>
       </div>

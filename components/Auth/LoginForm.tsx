@@ -2,26 +2,77 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
 import { Eye, XIcon } from 'lucide-react'
+import { message } from 'antd'
 import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
+import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
 
 export default function LoginForm() {
   const router = useRouter()
-  const { login, isLoading } = useAuthStore()
+  const { login, loginWithPrivy, isLoading, user, isAuthenticated } = useAuthStore()
+  const { initOAuth, state: oauthState } = useLoginWithOAuth()
+  const { ready: privyReady, authenticated: privyAuthenticated, user: privyUser, getAccessToken } = usePrivy()
+  const hasCompletedPrivyLoginRef = useRef(false)
+
+  // Redirect to feed when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      router.replace('/feed')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  useEffect(() => {
+    if (oauthState?.status === 'error') {
+      const errorMessage = (oauthState as any)?.error?.message || 'Social login failed. Please try again.'
+      message.error(errorMessage)
+    }
+  }, [oauthState])
+
+  useEffect(() => {
+    if (!privyReady || !privyAuthenticated || !privyUser) {
+      return
+    }
+
+    console.log('Privy OAuth user details:', privyUser)
+
+    if (hasCompletedPrivyLoginRef.current) {
+      return
+    }
+
+    const completePrivyLogin = async () => {
+      try {
+        const accessToken = await getAccessToken()
+        await loginWithPrivy(privyUser, accessToken ?? null)
+        message.success('Logged in successfully with Privy!')
+        router.replace('/feed')
+      } catch (error: any) {
+        console.error('Privy login completion error:', error)
+        hasCompletedPrivyLoginRef.current = false
+        const errorMessage = error?.message || 'Unable to complete Privy login. Please try again.'
+        message.error(errorMessage)
+      }
+    }
+
+    hasCompletedPrivyLoginRef.current = true
+    void completePrivyLogin()
+  }, [getAccessToken, loginWithPrivy, privyAuthenticated, privyReady, privyUser, router])
 
   const [formData, setFormData] = useState<LoginData>({
 
     username: '',
     password: '',
   })
+  console.log('loginformuser', user)
   const [errors, setErrors] = useState<Partial<SignUpData>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [rememberMe, setRememberMe] = useState(false);
+  const oauthLoading = oauthState?.status === 'loading'
+  const oauthProvider = (oauthState as any)?.provider
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -30,16 +81,54 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.password) {
-      setErrors({ confirmPassword: 'Passwords do not match' })
+    
+    // Reset errors
+    setErrors({})
+    
+    // Validation checks
+    if (!formData.username || formData.username.trim() === '') {
+      setErrors({ username: 'Please enter your username' })
+      message.error('Please enter your username')
+      return
+    }
+
+    if (!formData.password || formData.password.trim() === '') {
+      setErrors({ password: 'Please enter your password' })
+      message.error('Please enter your password')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setErrors({ password: 'Password must be at least 6 characters long' })
+      message.error('Password must be at least 6 characters long')
       return
     }
 
     try {
       await login(formData)
-      router.push('/feed')
-    } catch (error) {
-      console.error('Signup error:', error)
+      message.success('Login successful! Redirecting...')
+      // Redirect will happen via useEffect when isAuthenticated becomes true
+    } catch (error: any) {
+      console.error('Login error:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Login failed. Please check your credentials and try again.'
+      message.error(errorMessage)
+    }
+  }
+
+  const handleOAuthLogin = async (provider: 'google' | 'twitter') => {
+    if (!privyReady) {
+      message.warning('Login is still initializing. Please try again in a moment.')
+      return
+    }
+
+    try {
+      hasCompletedPrivyLoginRef.current = false
+      console.log(`Starting Privy OAuth login for provider: ${provider}`)
+      await initOAuth({ provider })
+    } catch (error: any) {
+      console.error(`OAuth login error for ${provider}:`, error)
+      const errorMessage = error?.message || 'Unable to start social login. Please try again.'
+      message.error(errorMessage)
     }
   }
 
@@ -50,8 +139,7 @@ export default function LoginForm() {
       <div className="w-full max-w-md sm:max-w-lg relative z-10">
         {/* Form container with gray border */}
         <div className="relative rounded-xl  md:rounded-2xl border-1 border-gray-600">
-          <div className="bg-blur bg-[linear-gradient(135deg,#4A01D8_1%,#4A01D8_1%,#000_17%,#000_90%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/40">
-            {/* Header Section */}
+        <div className="bg-blur bg-opacity-20 bg-[linear-gradient(135deg,rgba(74,1,216,0.3)_10%,#000_25%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/40">            {/* Header Section */}
             <div className="mb-2 md:mb-3 text-center">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-audiowide font-bold mb-1 bg-gradient-to-r from-[#ffcc00] via-orange-400 to-orange-500 bg-clip-text text-transparent">
                 WELCOME BACK!
@@ -107,10 +195,13 @@ export default function LoginForm() {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Enter user name"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.username ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                 </div>
+                {errors.username && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.username}</p>}
               </div>
 
 
@@ -126,7 +217,9 @@ export default function LoginForm() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
-                    className="w-full border font-exo2 border-gray-600 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors text-sm sm:text-base"
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                      errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
+                    }`}
                     required
                   />
                   <button
@@ -137,6 +230,7 @@ export default function LoginForm() {
                     {showPassword ? <Eye size={16} /> : <img src="/assets/Eye Closed.png" alt="Eye closed" className="w-4 h-4" />}
                   </button>
                 </div>
+                {errors.password && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.password}</p>}
               </div>
               <div className="flex mt-4 items-center justify-between mb-6 sm:mb-8 text-xs sm:text-sm">
                 <label className="flex items-center gap-2 cursor-pointer text-white">
@@ -157,16 +251,21 @@ export default function LoginForm() {
                 <div className="h-px bg-gray-600 w-full"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="px-2 py-0.5 text-gray text-xs sm:text-sm font-exo2 bg-black rounded-full ">
-                    Ro
+                    OR
                   </span>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="pt-1 md:pt-1.5 space-y-1.5 sm:space-y-2">
-                <button className="w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('twitter')}
+                  disabled={oauthLoading}
+                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
+                >
                   <XIcon />
-                  Continue with X
+                  {oauthLoading && oauthProvider === 'twitter' ? 'Connecting...' : 'Continue with X'}
                 </button>
 
                 <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
@@ -174,15 +273,20 @@ export default function LoginForm() {
                   Continue with Facebook
                 </button>
 
-                <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  disabled={oauthLoading}
+                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
+                >
                   <GoogleIcon />
-                  Continue with Google
+                  {oauthLoading && oauthProvider === 'google' ? 'Connecting...' : 'Continue with Google'}
                 </button>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full  mt-3 bg-[#4A01D8] border border-gray-600 text-white text-base sm:text-lg font-exo2 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition disabled:opacity-50 shadow-lg"
+                  className="w-full mt-3 rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold btn-purple-gradient transition-all duration-200"
                 >
                   {isLoading ? 'Logging in...' : 'Log In'}
                 </button>

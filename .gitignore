@@ -18,6 +18,7 @@ bun.lock.json
 bun.lock.json.lock
 bun.lock.json.lock.json
 bun.lock.json.lock.json.json
+package-lock.json
 
 # testing
 /coverage

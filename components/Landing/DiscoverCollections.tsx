@@ -93,7 +93,7 @@ export default function DiscoverCollections() {
         {/* Action Buttons */}
         <div className="flex items-center justify-center gap-4">
           <button 
-            className="px-6 py-3 text-white rounded-full font-semibold inline-flex items-center gap-2 transition-all" 
+            className="px-6 py-3 text-white rounded-full font-exo2 inline-flex items-center gap-2 transition-all" 
             style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
           >
             Avalanche
