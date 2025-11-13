@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronDown, Bell, Settings, Languages } from 'lucide-react'
+import { Search, ChevronDown, Bell, Settings, Languages, Menu, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/authStore'
 
 export default function Header() {
@@ -10,6 +10,7 @@ export default function Header() {
   const { isAuthenticated, user } = useAuthStore()
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('English')
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
@@ -45,13 +46,23 @@ export default function Header() {
 
   return (
     <header 
-       className="flex items-center justify-center mt-6 md:mt-10 px-4"
+       className="flex items-center justify-center mt-4 md:mt-10 px-4"
        style={{marginTop: '20px'}}
     >
-      <div className="container mx-auto px-6 md:px-8 py-4 w-full">
+      <div className="container mx-auto px-3 md:px-8 py-3 md:py-4 w-full">
         <div className="flex items-center justify-between relative">
-          {/* Left Side - Search & Language */}
-          <div className="flex items-center gap-4 md:gap-6 left-10 md:left-10">
+          {/* Left Side - Mobile Menu / Desktop Search & Language */}
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* Mobile Hamburger Menu */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden flex items-center justify-center text-white hover:text-gray-300 transition-colors w-8 h-8"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+            {/* Desktop Search & Language - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-4 md:gap-6">
             {/* Search (84x22, gap 10) */}
             <button 
               className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-colors w-[84px] h-[22px]"
@@ -130,11 +141,12 @@ export default function Header() {
                 </div>
               )}
             </div>
+            </div>
           </div>
 
           {/* Center - Logo (precise sizing and gradient) */}
-          <div className="flex items-center justify-center" >
-            <img src="/assets/logo.png" alt="Logo" className="" />
+          <div className="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2" >
+            <img src="/assets/logo.png" alt="Logo" className="h-8 md:h-auto" />
           </div>
 
           {/* Right Side - Login/Sign-Up Button or Profile Dropdown */}
@@ -143,14 +155,15 @@ export default function Header() {
               /* Login | Sign-Up Button (when not logged in) */
               <button
                 onClick={() => router.push('/login')}
-                className="px-6 md:px-8 py-2.5 md:py-3 rounded-full text-white font-semibold text-sm md:text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
+                className="px-4 md:px-8 py-2 md:py-3 rounded-full text-white font-semibold text-xs md:text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
                 style={{
                   // background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.8) 0%, rgba(168, 85, 247, 1) 100%)',
                   boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4), 0 0 20px rgba(139, 92, 246, 0.2)',
                   fontFamily: 'var(--font-exo2)',
                 }}
               >
-                Login | Sign-Up
+                <span className="hidden sm:inline">Login | Sign-Up</span>
+                <span className="sm:hidden">Login</span>
               </button>
             ) : (
               /* Profile Dropdown (when logged in) */
@@ -166,7 +179,7 @@ export default function Header() {
                     margin: '4px',
                   }}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-600 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-purple-500/50 transition-all ">
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-600 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-purple-500/50 transition-all ">
                     {user?.profilePicture || user?.avatar ? (
                       <img 
                         src={user.profilePicture || user.avatar} 
@@ -177,10 +190,10 @@ export default function Header() {
                       <span className="text-white text-sm font-semibold">{getUserInitial()}</span>
                     )}
                   </div>
-                  <span className="hidden md:inline text-sm font-medium">{getUserDisplayName()}</span>
+                  <span className="hidden lg:inline text-sm font-medium">{getUserDisplayName()}</span>
                   <ChevronDown 
                     size={16} 
-                    className={`transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`}
+                    className={`hidden md:block transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
@@ -274,6 +287,45 @@ export default function Header() {
             )}
           </div>
         </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div 
+              className="rounded-xl overflow-hidden"
+              style={{
+                background: 'rgba(17, 24, 39, 0.95)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                backdropFilter: 'blur(20px)',
+              }}
+            >
+              {/* Search */}
+              <button className="w-full flex items-center gap-3 text-white hover:bg-purple-600/20 transition-all px-4 py-3 border-b border-white/10">
+                <Search className="w-4 h-4" />
+                <span className="font-medium text-sm" style={{ fontFamily: 'var(--font-exo2)' }}>Search</span>
+              </button>
+              
+              {/* Language */}
+              <div className="flex items-center justify-between px-4 py-3 hover:bg-purple-600/20 transition-all">
+                <div className="flex items-center gap-3">
+                  <Languages className="w-4 h-4 text-white" />
+                  <span className="font-medium text-sm text-white" style={{ fontFamily: 'var(--font-exo2)' }}>Language</span>
+                </div>
+                <select 
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="bg-purple-900/30 text-white border border-white/20 rounded-md px-2 py-1 text-xs font-medium"
+                  style={{ fontFamily: 'var(--font-exo2)' }}
+                >
+                  {languages.map((lang) => (
+                    <option key={lang} value={lang} className="bg-gray-900">{lang}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+        
       <hr className="border-white/30 w-full my-4" />
       </div>
     </header>
