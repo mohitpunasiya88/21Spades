@@ -42,16 +42,32 @@ export default function Navbar() {
 
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
 
+  const handleLogout = async () => {
+    try {
+      setOpen(false)
+      setIsMobileProfileOpen(false)
+      
+      // Clear state first
+      await logout()
+      
+      // Small delay to ensure state is cleared before redirect
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Use replace to prevent going back to feed page
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if logout fails, force redirect
+      window.location.href = '/login'
+    }
+  }
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'logout',
       label: (
         <button
-          onClick={() => {
-            logout()
-            router.push('/login')
-            setOpen(false)
-          }}
+          onClick={handleLogout}
           className="w-full text-left text-red-400 px-4 py-2 hover:bg-red-500/10 transition-colors"
         >
           Logout
@@ -334,11 +350,7 @@ export default function Navbar() {
                   
                   {/* Logout */}
                   <button
-                    onClick={() => {
-                      logout()
-                      router.push('/login')
-                      setIsMobileProfileOpen(false)
-                    }}
+                    onClick={handleLogout}
                     className="w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
                   >
                     <LogOut className="w-5 h-5" />

@@ -1,15 +1,26 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 
 export default function PrivateRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const { isAuthenticated, isLoading, checkAuth, getUser } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
 
+  // Routes that are accessible without authentication
+  const publicRoutes = ['/feed']
+  const isPublicRoute = publicRoutes.includes(pathname)
+
   useEffect(() => {
+    // Allow public routes without authentication check
+    if (isPublicRoute) {
+      setIsChecking(false)
+      return
+    }
+
     // Check authentication on mount
     const initAuth = async () => {
       setIsChecking(true)
@@ -27,31 +38,42 @@ export default function PrivateRoute({ children }: { children: React.ReactNode }
             }
           } else {
             // Token exists but user not authenticated, clear and redirect
-            localStorage.removeItem('token')
-            router.push('/login')
+            if (typeof window !== 'undefined') {
+              localStorage.clear()
+            }
+            router.replace('/login')
             return
           }
         } else {
           // No token, redirect to login
-          router.push('/login')
+          router.replace('/login')
           return
         }
       } catch (error) {
         console.error('Auth check error:', error)
-        router.push('/login')
+        router.replace('/login')
       } finally {
         setIsChecking(false)
       }
     }
 
     initAuth()
-  }, [router, checkAuth, getUser])
+  }, [router, checkAuth, getUser, isPublicRoute, pathname])
 
   useEffect(() => {
+    // Don't redirect if it's a public route
+    if (isPublicRoute) return
+
     if (!isChecking && !isLoading && !isAuthenticated) {
-      router.push('/login')
+      // Use replace to prevent going back
+      router.replace('/login')
     }
-  }, [isAuthenticated, isLoading, isChecking, router])
+  }, [isAuthenticated, isLoading, isChecking, router, isPublicRoute])
+
+  // For public routes, always render children
+  if (isPublicRoute) {
+    return <>{children}</>
+  }
 
   if (isChecking || isLoading) {
     return (
