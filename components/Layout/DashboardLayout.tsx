@@ -38,10 +38,10 @@ export default function DashboardLayout({
           {/* Mobile Menu Button */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden fixed top-16 sm:top-20 left-3 sm:left-4 z-30 p-2 bg-[#090721] border border-[#2A2F4A] rounded-lg text-white hover:bg-[#7E6BEF0A] transition-colors shadow-lg"
+            className="lg:hidden fixed top-16 sm:top-20 left-3 sm:left-4 z-30 px-4 py-2 bg-[#090721] border border-[#2A2F4A] rounded-lg text-white hover:bg-[#7E6BEF0A] transition-colors shadow-lg font-medium text-sm"
             aria-label="Toggle sidebar"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {sidebarOpen ? 'Close' : 'Menu'}
           </button>
           {children}
         </main>
