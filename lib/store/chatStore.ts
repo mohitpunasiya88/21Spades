@@ -85,6 +85,7 @@ interface ChatState {
   removeChat: (chatId: string) => void
 }
 
+
 export const useChatStore = create<ChatState>((set, get) => ({
   chats: [],
   messages: {},
@@ -726,4 +727,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }))
   },
 }))
+
+
+
+
+
 

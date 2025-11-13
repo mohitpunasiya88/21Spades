@@ -41,6 +41,12 @@ const authRoutes = {
     getFeedGreedIndex: 'market-data/fear-greed',
     getCoinPrice: 'market-data/coin-price',
     getMarketCap: 'market-data/coin-data',
+
+    // ProfilePage 
+
+    getProfile:'profile/get',
+    profileUpdate:'profile/update',
+    profileview :'profile/view'
 }
 
 export default authRoutes;

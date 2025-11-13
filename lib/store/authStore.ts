@@ -27,6 +27,11 @@ interface AuthState {
   updateUser: (data: User) => Promise<void>
   deleteUser: (data: User) => Promise<void>
   checkAuth: () => boolean
+  
+  // Profile management methods
+  getProfile: () => Promise<any>
+  updateProfile: (data: any) => Promise<void>
+  incrementProfileView: () => Promise<void>
 }
 
 export interface Post {
@@ -542,6 +547,57 @@ export const useAuthStore = create<AuthState>()(
           set({ isAuthenticated: authenticated })
         }
         return authenticated
+      },
+
+      // Profile management methods
+      getProfile: async () => {
+        try {
+          const response = await apiCaller('GET', authRoutes.getProfile)
+          console.log('getProfile response', response)
+          if (response.success && response.data) {
+            return response.data
+          }
+          return null
+        } catch (error) {
+          console.error('Error fetching profile:', error)
+          throw error
+        }
+      },
+
+      updateProfile: async (data: any) => {
+        set({ isLoading: true })
+        try {
+          const response = await apiCaller('PUT', authRoutes.profileUpdate, data)
+          console.log('updateProfile response', response)
+          if (response.success) {
+            // Update user in store if user data is returned
+            if (response.data?.user) {
+              const updatedUser = {
+                ...response.data.user,
+                id: response.data.user._id || response.data.user.id,
+              }
+              set({ user: updatedUser, isLoading: false })
+            } else {
+              set({ isLoading: false })
+            }
+          } else {
+            set({ isLoading: false })
+          }
+        } catch (error) {
+          console.error('Error updating profile:', error)
+          set({ isLoading: false })
+          throw error
+        }
+      },
+
+      incrementProfileView: async () => {
+        try {
+          await apiCaller('POST', authRoutes.profileview)
+          // Silently increment view, no need to show message
+        } catch (error) {
+          console.error('Error incrementing profile view:', error)
+          // Don't throw error for view increment
+        }
       },
     }),
     {
