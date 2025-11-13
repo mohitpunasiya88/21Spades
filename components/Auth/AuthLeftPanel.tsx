@@ -9,11 +9,11 @@ const cardImages = [
 
 function AuthLeftPanel() {
   return (
-    <div className="hidden md:block w-1/2 relative px-5 overflow-hidden bg-[#03020800]">
+    <div className="absolute md:relative inset-0 md:w-1/2 w-full px-5 overflow-hidden bg-[#03020800] opacity-20 md:opacity-100">
       {/* Bottom-right purple glow to match signup page */}
       <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96  rounded-full "></div>
-      {/* Header logo above cards */}
-      <div className="absolute w-[200] mx-24 flex justify-center z-8 p-4 mt-8">
+      {/* Header logo above cards - Hidden on mobile, shown on desktop */}
+      <div className="hidden md:flex absolute w-[200] mx-24 justify-center z-8 p-4 mt-8">
         <img src="/assets/logo.png" alt="21 Spades" className="h-8 sm:h-10 object-contain" />
       </div>
       <div className="absolute top-0 left-0 right-0 w-full h-full flex justify-center gap-6 p-6">

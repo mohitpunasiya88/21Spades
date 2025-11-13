@@ -7,7 +7,7 @@ interface AuthFooterProps {
 
 export default function AuthFooter({ showCopyright = true, className = '' }: AuthFooterProps) {
     return (
-        <footer className={`relative md:absolute md:bottom-0 md:left-0 md:right-0 w-full  ${className}`}>
+        <footer className={`relative md:absolute md:bottom-0 md:left-0 md:right-0 w-full z-20 ${className}`}>
             {/* Horizontal line above footer */}
             <div className="h-px bg-gray-600 w-[85%] mx-6 sm:mx-12 md:mx-12 lg:mx-24"></div>
 
