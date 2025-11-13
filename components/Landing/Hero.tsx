@@ -1,8 +1,28 @@
+'use client'
+
 import { Facebook, Instagram, Twitter } from "lucide-react";
 import Header from "./Header";
 import './landingPage.css'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { useRouter } from 'next/navigation'
 
-export default function Hero() {  
+export default function Hero() {
+  const isAuthenticated = useAuth()
+  const router = useRouter()
+
+  const handleChatClick = () => {
+    if (isAuthenticated) {
+      router.push('/messages')
+    } else {
+      router.push('/login')
+    }
+  }
+
+  const handleExploreFeed = () => {
+    // Allow all users to visit feed page, but they'll need to login for actions
+    router.push('/feed')
+  }
+
   return (
     <div className="hero-section relative md:w-[97%] w-[100%] mx-auto min-h-screen flex flex-col items-center justify-center mt-5 ">
       {/* background image */}
@@ -56,8 +76,21 @@ export default function Hero() {
           </div>
           <div className="flex gap-2 md:gap-6 font-[400] font-exo2">
             <button className="text-black bg-white rounded-full border border-[#CBD5E14D] px-4 py-2 md:text-2xl text-[12px]">Explore more</button>
-            <button className="text-white bg-transparent border border-[#CBD5E14D] rounded-full px-4 py-2 md:text-2xl text-[12px]">Explore feed</button>
-            <button className="text-white bg-transparent border border-[#CBD5E14D] rounded-full px-4 py-2 md:text-2xl text-[12px]">Chat</button>
+            <button 
+              onClick={handleExploreFeed}
+              className="text-white bg-transparent border border-[#CBD5E14D] rounded-full px-4 py-2 md:text-2xl text-[12px]"
+            >
+              Explore feed
+            </button>
+            {/* Show Chat button only if user is logged in */}
+            {isAuthenticated && (
+              <button 
+                onClick={handleChatClick}
+                className="text-white bg-transparent border border-[#CBD5E14D] rounded-full px-4 py-2 md:text-2xl text-[12px]"
+              >
+                Chat
+              </button>
+            )}
           </div>
         </div>
         {/* right side image */}

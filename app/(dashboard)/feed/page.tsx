@@ -7,6 +7,8 @@ import FeedRightSidebar from '@/components/Layout/FeedRightSidebar'
 import { Badge, Drawer } from 'antd'
 import { useCategoriesStore, useFeedStore, type Post } from '@/lib/store/authStore'
 import EmojiPicker from 'emoji-picker-react'
+import { useAuth } from '@/lib/hooks/useAuth'
+import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
 
 // Helper function to format time ago
 function formatTimeAgo(dateString: string): string {
@@ -81,6 +83,8 @@ function transformPost(post: Post) {
 export default function FeedPage() {
   const { posts, isLoading, getPosts, createPost } = useFeedStore()
   const { categories, getCategories } = useCategoriesStore()
+  const isAuthenticated = useAuth()
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('All') // For filtering posts
   const [postCategory, setPostCategory] = useState('All') // For post creation
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false) // For post creation
@@ -224,6 +228,11 @@ export default function FeedPage() {
 
   // Handle post submission
   const handlePostSubmit = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     // Validate: must have text or image
     if (!postText.trim() && imagePreviews.length === 0) {
       alert('Please add text or an image to post')
@@ -501,6 +510,14 @@ export default function FeedPage() {
           <FeedRightSidebar />
         </div>
       </div>
+
+      {/* Login Required Modal */}
+      <LoginRequiredModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        title="Login Required"
+        message="You need to be logged in to create a post. Please login to continue."
+      />
     </div>
   )
 }

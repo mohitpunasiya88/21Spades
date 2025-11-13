@@ -144,7 +144,8 @@ export default function CreateNFTPage() {
               className="object-contain"
               style={{
                 filter: 'blur(4px) brightness(1.6) contrast(1.35)',
-                transform: 'translateX(-65%)',
+                transform: ' rotate(90deg)',
+                
                 objectFit: 'cover',
                 objectPosition: '100% 50%',
               }}
@@ -156,10 +157,10 @@ export default function CreateNFTPage() {
               src={spadesImage}
               alt="Right spade accent"
               fill
-              className="object-contain"
+              className="object-contain mr-24"
               style={{
                 filter: 'blur(4px) brightness(1.6) contrast(1.35)',
-                transform: 'translateX(65%) scaleX(-1)',
+                transform: ' rotate(-90deg)',
                 objectFit: 'cover',
                 objectPosition: '100% 50%',
               }}
@@ -185,7 +186,7 @@ export default function CreateNFTPage() {
               <Image
                 src={tigercarImage}
                 alt="NFT Preview"
-                className="w-full h-full object-cover rounded-xl max-w-[338px] max-h-[448px]"
+                className="w-full h-auto object-cover rounded-xl "
               />
             </div>
 
@@ -338,7 +339,7 @@ export default function CreateNFTPage() {
                   placeholder="e.g: Width x height"
                   value={size}
                   onChange={(e) => setSize(e.target.value)}
-                  className="!bg-[#0B0926] !border-[#2A2F4A] !text-white !h-12 !rounded-xl placeholder:!text-[#6B7280]"
+                  className="!bg-[#0B0926] !border-[#2A2F4A] !text-white !h-8 !rounded-xl placeholder:!text-[#6B7280]"
                 />
               </div>
 

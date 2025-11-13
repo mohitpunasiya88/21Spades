@@ -6,6 +6,8 @@ import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
 import { Avatar, Button, Collapse, Tooltip, Steps } from 'antd'
 import EmojiPicker from 'emoji-picker-react'
 import { useChatStore } from '@/lib/store/chatStore'
+import { useAuth } from '@/lib/hooks/useAuth'
+import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
 
 interface FeedPostProps {
   post: {
@@ -37,6 +39,8 @@ export default function FeedPost({ post }: FeedPostProps) {
   const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes } = useFeedStore()
   const { searchUsers, searchedUsers, clearSearchedUsers } = useChatStore()
   const { user: currentUser } = useAuthStore()
+  const isAuthenticated = useAuth()
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [liked, setLiked] = useState(post.isLiked || false)
   const [saved, setSaved] = useState(post.isSaved || false)
   const [localLikes, setLocalLikes] = useState(post.likes)
@@ -88,6 +92,11 @@ export default function FeedPost({ post }: FeedPostProps) {
   const mentionDropdownRef = useRef<HTMLDivElement | null>(null)
 
   const handleLike = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     const newLiked = !liked
     const isRepost = !!post.originalPostId
 
@@ -131,6 +140,11 @@ export default function FeedPost({ post }: FeedPostProps) {
   }
 
   const handleToggleCommentLike = async (commentId: string, index: number) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     try {
       const res = await likeComment(commentId)
       setComments(prev => {
@@ -146,6 +160,11 @@ export default function FeedPost({ post }: FeedPostProps) {
   }
 
   const handleRepost = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     // Prevent if already reposted or currently reposting
     if (reposted || isReposting) return
 
@@ -170,6 +189,11 @@ export default function FeedPost({ post }: FeedPostProps) {
   }
 
   const handleShare = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     // Prevent multiple rapid clicks
     if (isSharing) return
 
@@ -192,6 +216,11 @@ export default function FeedPost({ post }: FeedPostProps) {
   }
 
   const handleSave = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     const newSaved = !saved
     const isRepost = !!post.originalPostId
 
@@ -277,6 +306,11 @@ export default function FeedPost({ post }: FeedPostProps) {
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    
     if (!commentText.trim() || isSubmitting) return
 
     setIsSubmitting(true)
@@ -930,6 +964,14 @@ export default function FeedPost({ post }: FeedPostProps) {
           ]}
         />
       </div>
+      
+      {/* Login Required Modal */}
+      <LoginRequiredModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        title="Login Required"
+        message="You need to be logged in to perform this action. Please login to continue."
+      />
     </div>
   )
 }
