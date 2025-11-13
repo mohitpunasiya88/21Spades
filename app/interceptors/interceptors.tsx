@@ -3,8 +3,8 @@ import authRoutes from '../routes/route';
 
 
  export const apiClient = axios.create({
-    // baseURL: import.meta.env.VITE_API_BASE_URL,
-    baseURL: "http://localhost:8080/api/",
+    // baseURL: "http://localhost:8080/api/",
+    baseURL: "http://44.200.78.158:8080/api/",
 });
 
 const routes = authRoutes;
