@@ -451,22 +451,16 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
-          const response =  await apiCaller('POST', authRoutes.logout )
-          console.log('response6666666', response)
-          // Clear token and user data regardless of API response
-          localStorage.removeItem('token')
+          if (typeof window !== 'undefined') {
+            localStorage.clear()
+          }
           set({
             user: null,
             isAuthenticated: false,
+            isLoading: false,
           })
         } catch (error) {
-          // Even if API call fails, clear local auth
-          localStorage.removeItem('token')
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false
-          })
+          set({ isLoading: false })
           throw error
         }
       },
