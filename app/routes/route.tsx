@@ -1,3 +1,4 @@
+
 const authRoutes = {
     login: 'auth/login',
     signup: 'auth/signup',
@@ -46,7 +47,14 @@ const authRoutes = {
 
     getProfile:'profile/get',
     profileUpdate:'profile/update',
-    profileview :'profile/view'
+    profileview :'profile/view',
+
+    // NFT Collections
+    createCollection: 'nft/collections',
+    getCollections: 'nft/collections',
+    
+    // NFT Items
+    createNFT: 'nft/items',
 }
 
 export default authRoutes;
