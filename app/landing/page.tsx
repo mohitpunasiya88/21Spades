@@ -2,7 +2,6 @@
 
 import DiscoverCollections from "@/components/Landing/DiscoverCollections"
 import Footer from "@/components/Landing/Footer"
-import GlobalReach from "@/components/Landing/GlobalReach"
 import Header from "@/components/Landing/Header"
 import Hero from "@/components/Landing/Hero"
 import HowToTokenize from "@/components/Landing/HowToTokenize"
@@ -17,7 +16,6 @@ export default function LandingPage() {
   return (
     <div style={{ background: '#0F0F23', minHeight: '100vh', width: '100%' , padding: '0 10px' , overflowX: 'hidden'}}>
       <Hero />
-      <GlobalReach />
       <PlatformFeatures />
       <LogoAnimation />
       <Trending />

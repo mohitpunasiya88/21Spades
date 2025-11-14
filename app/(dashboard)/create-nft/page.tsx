@@ -145,7 +145,7 @@ export default function CreateNFTPage() {
               style={{
                 filter: 'blur(4px) brightness(1.6) contrast(1.35)',
                 transform: ' rotate(90deg)',
-                
+
                 objectFit: 'cover',
                 objectPosition: '100% 50%',
               }}
@@ -170,7 +170,7 @@ export default function CreateNFTPage() {
 
         {/* Text Content */}
         <div className="relative z-10 text-center">
-          <h1 className="text-white text-2xl md:text-3xl font-exo2 uppercase tracking-wider">Create Single item on Avalanche</h1>
+          <h1 className="text-white text-2xl md:text-3xl font-exo2 tracking-wider">Tokenize an Asset</h1>
         </div>
       </div>
 
@@ -417,8 +417,8 @@ export default function CreateNFTPage() {
                 type="button"
                 onClick={() => setSelectedCollection("create-new")}
                 className={`group flex h-[130px] w-full flex-col items-center justify-center rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
-                    ? "border-[#6C4DFF] text-white bg-[#120D39]"
-                    : "border-[#2A2F4A] text-[#9BA3AF] hover:border-[#6C4DFF] hover:text-white"
+                  ? "border-[#6C4DFF] text-white bg-[#120D39]"
+                  : "border-[#2A2F4A] text-[#9BA3AF] hover:border-[#6C4DFF] hover:text-white"
                   }`}
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6C4DFF]/10 text-[#6C4DFF] mb-3 group-hover:bg-[#6C4DFF]/20">
