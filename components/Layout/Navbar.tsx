@@ -3,22 +3,27 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
-import { Input, Select, Badge, Button, Avatar, Dropdown, type MenuProps } from 'antd'
-import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut } from 'lucide-react'
+import { Badge } from 'antd'
+import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
-  const { logout,user } = useAuthStore()
-  console.log('login98989898',user)
+  const { logout, user } = useAuthStore()
+  console.log('login98989898', user)
 
-  const [open, setOpen] = useState(false)
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isWalletOpen, setIsWalletOpen] = useState(false)
+  const [isWalletHovered, setIsWalletHovered] = useState(false)
+  const [isCreateTokenHovered, setIsCreateTokenHovered] = useState(false)
+  const [isProfileHovered, setIsProfileHovered] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('English')
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const walletRef = useRef<HTMLDivElement>(null)
+  const mobileWalletRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const mobileProfileRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -28,6 +33,12 @@ export default function Navbar() {
       }
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false)
+      }
+      if (walletRef.current && !walletRef.current.contains(event.target as Node)) {
+        setIsWalletOpen(false)
+      }
+      if (mobileWalletRef.current && !mobileWalletRef.current.contains(event.target as Node)) {
+        setIsWalletOpen(false)
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false)
@@ -44,15 +55,14 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      setOpen(false)
       setIsMobileProfileOpen(false)
-      
+
       // Clear state first
       await logout()
-      
+
       // Small delay to ensure state is cleared before redirect
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Use replace to prevent going back to feed page
       window.location.href = '/login'
     } catch (error) {
@@ -62,28 +72,16 @@ export default function Navbar() {
     }
   }
 
-  const menuItems: MenuProps['items'] = [
-    {
-      key: 'logout',
-      label: (
-        <button
-          onClick={handleLogout}
-          className="w-full text-left text-red-400 px-4 py-2 hover:bg-red-500/10 transition-colors"
-        >
-          Logout
-        </button>
-      ),
-    },
-  ]
-
-  const  handleclick = () => {
+  const handleclick = () => {
     router.push('/profile')
   }
 
   return (
-    <nav
-      className="backdrop-blur-sm border-b border-gray-800 px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between sticky top-0 z-50 bg-[#020019]"
-    >
+    <div className="sticky top-0 z-50 bg-[#020019]">
+     
+      <nav
+        className="backdrop-blur-sm border-b border-gray-800 px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between"
+      >
       {/* Mobile Menu Button - Left Side */}
       <div className="sm:hidden relative" ref={mobileMenuRef}>
         <button
@@ -92,7 +90,7 @@ export default function Navbar() {
         >
           {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-        
+
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
           <div
@@ -118,7 +116,7 @@ export default function Navbar() {
                 ))}
               </select>
             </div>
-            
+
             {/* Notifications */}
             <button
               className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#2A2F4A]"
@@ -127,7 +125,7 @@ export default function Navbar() {
               <span>Notifications</span>
               <Badge dot className="ml-auto [&_.ant-badge-dot]:!bg-red-500" />
             </button>
-            
+
             {/* Create/Plus */}
             <button
               onClick={() => {
@@ -230,52 +228,295 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Notifications */}
+        {/* Notifications - Desktop */}
         <div className="relative hidden sm:block">
-          <Badge dot offset={[-2, 2]} className="[&_.ant-badge-dot]:!bg-red-500">
-            <button className="relative text-gray-300 hover:text-white transition-colors w-9 h-9 rounded-full border border-gray-700 bg-gray-800/50 flex items-center justify-center">
+          <Badge count={8} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
+            <button className="relative text-white w-9 h-9 rounded-full border border-white/30 bg-transparent flex items-center justify-center hover:opacity-80 transition-all">
               <Bell className="w-5 h-5" />
             </button>
           </Badge>
         </div>
 
-        {/* Create NFT icon with border */}
-        <button 
-          onClick={() => router.push('/create-nft')}
-          className="hidden sm:flex text-gray-300 hover:text-white transition-colors w-9 h-9 rounded-full border border-gray-700 bg-gray-800/50 items-center justify-center"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
+        {/* Notifications - Mobile */}
+        <div className="relative sm:hidden">
+          <Badge count={8} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white [&_.ant-badge-count]:!min-w-[16px] [&_.ant-badge-count]:!h-[16px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
+            <button className="relative text-white w-8 h-8 rounded-full border border-white/30 bg-transparent flex items-center justify-center hover:opacity-80 transition-all">
+              <Bell className="w-4 h-4" />
+            </button>
+          </Badge>
+        </div>
 
-        {/* User Profile with Email */}
+        {/* Wallet Button with Hover Dropdown - Desktop */}
+        <div className="relative hidden sm:block" ref={walletRef}>
+          <button
+            onMouseEnter={() => {
+              setIsWalletHovered(true)
+              setIsWalletOpen(true)
+            }}
+            onMouseLeave={() => {
+              setIsWalletHovered(false)
+              setIsWalletOpen(false)
+            }}
+            className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${
+              isWalletHovered ? 'px-3 py-2' : 'p-2'
+            }`}
+          >
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-4 h-4 text-gray-800" />
+            </div>
+            {isWalletHovered && (
+              <>
+                <span className="text-white font-semibold text-sm whitespace-nowrap">Wallet</span>
+                <ChevronDown className={`w-4 h-4 text-white transition-transform ${isWalletOpen ? 'rotate-180' : ''}`} />
+              </>
+            )}
+          </button>
+
+          {/* Wallet Dropdown Menu */}
+          {isWalletOpen && (
+            <div
+              onMouseEnter={() => {
+                setIsWalletHovered(true)
+                setIsWalletOpen(true)
+              }}
+              onMouseLeave={() => {
+                setIsWalletHovered(false)
+                setIsWalletOpen(false)
+              }}
+              className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{
+                background: 'rgba(17, 24, 39, 0.98)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                minWidth: '200px',
+                zIndex: 1000,
+              }}
+            >
+              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group">
+                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="group-hover:text-purple-300 transition-colors">Connect Wallet</span>
+              </button>
+              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
+                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="group-hover:text-purple-300 transition-colors">My Wallets</span>
+              </button>
+              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
+                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="group-hover:text-purple-300 transition-colors">Transaction History</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Create Token Button - Desktop */}
+        <div className="relative hidden sm:block">
+          <button
+            onClick={() => router.push('/create-nft')}
+            onMouseEnter={() => setIsCreateTokenHovered(true)}
+            onMouseLeave={() => setIsCreateTokenHovered(false)}
+            className={`flex items-center gap-2 rounded-full border border-white/30 bg-transparent hover:border-white/50 transition-all overflow-hidden ${
+              isCreateTokenHovered ? 'px-3 sm:px-4 py-1.5 sm:py-2' : 'p-2'
+            }`}
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white flex-shrink-0">
+              {/* Hexagonal icon with plus sign */}
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Hexagon shape */}
+                <path
+                  d="M8 1L13.8564 4V12L8 15L2.14359 12V4L8 1Z"
+                  fill="black"
+                />
+                {/* Plus sign */}
+                <path
+                  d="M8 5V11M5 8H11"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            {isCreateTokenHovered && (
+              <span className="text-white font-semibold text-sm md:text-base whitespace-nowrap">Create Token</span>
+            )}
+          </button>
+        </div>
+
+        {/* Wallet Button - Mobile */}
+        <div className="relative sm:hidden" ref={mobileWalletRef}>
+          <button
+            onClick={() => setIsWalletOpen(!isWalletOpen)}
+            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-transparent hover:border-white/50 transition-all p-1.5"
+          >
+            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-3.5 h-3.5 text-gray-800" />
+            </div>
+          </button>
+
+          {/* Wallet Dropdown Menu - Mobile */}
+          {isWalletOpen && (
+            <div
+              className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{
+                background: 'rgba(17, 24, 39, 0.98)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                minWidth: '200px',
+                zIndex: 1000,
+              }}
+            >
+              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group">
+                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="group-hover:text-purple-300 transition-colors">Connect Wallet</span>
+              </button>
+              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
+                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="group-hover:text-purple-300 transition-colors">My Wallets</span>
+              </button>
+              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
+                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="group-hover:text-purple-300 transition-colors">Transaction History</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Create Token Button - Mobile */}
+        <div className="relative sm:hidden">
+          <button
+            onClick={() => router.push('/create-nft')}
+            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-transparent hover:border-white/50 transition-all p-1.5"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white flex-shrink-0">
+              {/* Hexagonal icon with plus sign */}
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Hexagon shape */}
+                <path
+                  d="M8 1L13.8564 4V12L8 15L2.14359 12V4L8 1Z"
+                  fill="black"
+                />
+                {/* Plus sign */}
+                <path
+                  d="M8 5V11M5 8H11"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        {/* User Profile with Spades Text and Hover Dropdown */}
         {user && (
           <div className="flex items-center gap-1 sm:gap-3">
-            {/* Desktop Profile */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600 bg-purple-600 shadow-md flex items-center justify-center flex-shrink-0 cursor-pointer"
-                onClick={handleclick}
+            {/* Desktop Profile with Hover Dropdown */}
+            <div className="relative hidden sm:block" ref={profileRef}>
+              <button
+                onMouseEnter={() => {
+                  setIsProfileHovered(true)
+                  setIsProfileOpen(true)
+                }}
+                onMouseLeave={() => {
+                  setIsProfileHovered(false)
+                  setIsProfileOpen(false)
+                }}
+                className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${
+                  isProfileHovered ? 'px-3 py-2' : 'p-2'
+                }`}
               >
-                {user.profilePicture ? (
-                  <img
-                    src={user.profilePicture}
-                    alt={user.name || 'User'}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/assets/avatar.jpg'
-                    }}
-                  />
-                ) : (
-                  <img
-                    src="/assets/avatar.jpg"
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {user.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.name || 'User'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/assets/avatar.jpg'
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src="/assets/avatar.jpg"
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                {isProfileHovered && (
+                  <>
+                    <span className="text-white font-semibold text-sm whitespace-nowrap">Spades</span>
+                    <ChevronDown className={`w-4 h-4 text-white transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  </>
                 )}
-              </div>
-              <div className="hidden md:flex flex-col">
-                <p className="text-white font-semibold text-sm leading-tight">{user.name || 'User'}</p>
-                <p className="text-gray-400 text-xs leading-tight truncate max-w-[150px]">{user.email || ''}</p>
-              </div>
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileOpen && (
+                <div
+                  onMouseEnter={() => {
+                    setIsProfileHovered(true)
+                    setIsProfileOpen(true)
+                  }}
+                  onMouseLeave={() => {
+                    setIsProfileHovered(false)
+                    setIsProfileOpen(false)
+                  }}
+                  className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                  style={{
+                    background: 'rgba(17, 24, 39, 0.98)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                    minWidth: '220px',
+                    zIndex: 1000,
+                  }}
+                >
+                  {/* User Info */}
+                  <div className="p-4 border-b border-[#2A2F4A]">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-600 bg-purple-600">
+                        {user.profilePicture ? (
+                          <img
+                            src={user.profilePicture}
+                            alt={user.name || 'User'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/assets/avatar.jpg'
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src="/assets/avatar.jpg"
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-semibold text-sm">{user.name || 'User'}</p>
+                        <p className="text-gray-400 text-xs truncate">{user.email || ''}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleclick}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 rounded-lg transition-colors"
+                    >
+                      View Profile
+                    </button>
+                  </div>
+
+                  {/* Logout */}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Mobile Profile with Dropdown */}
@@ -301,7 +542,7 @@ export default function Navbar() {
                   />
                 )}
               </button>
-              
+
               {/* Mobile Profile Dropdown */}
               {isMobileProfileOpen && (
                 <div
@@ -347,7 +588,7 @@ export default function Navbar() {
                       View Profile
                     </button>
                   </div>
-                  
+
                   {/* Logout */}
                   <button
                     onClick={handleLogout}
@@ -360,24 +601,10 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Desktop Logout Dropdown */}
-            <div className="relative dropdown-container hidden sm:block">
-              <Dropdown
-                open={open}
-                onOpenChange={setOpen}
-                menu={{ items: menuItems }}
-                popupRender={(menu) => (
-                  <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-2 min-w-[120px]">{menu}</div>
-                )}
-              >
-                <button className="text-gray-300 hover:text-white transition-colors">
-                  <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-                </button>
-              </Dropdown>
-            </div>
           </div>
         )}
       </div>
     </nav>
+    </div>
   )
 }

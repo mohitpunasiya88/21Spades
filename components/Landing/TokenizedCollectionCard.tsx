@@ -30,7 +30,7 @@ function CardContent({
   imageSrc = '/assets/image6.jpeg',
 }: marketplace) {
   return (
-    <div className="relative w-full h-64 rounded-lg overflow-hidden mt-10 p-4">
+    <div className="relative w-full h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden mt-4 sm:mt-6 md:mt-10 p-2 sm:p-3 md:p-4">
       {/* Background Image */}
       <Image 
         src={imageSrc} 
@@ -43,52 +43,47 @@ function CardContent({
       <div className="absolute inset-0 h-1/2 w-full bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
       
       {/* Content */}
-      <div className="relative h-full flex flex-col mt-14">
+      <div className="relative h-full flex flex-col mt-8 sm:mt-10 md:mt-14">
         {/* Title and Creator Section - Bottom Left */}
-        <div className="absolute bottom-16 left-10 z-10">
-          <h1 className="text-white text-4xl font-exo2 mb-1">
+        <div className="absolute bottom-8 sm:bottom-12 md:bottom-16 left-4 sm:left-6 md:left-10 z-10">
+          <h1 className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl font-exo2 mb-1">
             {title}
           </h1>
-          <p className="text-white font-exo2 text-base">
+          <p className="text-white font-exo2 text-xs sm:text-sm md:text-base">
             by {creatorAddress}
           </p>
         </div>
         
         {/* Data Panel - Glass pill centered with angled shape */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20">
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20 w-[90%] sm:w-auto">
           <div
-            className="relative flex items-center gap-5 px-6 py-4 backdrop-blur-xl ring-1 ring-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-            style={{
-              background: 'linear-gradient(180deg, rgba(20,20,30,0.75) 0%, rgba(20,20,30,0.60) 100%)',
-              clipPath: 'polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%)',
-              WebkitClipPath: 'polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%)',
-            }}
+            className="relative flex items-center gap-2 sm:gap-3 md:gap-5 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 backdrop-blur-sm rounded-lg sm:rounded-xl ring-1 ring-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
           >
             {/* Price */}
-            <div className="flex flex-col items-center min-w-[100px]">
-              <div className="flex items-center gap-1.5 text-white text-sm font-bold">
-                <ArrowUp className="text-red-500 w-3.5 h-3.5 fill-red-500" />
+            <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[100px]">
+              <div className="flex items-center gap-1 sm:gap-1.5 text-white text-xs sm:text-sm font-bold">
+                <ArrowUp className="text-red-500 w-3 h-3 sm:w-3.5 sm:h-3.5 fill-red-500" />
                 <span className="font-exo2">{price} {currency}</span>
               </div>
-              <span className="text-[#C084FC] text-xs mt-0.5">Price</span>
+              <span className="text-yellow-500 text-[10px] sm:text-xs mt-0.5">Price</span>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-12 bg-white/20" />
+            <div className="w-px h-8 sm:h-10 md:h-12 bg-white/20" />
 
             {/* Items */}
-            <div className="flex flex-col items-center min-w-[70px]">
-              <span className="text-white text-sm font-bold">{items}</span>
-              <span className="text-[#C084FC] text-xs mt-0.5">Items</span>
+            <div className="flex flex-col items-center min-w-[50px] sm:min-w-[60px] md:min-w-[70px]">
+              <span className="text-white text-xs sm:text-sm font-bold">{items}</span>
+              <span className="text-yellow-500 text-[10px] sm:text-xs mt-0.5">Items</span>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-12 bg-white/20" />
+            <div className="w-px h-8 sm:h-10 md:h-12 bg-white/20" />
 
             {/* Auction Timer */}
-            <div className="flex flex-col items-center min-w-[160px]">
-              <span className="text-white text-sm font-bold font-mono whitespace-nowrap">{auctionTime}</span>
-              <span className="text-[#C084FC] text-xs mt-0.5">Auction starts in</span>
+            <div className="flex flex-col items-center min-w-[100px] sm:min-w-[130px] md:min-w-[160px]">
+              <span className="text-white text-xs sm:text-sm font-bold font-mono whitespace-nowrap">{auctionTime}</span>
+              <span className="text-yellow-500 text-[10px] sm:text-xs mt-0.5">Auction starts in</span>
             </div>
           </div>
         </div>
@@ -117,52 +112,52 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
   }
 
   return (
-    <div className="relative w-full max-w-[320px] mx-auto">
+    <div className="relative w-[280px] sm:w-[300px] md:w-[320px]">
       <div 
         onClick={handleCardClick}
-        className="relative rounded-2xl overflow-hidden cursor-pointer transition-transform hover:scale-[1.03] m-2 p-3 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
+        className="relative rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-transform hover:scale-[1.03] m-1 sm:m-2 p-2 sm:p-3 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
         style={{
-          minHeight: '370px',
+          minHeight: '340px',
           boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
         }}
       >
         {/* Media box */}
-        <div className="relative h-[214px] p-3">
+        <div className="relative h-[180px] sm:h-[200px] md:h-[214px] p-2 sm:p-3">
           {/* Heart Icon - Top Right with light purple background */}
           <button
             onClick={(e) => {
               e.stopPropagation()
               setIsFavorite(!isFavorite)
             }}
-            className="absolute top-7.5 right-7.5 z-10 p-2 rounded-full transition-colors ring-1 ring-white/25"
+            className="absolute top-5 sm:top-6 md:top-7.5 right-5 sm:right-6 md:right-7.5 z-10 p-1.5 sm:p-2 rounded-full transition-colors ring-1 ring-white/25"
             style={{
               background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
             }}
           >
             <Heart 
-              className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
             />
           </button>
 
           {/* Padded media with gradient and vignette */}
-          <div className="absolute inset-0 p-3.5">
+          <div className="absolute inset-0 p-2.5 sm:p-3 md:p-3.5">
             <div
-              className="relative p-3 h-full w-full rounded-[14px] overflow-hidden ring-1 ring-white/10 bg-[#050616]"
+              className="relative p-2 sm:p-2.5 md:p-3 h-full w-full rounded-[10px] sm:rounded-[12px] md:rounded-[14px] overflow-hidden ring-1 ring-white/10 bg-[#050616]"
               style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }}
             >
               <div
                 className="pointer-events-none absolute inset-0"
                 style={{ background: 'radial-gradient(120% 100% at 50% 0%, rgba(0,0,0,0) 52%, rgba(5,6,20,0.65) 100%)' }}
               />
-              <div className="pointer-events-none absolute inset-0 ring-1 ring-[#7E6BEF]/25 rounded-[14px]" />
+              <div className="pointer-events-none absolute inset-0 ring-1 ring-[#7E6BEF]/25 rounded-[10px] sm:rounded-[12px] md:rounded-[14px]" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <Image 
                   src={spadesImage} 
                   alt="21 Spade" 
-                  width={145} 
-                  height={145} 
+                  width={120}
+                  height={120}
+                  className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[145px] md:h-[145px] object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
                   priority
-                  className="object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
                 />
               </div>
             </div>
@@ -172,31 +167,31 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
 
         {/* Bottom Section - Information */}
         <div 
-          className="px-4 pb-4 pt-3"
+          className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 sm:pt-3"
           style={{
             // background: 'linear-gradient(to bottom, rgba(25, 11, 63, 0.3), rgba(0,0,0,0.6))',
           }}
         >
           {/* Creator */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#162345] ring-1 ring-[#3B82F6]/45">
-              <Check className="w-3.5 h-3.5 text-[#69A8FF]" />
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+            <span className="inline-flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-[#162345] ring-1 ring-[#3B82F6]/45">
+              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#69A8FF]" />
             </span>
-            <span className="text-[#D6DEFF] text-sm font-medium font-exo2">{creator}</span>
+            <span className="text-[#D6DEFF] text-xs sm:text-sm font-medium font-exo2">{creator}</span>
           </div>
 
           {/* Title */}
-          <h3 className="text-white text-[21px] font-bold tracking-tight mb-3 font-exo2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
+          <h3 className="text-white text-lg sm:text-xl md:text-[21px] font-bold tracking-tight mb-2 sm:mb-3 font-exo2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
             {title}
           </h3>
-          <div className="h-px w-full bg-white/10 mb-3" />
+          <div className="h-px w-full bg-white/10 mb-2 sm:mb-3" />
 
           {/* Floor Price Section */}
           <div className="flex items-center justify-between">
-            <span className="text-[#7E6BEF] text-sm font-medium font-exo2">Floor Price</span>
-            <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-[14px] h-[14px] text-[#FF5E57] flex-shrink-0" />
-              <span className="text-white text-sm font-semibold tracking-wide font-exo2">{floorPrice}</span>
+            <span className="text-[#7E6BEF] text-xs sm:text-sm font-medium font-exo2">Floor Price</span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <AlertTriangle className="w-3 h-3 sm:w-[14px] sm:h-[14px] text-[#FF5E57] flex-shrink-0" />
+              <span className="text-white text-xs sm:text-sm font-semibold tracking-wide font-exo2">{floorPrice}</span>
             </div>
           </div>
         </div>
@@ -209,6 +204,8 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
 const TokenizedCollectionCard: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [selectedNetwork, setSelectedNetwork] = useState('Avalanche')
+  const [visibleCards, setVisibleCards] = useState(3)
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   
   const onChange = (currentSlide: number) => {
     console.log(currentSlide)
@@ -253,12 +250,43 @@ const TokenizedCollectionCard: React.FC = () => {
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
+    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
+    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
+    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
+    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
+    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
+    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
   ];
 
 
   const filteredNfts = activeCategory === 'ALL' 
     ? allNfts 
     : allNfts.filter(nft => nft.category === activeCategory);
+
+  // Handle scroll to load more cards
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (!scrollContainerRef.current) return
+
+      const container = scrollContainerRef.current
+      const scrollLeft = container.scrollLeft
+      const scrollWidth = container.scrollWidth
+      const clientWidth = container.clientWidth
+
+      // Load more when user scrolls to 80% of the container
+      if (scrollLeft + clientWidth >= scrollWidth * 0.8) {
+        if (visibleCards < filteredNfts.length) {
+          setVisibleCards(prev => Math.min(prev + 3, filteredNfts.length))
+        }
+      }
+    }
+
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener('scroll', handleScroll)
+      return () => container.removeEventListener('scroll', handleScroll)
+    }
+  }, [visibleCards, filteredNfts.length])
 
   return (
     <div className="w-full relative pb-12">
@@ -342,13 +370,13 @@ const TokenizedCollectionCard: React.FC = () => {
         `
       }} />
  
-      <div className='w-full h-full p-4 mt-10'>
-        <div className='flex items-center justify-between pr-10 pl-10'>
-          <h1 className='text-white text-2xl font-exo2'>Discover all the Tokenized collections</h1>
+      <div className='w-full h-full p-2 sm:p-4 md:p-6 mt-6 sm:mt-8 md:mt-10'>
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 px-2 sm:px-4 md:px-6 lg:px-10'>
+          <h1 className='text-white text-lg sm:text-xl md:text-2xl font-exo2'>Discover all the Tokenized collections</h1>
           <Dropdown menu={{ items, onClick: handleMenuClick }} trigger={['click']} placement="bottomRight" className='border border-gray-800 rounded-full'>
             <a onClick={(e) => e.preventDefault()}>
               <Space 
-                className=' text-white font-exo2 px-4 py-2 rounded-full cursor-pointer transition-colors'
+                className='text-white font-exo2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full cursor-pointer transition-colors text-sm sm:text-base'
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -361,20 +389,27 @@ const TokenizedCollectionCard: React.FC = () => {
           </Dropdown>
         </div>
 
-        <div className=" grid grid-cols-1 md:grid-cols-2 mt-10 lg:grid-cols-3 gap-8 mb-12 mx-auto max-w-7xl">
+        <div className="mt-6 sm:mt-8 md:mt-10 mb-8 sm:mb-10 md:mb-12 mx-2 sm:mx-4 md:mx-6 lg:mx-10">
           {filteredNfts.length > 0 ? (
-            filteredNfts.slice(0, 6).map((nft, index) => (
-              <NFTCard 
-                key={index} 
-                title={nft.title}
-                creator={nft.creator}
-                price={nft.price}
-                floorPrice={nft.floorPrice}
-                verified={true}
-              />
-            ))
+            <div 
+              ref={scrollContainerRef}
+              className="flex gap-4 sm:gap-8 md:gap-12 lg:gap-20 overflow-x-auto pb-4 scrollbar-hide" 
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {filteredNfts.slice(0, visibleCards).map((nft, index) => (
+                <div key={index} className="flex-shrink-0">
+                  <NFTCard 
+                    title={nft.title}
+                    creator={nft.creator}
+                    price={nft.price}
+                    floorPrice={nft.floorPrice}
+                    verified={true}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
-            <div className="col-span-full text-center text-gray-400 py-12">
+            <div className="text-center text-gray-400 py-12">
               No NFTs found in this category
             </div>
           )}

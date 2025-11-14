@@ -4,7 +4,7 @@ import TokenizedCollectionCard from "@/components/Landing/TokenizedCollectionCar
 
 export default function MarketplacePage() {
   return (
-    <div> 1 11
+    <div>
       <TokenizedCollectionCard />
     </div>
   )

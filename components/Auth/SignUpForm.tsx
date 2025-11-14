@@ -67,7 +67,6 @@ export default function SignUpForm() {
     password: '',
     confirmPassword: '',
   })
-  console.log('user1111111111111111111', user)
  
   const [errors, setErrors] = useState<Partial<SignUpData>>({})
   const [showPassword, setShowPassword] = useState(false)

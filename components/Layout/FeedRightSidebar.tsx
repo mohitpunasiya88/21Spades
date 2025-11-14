@@ -227,7 +227,7 @@ export default function FeedRightSidebar() {
       </div>
 
       {/* Trending in Web3 */}
-      <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
+      {/* <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold">Trending in Web3</h3>
           <button className="text-purple-400 text-sm">See All &gt;</button>
@@ -267,10 +267,10 @@ export default function FeedRightSidebar() {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Upcoming Web3 Events */}
-      <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
+      {/* <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold">Upcoming Web3 Events</h3>
           <button className="text-white text-sm">See All  &gt;</button>
@@ -294,10 +294,10 @@ export default function FeedRightSidebar() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Learn Web3 */}
-      <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
+      {/* <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold">Learn Web3</h3>
           <button className="text-white text-sm">See All &gt;</button>
@@ -326,10 +326,10 @@ export default function FeedRightSidebar() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* New Collection */}
-      <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
+      {/* <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold">New Collection</h3>
           <button className="text-white text-sm">See All &gt;</button>
@@ -352,13 +352,12 @@ export default function FeedRightSidebar() {
                     <p className="text-white text-[12px]">⟠ 0.91 ETH</p>
                   </div>
                 </div>
-                {/* horizontal line */}
               </div>
               <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-2 mt-2" />
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
     </aside>
   )
 }

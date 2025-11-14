@@ -558,3 +558,10 @@ div.figma-vertical-line {
   width: 1px !important;
   height: auto !important;
 }
+
+.font-evil {
+  font-family: 'Evil Empire', 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

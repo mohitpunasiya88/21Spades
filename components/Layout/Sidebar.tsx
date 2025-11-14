@@ -1,41 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import {
   FileText,
   ShoppingBag,
   BarChart,
-  MessageCircle,
-  Users,
   User,
-  Grid3x3,
   Search,
-  RefreshCw,
   Calendar,
   File,
   MoreVertical,
   ChevronDown,
   ChevronRight,
   Send,
-  ChevronLeft,
+  Flame,
+  Box,
 } from 'lucide-react'
 import { useUIStore } from '@/lib/store/uiStore'
 import image22 from '@/components/assets/image22.png'
 
 const menuItems = [
+  // Group 1: Feed, Marketplace, SpadesFI
   { icon: FileText, label: 'Feed', path: '/feed' },
-  { icon: MessageCircle, label: 'Messages', path: '/messages' },
   { icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
   { icon: BarChart, label: 'SpadesFI', path: '/spadesfi' },
-  { icon: Grid3x3, label: 'D-Drop', path: '/ddrop' },
+  // Group 2: D-Drop, Explore, trending
+  { icon: Box, label: 'D-Drop', path: '/d-drop' },
   { icon: Search, label: 'Explore', path: '/explore' },
-  { icon: RefreshCw, label: 'trending', path: '/trending' },
+  { icon: Flame, label: 'Trending', path: '/trending' },
+  // Group 3: Events, News, Dashboard
   { icon: Calendar, label: 'Events', path: '/events' },
   { icon: File, label: 'News', path: '/news' },
   { icon: User, label: 'Dashboard', path: '/dashboard' },
-  
 ]
 
 const chatData = [
@@ -80,8 +79,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
   const [isSpadesFIOpen, setIsSpadesFIOpen] = useState(false)
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
+  const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({})
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string, label: string) => {
+    // For coming soon items, navigate to route and let the page handle the modal
     router.push(path)
     if (onClose) {
       onClose()
@@ -90,17 +93,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   // SpadesFI dropdown items
   const spadesFIItems = [
-    { label: 'Dashboard', path: '/spadesfi/dashboard' },
-    { label: 'Analytics', path: '/spadesfi/analytics' },
-    { label: 'Reports', path: '/spadesfi/reports' },
-    { label: 'Settings', path: '/spadesfi/settings' },
+    { label: 'CoinBase', path: '/spadesfi/coinbase' },
+    { label: 'Uniswap', path: '/spadesfi/uniswap' },
+    { label: 'Aave', path: '/spadesfi/aave' },
+    { label: 'ParaSpace', path: '/spadesfi/paraspace' },
   ]
 
   return (
-    <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} h-full overflow-y-auto scrollbar-hide bg-transparent transition-all duration-300 mt-25 md:mt-6 `}>
+    <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} h-full overflow-y-auto scrollbar-hide bg-transparent transition-all duration-300 mt-25 md:mt-6 ${!sidebarOpen ? 'overflow-x-visible' : ''}`}>
       {/* Combined Container */}
-      <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4`}>
-        <div className="rounded-lg bg-[#090721] border border-[#2A2F4A]">
+      <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4 ${!sidebarOpen ? 'overflow-visible' : ''}`}>
+        <div className={`rounded-lg bg-[#090721] border border-[#2A2F4A] ${!sidebarOpen ? 'overflow-visible' : ''}`}>
           {/* Toggle Button */}
           <div className="flex justify-center   border-b border-[#2A2F4A]">
             <button
@@ -109,7 +112,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
               {sidebarOpen ? (
-               <Image src={image22} alt="Collapse" width={40} height={40} className="object-contain" />
+               <h1 className="text-white text-2xl font-exo2">MENU</h1>
               ) : (
                 <Image src={image22} alt="Collapse" width={40} height={40} className="object-contain" />
               )}
@@ -117,7 +120,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           </div>
 
           {/* Menu Items */}
-          <nav >
+          <nav className={!sidebarOpen ? 'overflow-visible' : ''}>
           {menuItems.map((item, idx) => {
             const Icon = item.icon
             const isActive = pathname === item.path || (item.label === 'SpadesFI' && pathname.startsWith('/spadesfi'))
@@ -126,9 +129,23 @@ export default function Sidebar({ onClose }: SidebarProps) {
             return (
               <div key={item.path}>
                 {isSpadesFI ? (
-                  <div>
+                  <div className="relative group">
                     <button
-                      onClick={() => {setIsSpadesFIOpen(!isSpadesFIOpen); toggleSidebar()}}
+                      ref={(el) => {
+                        buttonRefs.current[item.path] = el
+                      }}
+                      onMouseEnter={() => {
+                        if (!sidebarOpen && buttonRefs.current[item.path]) {
+                          const rect = buttonRefs.current[item.path]!.getBoundingClientRect()
+                          setTooltipPosition({ x: rect.right + 8, y: rect.top + rect.height / 2 })
+                          setHoveredItem(item.path)
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredItem(null)
+                        setTooltipPosition(null)
+                      }}
+                      onClick={() => setIsSpadesFIOpen(!isSpadesFIOpen)}
                       className={`relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
                         isActive
                           ? 'text-[#FFB600] bg-[#7E6BEF0A]'
@@ -136,7 +153,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon  className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`} />
+                        <Icon  
+                          className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`}
+                          strokeWidth={1.5}
+                        />
                         {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
                       </div>
                       {sidebarOpen && (
@@ -157,7 +177,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           return (
                             <button
                               key={subItem.path}
-                              onClick={() => handleNavigation(subItem.path)}
+                              onClick={() => handleNavigation(subItem.path, subItem.label)}
                               className={`w-full text-left px-4 py-2.5 pl-8 text-sm font-exo2 transition-colors flex items-center gap-2 ${
                                 isSubActive
                                   ? 'text-[#FFB600] bg-[#7E6BEF0A]'
@@ -173,24 +193,42 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     )}
                   </div>
                 ) : (
-                  <button
-                    onClick={() => handleNavigation(item.path)}
-                    className={`relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
-                      isActive
-                        ? 'text-[#FFB600] bg-[#7E6BEF0A]'
-                        : 'text-white hover:bg-white/5'
-                    }`}
-                    title={!sidebarOpen ? item.label : ''}
-                  >
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`} />
-                    {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
-                    {isActive && sidebarOpen && (
-                      <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#FFB600] rounded-l"></span>
-                    )}
-                  </button>
+                  <div className="relative group">
+                    <button
+                      ref={(el) => {
+                        buttonRefs.current[item.path] = el
+                      }}
+                      onMouseEnter={() => {
+                        if (!sidebarOpen && buttonRefs.current[item.path]) {
+                          const rect = buttonRefs.current[item.path]!.getBoundingClientRect()
+                          setTooltipPosition({ x: rect.right + 8, y: rect.top + rect.height / 2 })
+                          setHoveredItem(item.path)
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredItem(null)
+                        setTooltipPosition(null)
+                      }}
+                      onClick={() => handleNavigation(item.path, item.label)}
+                      className={`relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                        isActive
+                          ? 'text-[#FFB600] bg-[#7E6BEF0A]'
+                          : 'text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon 
+                        className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`}
+                        strokeWidth={1.5}
+                      />
+                      {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
+                      {isActive && sidebarOpen && (
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#FFB600] rounded-l"></span>
+                      )}
+                    </button>
+                  </div>
                 )}
-                {/* separators between groups - after SpadesFI (idx 3) and after trending (idx 6) */}
-                {(idx === 3 || idx === 6) && <div className="mx-4 h-px bg-[#2A2F4A]" />}
+                {/* Separators after every 3 items (after idx 2, 5) */}
+                {(idx === 2 || idx === 5) && <div className="mx-4 h-px bg-[#2A2F4A]" />}
               </div>
             )
           })}
@@ -207,7 +245,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <h3 className="text-white text-lg font-exo2">Chat</h3>
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => handleNavigation('/messages')}
+                  onClick={() => handleNavigation('/messages', 'Messages')}
                   className="text-white hover:text-gray-300 transition-colors"
                   title="New Message"
                 >
@@ -232,7 +270,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               {chatData.map((chat, idx) => (
                 <div
                   key={idx}
-                  onClick={() => handleNavigation(`/messages?chat=${chat.id}&userId=${chat.userId}`)}
+                  onClick={() => handleNavigation(`/messages?chat=${chat.id}&userId=${chat.userId}`, 'Messages')}
                   className="flex items-center gap-3 py-2 px-1 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
                 >
                   {/* Profile Picture */}
@@ -269,7 +307,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
             {/* View All */}
             <button 
-              onClick={() => handleNavigation('/messages')}
+              onClick={() => handleNavigation('/messages', 'Messages')}
               className="flex items-center gap-1 text-white text-sm font-exo2 hover:text-gray-300 transition-colors"
             >
               View All
@@ -279,6 +317,23 @@ export default function Sidebar({ onClose }: SidebarProps) {
           )}
         </div>
       </div>
+      
+      {/* Tooltip Portal - Renders outside sidebar to avoid overflow clipping */}
+      {!sidebarOpen && hoveredItem && tooltipPosition && typeof window !== 'undefined' && createPortal(
+        <div
+          className="fixed px-3 py-1.5 bg-[#1a1a2e] text-white text-sm font-exo2 rounded-lg whitespace-nowrap z-[9999] border border-[#2A2F4A] shadow-xl pointer-events-none"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+            transform: 'translateY(-50%)',
+          }}
+        >
+          {menuItems.find(item => item.path === hoveredItem)?.label}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-r-4 border-r-[#1a1a2e] border-b-4 border-b-transparent"></div>
+        </div>,
+        document.body
+      )}
+
     </aside>
   )
 }
