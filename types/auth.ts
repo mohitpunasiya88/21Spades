@@ -1,3 +1,4 @@
+
 export interface User {
   id: string
   name: string
@@ -25,6 +26,7 @@ export interface User {
   isOnline?: boolean
   blocked?: boolean
   privyId?: string // Privy user ID for OAuth logins
+  walletAddress?: string // User's wallet address
 }
 
 export interface SignUpData {
@@ -46,4 +48,3 @@ export interface OTPData {
   phone: string
   otp: string
 }
-
