@@ -158,7 +158,7 @@ export default function CollectionProfile({
   }
 
   return (
-    <div className="w-full min-h-screen ">
+    <div className="w-full min-h-screen font-exo2 ">
       {/* Header Section with Radial Gradient */}
       <div 
         className="relative w-full h-auto min-h-[350px] sm:min-h-[400px] overflow-hidden"
@@ -167,13 +167,13 @@ export default function CollectionProfile({
         <div className="relative z-10 px-4 sm:px-6 md:px-8 pt-8 sm:pt-10 md:pt-12 pb-6 md:pb-8">
           {/* Card/Box Container with Border */}
           <div 
-            className="relative rounded-2xl overflow-hidden p-6 sm:p-8 border border-white/10"
+            className="relative rounded-2xl overflow-hidden p-6 sm:p-8 "
             style={{
               background: 'radial-gradient(ellipse at top center, #4A02D8 0%, #0F0F23 70%)',
             }}
           >
             {/* Collection Title with Spade Icon and Verified Badge */}
-            <div className="flex items-start gap-4 mb-3">
+            <div className="flex items-start gap-4 mb-3 font-exo2">
               {/* Spade Icon */}
               <div className="relative w-16 h-16 flex-shrink-0">
                 <Image 
@@ -187,7 +187,7 @@ export default function CollectionProfile({
               </div>
               <div className="flex flex-col flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-exo2 font-bold">{collectionName}</h1>
+                  <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-exo2 font-semibold">{collectionName}</h1>
                   <Avatar
                     size={32}
                     icon={<CheckOutlined />}
@@ -204,9 +204,9 @@ export default function CollectionProfile({
             </div>
 
             {/* Description */}
-            <p className="text-white text-base mb-6 font-exo2 max-w-[300px]">
+            <p className="text-white text-base mb-6 font-exo2 max-w-[400px]">
               {description}
-              <span className="text-[#C084FC] ml-2 hover:underline cursor-pointer font-exo2">More</span>
+              <span className="text-[#C084FC] ml-2 hover:underline cursor-pointer font-bold font-exo2">More</span>
             </p>
 
             {/* Stats Pill */}
@@ -261,7 +261,7 @@ export default function CollectionProfile({
       </div>
 
       {/* Navigation and Filter Bar */}
-      <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/10">
+      <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 ">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           {/* Tabs */}
           <div className="flex items-center gap-4 sm:gap-6 md:gap-8 w-full sm:w-auto overflow-x-auto">
@@ -329,7 +329,7 @@ export default function CollectionProfile({
       <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {nfts.map((nft) => (
-            <div key={nft.id} className="border border-gray-700 rounded-2xl">
+            <div key={nft.id} className=" rounded-2xl">
             <NFTCard 
               id={nft.id}
               name={nft.name}

@@ -14,6 +14,7 @@ import tigercarImage from "@/components/assets/tigercar.jpg"
 import collectionOneImage from "@/components/assets/image21.png"
 import collectionTwoImage from "@/components/assets/image22.png"
 import spadesImage from "@/components/assets/Spades-image-21.png"
+import spadesImageRight from "@/components/assets/Spades-left-Right.png"
 
 const { TextArea } = Input
 
@@ -659,69 +660,67 @@ export default function CreateNFTPage() {
   }
 
   return (
-    <div className="px-4 md:px-6 py-6 mt-4 space-y-6 bg-[#020019] font-exo2 min-h-screen">
+    <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 mt-2 sm:mt-4 space-y-4 sm:space-y-6 bg-[#020019] font-exo2 min-h-screen">
       {/* Banner */}
-      <div className="relative rounded-xl overflow-hidden border border-[#4F01E6] bg-gradient-to-r from-[#4F01E6] to-[#020019] py-8 md:py-12">
+      <div className="relative rounded-xl  overflow-hidden border border-[#4F01E6] bg-gradient-to-r from-[#4F01E6] to-[#020019] h-[120px] md:h-[160px]">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[260px] h-[260px] md:w-[320px] md:h-[320px] opacity-80">
+          {/* Left Spade - Pointing Right */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[20%] w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px]">
             <Image
-              src={spadesImage}
+              src={spadesImageRight}
               alt="Left spade accent"
               fill
               className="object-contain"
               style={{
-                filter: 'blur(4px) brightness(1.6) contrast(1.35)',
-                transform: ' rotate(90deg)',
-
-                objectFit: 'cover',
-                objectPosition: '100% 50%',
+                filter: 'blur(3px) brightness(1.5) contrast(1.3)',
+                transform: 'rotate(0deg) scaleX(-1)',
               }}
             />
           </div>
 
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[260px] h-[260px] md:w-[320px] md:h-[320px] opacity-80">
+          {/* Right Spade - Pointing Left */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[20%] w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px] lg:w-[320px] lg:h-[320px]">
             <Image
-              src={spadesImage}
+              src={spadesImageRight}
               alt="Right spade accent"
               fill
-              className="object-contain mr-24"
+              className="object-contain"
               style={{
-                filter: 'blur(4px) brightness(1.6) contrast(1.35)',
-                transform: ' rotate(-90deg)',
-                objectFit: 'cover',
-                objectPosition: '100% 50%',
+                filter: 'blur(3px) brightness(1.5) contrast(1.3)',
               }}
             />
           </div>
         </div>
 
         {/* Text Content */}
-        <div className="relative z-10 text-center">
-          <h1 className="text-white text-2xl md:text-3xl font-exo2 tracking-wider">Tokenize an Asset</h1>
+        <div className="relative z-10 flex items-center justify-center h-full">
+          <h1 className="text-white text-lg sm:text-2xl md:text-3xl lg:text-4xl font-exo2 tracking-wider font-semibold">
+            Tokenize an Asset
+          </h1>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Left Column - Preview Item */}
-        <div className="space-y-6">
-          <div className="p-6">
-            <h2 className="text-white text-xl font-semibold mb-2">Preview Item</h2>
-            <p className="text-[#9BA3AF] text-sm mb-4">Your NFT will look this</p>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Preview Item</h2>
+            <p className="text-[#9BA3AF] text-xs sm:text-sm mb-3 sm:mb-4">Your NFT will look this</p>
 
             {/* NFT Preview Card */}
             <div className="relative rounded-xl overflow-hidden bg-[#0B0926] border border-[#2A2F4A]">
               {/* NFT Image */}
               <div className="relative w-full aspect-square overflow-hidden">
-              <Image
+                <Image
                   src={previewUrl || tigercarImage}
-                alt="NFT Preview"
+                  alt="NFT Preview"
                   fill
                   className="object-cover"
                 />
                 
                 {/* NFT Details Overlay - Positioned at bottom of image */}
                 <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
-                  <h3 className="text-white text-lg font-semibold mb-2">
+                  <h3 className="text-white text-base sm:text-lg font-semibold mb-2">
                     {title || "Tiger Neon #1"}
                   </h3>
                   
@@ -742,17 +741,17 @@ export default function CreateNFTPage() {
                         />
                       )}
                     </div>
-                    <span className="text-white text-sm">
+                    <span className="text-white text-xs sm:text-sm">
                       Creator <span className="font-semibold">{user?.name || "21Spades"}</span>
                     </span>
                   </div>
                   
                   {/* Highest Bid */}
                   <div className="flex items-center justify-between">
-                    <span className="text-white text-sm">Highest Bid</span>
+                    <span className="text-white text-xs sm:text-sm">Highest Bid</span>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-semibold">
+                        <span className="text-white text-sm sm:text-base font-semibold">
                           {fixedPrice ? `${fixedPrice} AVAX` : "6.8 AVAX"}
                         </span>
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#E84142] to-[#C2181B] flex items-center justify-center flex-shrink-0">
@@ -773,7 +772,7 @@ export default function CreateNFTPage() {
             <Button
               type="primary"
               htmlType="button"
-              className="!w-full !mt-4 !bg-gradient-to-r !from-[#5A21FF] !to-[#7E6BEF] !border-none !h-12 !text-base !font-semibold"
+              className="!w-full !mt-3 sm:!mt-4 !bg-gradient-to-r !from-[#5A21FF] !to-[#7E6BEF] !border-none !h-10 sm:!h-12 !text-sm sm:!text-base !font-semibold"
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -787,16 +786,16 @@ export default function CreateNFTPage() {
         </div>
 
         {/* Right Column - Form */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Upload File */}
-          <div className="p-6">
-            <h2 className="text-white text-xl font-semibold mb-2">Upload File</h2>
-            <p className="text-[#9BA3AF] text-sm mb-4">Drag or choose your file to upload</p>
+          <div className="p-4 sm:p-6">
+            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Upload File</h2>
+            <p className="text-[#9BA3AF] text-xs sm:text-sm mb-3 sm:mb-4">Drag or choose your file to upload</p>
 
             <div
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              className="border-2 border-dashed border-[#2A2F4A] rounded-xl p-8 md:p-12 bg-[#0B0926] text-center cursor-pointer hover:border-[#5A21FF] transition-colors"
+              className="border-2 border-dashed border-[#2A2F4A] rounded-xl p-6 sm:p-8 md:p-12 bg-[#0B0926] text-center cursor-pointer hover:border-[#5A21FF] transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
               {previewUrl && uploadedFile?.type.startsWith("image/") ? (
@@ -821,8 +820,8 @@ export default function CreateNFTPage() {
                 </div>
               ) : (
                 <>
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-xl bg-[#5A21FF]/20 flex items-center justify-center">
-                    <UploadIcon className="w-10 h-10 text-[#5A21FF]" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-xl bg-[#5A21FF]/20 flex items-center justify-center">
+                    <UploadIcon className="w-8 h-8 sm:w-10 sm:h-10 text-[#5A21FF]" />
                   </div>
                   <p className="text-[#9BA3AF] text-sm mb-2">
                     PNG, GIF, WEBP, MP3, MP4; MAX 500MB
@@ -851,16 +850,16 @@ export default function CreateNFTPage() {
           </div>
 
           {/* Select Method */}
-          <div className="p-6">
-            <h2 className="text-white text-xl font-semibold mb-2">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
               Select Method <span className="text-[#5A21FF]">*</span>
             </h2>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {methods.map((method) => (
                 <button
                   key={method}
                   onClick={() => setSelectedMethod(method)}
-                  className={`px-6 py-3 rounded-full text-sm font-exo2 transition-all ${
+                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-exo2 transition-all ${
                     selectedMethod === method
                       ? "bg-[#5A21FF] text-white border border-[#5A21FF]"
                       : "bg-transparent text-white border border-[#6B7280] hover:bg-[#4E00E5] hover:text-white hover:border-[#5A21FF]"
@@ -872,11 +871,9 @@ export default function CreateNFTPage() {
             </div>
           </div>
 
-          
-
           {/* Title */}
-          <div className="p-6">
-            <h2 className="text-white text-xl font-semibold mb-2">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
               Title <span className="text-[#5A21FF]">*</span>
             </h2>
             <Input
@@ -888,22 +885,22 @@ export default function CreateNFTPage() {
           </div>
 
           {/* Description */}
-          <div className="p-6">
-            <h2 className="text-white text-xl font-semibold mb-2">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
               Description <span className="text-[#5A21FF]">*</span>
             </h2>
             <TextArea
               placeholder="e.g: This is very limited item"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={6}
-              className="!bg-[#0B0926] !border-[#6B7280] !text-white !rounded-xl placeholder:!text-[#6B7280]"
+              rows={4}
+              className="!bg-[#0B0926] !border-[#6B7280] !text-white !rounded-xl placeholder:!text-[#6B7280] sm:!min-h-[120px]"
             />
           </div>
 
           {/* Time Auction Date Fields */}
           {selectedMethod === "Time Auction" && (
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Starting Date */}
                 <div>
@@ -945,7 +942,7 @@ export default function CreateNFTPage() {
           )}
 
           {/* Input Fields - 2x2 Grid */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Fixed Price */}
               <div>
@@ -1038,9 +1035,9 @@ export default function CreateNFTPage() {
           </div>
 
           {/* Choose/Create Collection */}
-          <div className="p-6">
-            <h2 className="text-white text-xl font-semibold mb-2">Choose/Create your own Collection</h2>
-            <p className="text-[#9BA3AF] text-sm mb-5">Choose an existing collection or create a new one.</p>
+          <div className="p-4 sm:p-6">
+            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Choose/Create your own Collection</h2>
+            <p className="text-[#9BA3AF] text-xs sm:text-sm mb-4 sm:mb-5">Choose an existing collection or create a new one.</p>
 
             <div 
               className={collections.length > 2 ? "collections-scroll pr-2" : ""}
@@ -1053,20 +1050,20 @@ export default function CreateNFTPage() {
                 scrollbarColor: collections.length > 2 ? '#5A21FF #0B0926' : 'transparent transparent',
               }}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
               {/* Create Collection Button - Always First */}
               <button
                 type="button"
                 onClick={() => setIsCreateCollectionModalOpen(true)}
-                className={`group flex h-[150px] w-full flex-col items-center justify-center rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
+                className={`group flex h-[120px] sm:h-[150px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
                     ? "border-[#6C4DFF] text-white bg-[#120D39]"
                     : "border-[#2A2F4A] text-[#9BA3AF] hover:border-[#6C4DFF] hover:text-white"
                   }`}
               >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6C4DFF]/10 text-[#6C4DFF] mb-3 group-hover:bg-[#6C4DFF]/20">
-                  <Plus className="h-5 w-5" />
+                <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#6C4DFF]/10 text-[#6C4DFF] mb-2 sm:mb-3 group-hover:bg-[#6C4DFF]/20">
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
-                <span className="text-sm font-semibold">Create Collection</span>
+                <span className="text-xs sm:text-sm font-semibold">Create Collection</span>
               </button>
 
               {/* Collections List */}
@@ -1108,7 +1105,7 @@ export default function CreateNFTPage() {
                           : "border-transparent hover:border-[#6C4DFF]/60"
                       }`}
                     >
-                      <div className="relative h-[160px] w-full rounded-2xl">
+                      <div className="relative h-[120px] sm:h-[160px] w-full rounded-xl sm:rounded-2xl">
                       <Image
                           src={collectionImage}
                           alt={collectionName}
@@ -1134,9 +1131,9 @@ export default function CreateNFTPage() {
               </button>
                         )}
                         
-                        <div className="absolute inset-x-0 bottom-0 p-4">
-                          <p className="text-white text-base font-semibold truncate">{collectionName}</p>
-                          <p className="text-xs text-[#C5C9FF]/80">{itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
+                        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                          <p className="text-white text-sm sm:text-base font-semibold truncate">{collectionName}</p>
+                          <p className="text-[10px] sm:text-xs text-[#C5C9FF]/80">{itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
                         </div>
                       </div>
                     </button>
@@ -1152,13 +1149,13 @@ export default function CreateNFTPage() {
           </div>
 
           {/* Toggle Options */}
-          <div className="p-6">
-            <div className="space-y-4">
+          <div className="p-4 sm:p-6">
+            <div className="space-y-3 sm:space-y-4">
               {/* Post To Feed */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1">Post To Feed</h3>
-                  <p className="text-[#9BA3AF] text-sm">Item will display in Feed</p>
+                  <h3 className="text-white text-sm sm:text-base font-semibold mb-1">Post To Feed</h3>
+                  <p className="text-[#9BA3AF] text-xs sm:text-sm">Item will display in Feed</p>
                 </div>
                 <Switch
                   checked={postToFeed}
@@ -1170,8 +1167,8 @@ export default function CreateNFTPage() {
               {/* Free Minting */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1">Free Minting</h3>
-                  <p className="text-[#9BA3AF] text-sm">Buyer will pay gas fees for minting</p>
+                  <h3 className="text-white text-sm sm:text-base font-semibold mb-1">Free Minting</h3>
+                  <p className="text-[#9BA3AF] text-xs sm:text-sm">Buyer will pay gas fees for minting</p>
                 </div>
                 <Switch
                   checked={freeMinting}
@@ -1183,8 +1180,8 @@ export default function CreateNFTPage() {
               {/* Put on marketplace */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1">Put on marketplace</h3>
-                  <p className="text-[#9BA3AF] text-sm">You'll receive bids on this item</p>
+                  <h3 className="text-white text-sm sm:text-base font-semibold mb-1">Put on marketplace</h3>
+                  <p className="text-[#9BA3AF] text-xs sm:text-sm">You'll receive bids on this item</p>
                 </div>
                 <Switch
                   checked={putOnMarketplace}
@@ -1196,8 +1193,8 @@ export default function CreateNFTPage() {
               {/* Unlock once purchased */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1">Unlock once purchased</h3>
-                  <p className="text-[#9BA3AF] text-sm">Content will be unlocked after successful transaction</p>
+                  <h3 className="text-white text-sm sm:text-base font-semibold mb-1">Unlock once purchased</h3>
+                  <p className="text-[#9BA3AF] text-xs sm:text-sm">Content will be unlocked after successful transaction</p>
                 </div>
                 <Switch
                   checked={unlockOncePurchased}

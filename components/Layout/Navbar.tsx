@@ -123,10 +123,18 @@ export default function Navbar() {
             >
               <Bell className="w-5 h-5" />
               <span>Notifications</span>
-              <Badge dot className="ml-auto [&_.ant-badge-dot]:!bg-red-500" />
+              <Badge count={8} className="ml-auto [&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs" />
             </button>
 
-            {/* Create/Plus */}
+            {/* Wallet */}
+            <button
+              className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#2A2F4A]"
+            >
+              <Wallet className="w-5 h-5" />
+              <span>Wallet</span>
+            </button>
+
+            {/* Create Token */}
             <button
               onClick={() => {
                 router.push('/create-nft')
@@ -135,7 +143,7 @@ export default function Navbar() {
               className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3"
             >
               <Plus className="w-5 h-5" />
-              <span>Create</span>
+              <span>Create Token</span>
             </button>
           </div>
         )}
@@ -237,14 +245,7 @@ export default function Navbar() {
           </Badge>
         </div>
 
-        {/* Notifications - Mobile */}
-        <div className="relative sm:hidden">
-          <Badge count={8} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white [&_.ant-badge-count]:!min-w-[16px] [&_.ant-badge-count]:!h-[16px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
-            <button className="relative text-white w-8 h-8 rounded-full border border-white/30 bg-transparent flex items-center justify-center hover:opacity-80 transition-all">
-              <Bell className="w-4 h-4" />
-            </button>
-          </Badge>
-        </div>
+        {/* Notifications - Mobile - HIDDEN, now in menu */}
 
         {/* Wallet Button with Hover Dropdown - Desktop */}
         <div className="relative hidden sm:block" ref={walletRef}>
@@ -342,71 +343,9 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Wallet Button - Mobile */}
-        <div className="relative sm:hidden" ref={mobileWalletRef}>
-          <button
-            onClick={() => setIsWalletOpen(!isWalletOpen)}
-            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-transparent hover:border-white/50 transition-all p-1.5"
-          >
-            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-              <Wallet className="w-3.5 h-3.5 text-gray-800" />
-            </div>
-          </button>
+        {/* Wallet Button - Mobile - HIDDEN, now in menu */}
 
-          {/* Wallet Dropdown Menu - Mobile */}
-          {isWalletOpen && (
-            <div
-              className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-              style={{
-                background: 'rgba(17, 24, 39, 0.98)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                backdropFilter: 'blur(20px)',
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
-                minWidth: '200px',
-                zIndex: 1000,
-              }}
-            >
-              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group">
-                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                <span className="group-hover:text-purple-300 transition-colors">Connect Wallet</span>
-              </button>
-              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
-                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                <span className="group-hover:text-purple-300 transition-colors">My Wallets</span>
-              </button>
-              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
-                <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                <span className="group-hover:text-purple-300 transition-colors">Transaction History</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Create Token Button - Mobile */}
-        <div className="relative sm:hidden">
-          <button
-            onClick={() => router.push('/create-nft')}
-            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-transparent hover:border-white/50 transition-all p-1.5"
-          >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white flex-shrink-0">
-              {/* Hexagonal icon with plus sign */}
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Hexagon shape */}
-                <path
-                  d="M8 1L13.8564 4V12L8 15L2.14359 12V4L8 1Z"
-                  fill="black"
-                />
-                {/* Plus sign */}
-                <path
-                  d="M8 5V11M5 8H11"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-          </button>
-        </div>
+        {/* Create Token Button - Mobile - HIDDEN, now in menu */}
 
         {/* User Profile with Spades Text and Hover Dropdown */}
         {user && (
