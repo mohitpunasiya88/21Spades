@@ -36,7 +36,7 @@ export default function CreateNFTPage() {
   const [putOnMarketplace, setPutOnMarketplace] = useState<boolean>(true)
   const [unlockOncePurchased, setUnlockOncePurchased] = useState<boolean>(true)
   // Time Auction date fields
-  const [startingDate, setStartingDate] = useState<string>("right-after-listing")
+  const [startingDate, setStartingDate] = useState<Dayjs | null>(null)
   const [expirationDate, setExpirationDate] = useState<Dayjs | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastValidFixedPriceRef = useRef<number | null>(null)
@@ -279,8 +279,8 @@ export default function CreateNFTPage() {
       let endingTime: string | undefined
       
       if (selectedMethod === "Time Auction") {
-        if (startingDate === "right-after-listing") {
-          startingTime = new Date().toISOString()
+        if (startingDate) {
+          startingTime = startingDate.toISOString()
         }
         if (expirationDate) {
           endingTime = expirationDate.toISOString()
@@ -380,7 +380,7 @@ export default function CreateNFTPage() {
         setRoyalties(null)
         setSelectedCollection("")
         setExpirationDate(null)
-        setStartingDate("right-after-listing")
+        setStartingDate(null)
         
         if (fileInputRef.current) {
           fileInputRef.current.value = ""
@@ -901,27 +901,29 @@ export default function CreateNFTPage() {
           {/* Time Auction Date Fields */}
           {selectedMethod === "Time Auction" && (
             <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Starting Date */}
                 <div>
-                  <h2 className="text-white text-xl font-semibold mb-2">Starting Date</h2>
-                  <Select
+                  <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Starting Date</h2>
+                   <DatePicker
                     value={startingDate}
-                    onChange={setStartingDate}
-                    className="time-auction-select !w-full"
-                    popupClassName="time-auction-select-dropdown"
-                    suffixIcon={<span className="text-white text-sm">▼</span>}
+                    onChange={(date) => setStartingDate(date)}
+                    disabledDate={(current) => {
+                      // Disable dates before today
+                      return current && current < dayjs().startOf('day')
+                    }}
+                    format="DD/MM/YYYY"
+                    placeholder="Select starting date"
+                    className="!w-full !h-10 sm:!h-12 [&_.ant-picker-input]:!bg-[#0B0926] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#0B0926] !border-[#6B7280] !rounded-xl [&_.ant-picker-suffix]:!text-white"
+                    popupClassName="[&_.ant-picker-dropdown]:!bg-[#0B0926] [&_.ant-picker-panel]:!bg-[#0B0926] [&_.ant-picker-header]:!bg-[#0B0926] [&_.ant-picker-header]:!border-[#6B7280] [&_.ant-picker-content]:!bg-[#0B0926] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF]"
+                    suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
-                  >
-                    <Select.Option value="right-after-listing" className="!text-white">
-                      Right after listing
-                    </Select.Option>
-                  </Select>
+                  />
                 </div>
 
                 {/* Expiration Date */}
                 <div>
-                  <h2 className="text-white text-xl font-semibold mb-2">Expiration Date</h2>
+                  <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Expiration Date</h2>
                   <DatePicker
                     value={expirationDate}
                     onChange={(date) => setExpirationDate(date)}
@@ -930,9 +932,9 @@ export default function CreateNFTPage() {
                       return current && current < dayjs().startOf('day')
                     }}
                     format="DD/MM/YYYY"
-                    placeholder="Select date"
-                    className="time-auction-datepicker !w-full"
-                    popupClassName="time-auction-datepicker-dropdown"
+                    placeholder="Select ending date"
+                    className="!w-full !h-10 sm:!h-12 [&_.ant-picker-input]:!bg-[#0B0926] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#0B0926] !border-[#6B7280] !rounded-xl [&_.ant-picker-suffix]:!text-white"
+                    popupClassName="[&_.ant-picker-dropdown]:!bg-[#0B0926] [&_.ant-picker-panel]:!bg-[#0B0926] [&_.ant-picker-header]:!bg-[#0B0926] [&_.ant-picker-header]:!border-[#6B7280] [&_.ant-picker-content]:!bg-[#0B0926] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF]"
                     suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                   />
