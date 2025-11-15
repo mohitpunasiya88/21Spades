@@ -52,9 +52,11 @@ const authRoutes = {
     // NFT Collections
     createCollection: 'nft/collections',
     getCollections: 'nft/collections',
+    getCollectionById: 'nft/collections', // Use with id: `nft/collections/${id}`
     
     // NFT Items
     createNFT: 'nft/items',
+    getNFTsByCollection: 'nft/items', // Use with collectionId: `nft/items?collectionId=${id}`
 }
 
 export default authRoutes;

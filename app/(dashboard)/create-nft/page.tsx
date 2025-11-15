@@ -1020,14 +1020,6 @@ export default function CreateNFTPage() {
               min={0}
               precision={2}
               controls={false}
-              styles={{
-                input: {
-                  color: 'white',
-                  '::placeholder': {
-                    color: '#6B7280'
-                  }
-                }
-              }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm">USDC</span>
           </div>
