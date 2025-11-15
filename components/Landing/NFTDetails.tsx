@@ -178,9 +178,9 @@ export default function NFTDetails({
                 <button className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
                   Buy Now
                 </button>
-                <button className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full border border-gray-700 text-white hover:border-white transition flex items-center justify-center gap-2 font-exo2 text-sm sm:text-base">
-                  <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Add to Cart
+                <button className="px-5 py-2.5 rounded-full border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Bids Now
                 </button>
               </div>
               
@@ -192,7 +192,32 @@ export default function NFTDetails({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
           <Accordion title="Token Detail">
-            {/* Token detail content can go here */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-400 text-sm font-exo2">Creator</span>
+                <span className="text-white text-sm font-exo2">{owner}</span>
+              </div>
+              <div className="flex items-center justify-between ">
+                <span className="text-gray-400 text-sm font-exo2">Token Standard</span>
+                <span className="text-white text-sm font-exo2">ERC-721</span>
+              </div>
+              <div className="flex items-center justify-between ">
+                <span className="text-gray-400 text-sm font-exo2">Blockchain</span>
+                <span className="text-white text-sm font-exo2">Avalanche</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm font-exo2">Last Updated</span>
+                <span className="text-white text-sm font-exo2">October 13, 2025</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-white/5">
+                <span className="text-gray-400 text-sm font-exo2">Category</span>
+                <span className="text-white text-sm font-exo2">Art</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-400 text-sm font-exo2">Creator Fee</span>
+                <span className="text-[#A855F7] text-sm font-exo2 font-semibold">10%</span>
+              </div>
+            </div>
           </Accordion>
 
           <Accordion title="Bids">

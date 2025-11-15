@@ -20,6 +20,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('English')
+  const [selectedWalletOption, setSelectedWalletOption] = useState<string | null>(null)
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const walletRef = useRef<HTMLDivElement>(null)
@@ -80,7 +81,7 @@ export default function Navbar() {
     <div className="sticky top-0 z-50 bg-[#020019]">
      
       <nav
-        className="backdrop-blur-sm border-b border-gray-800 px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between"
+        className="backdrop-blur-sm border-b border-gray-800 px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 flex items-center justify-between gap-2 sm:gap-4"
       >
       {/* Mobile Menu Button - Left Side */}
       <div className="sm:hidden relative" ref={mobileMenuRef}>
@@ -150,28 +151,30 @@ export default function Navbar() {
       </div>
 
       {/* Logo - Centered on Mobile */}
-      <div className="flex items-center gap-2 sm:gap-6 absolute left-1/2 -translate-x-1/2 sm:relative sm:left-auto sm:translate-x-0">
-        <div className="flex items-center gap-1 sm:gap-3">
-          <div className="flex items-center gap-1 sm:gap-2 mb-1">
-            <img src="/assets/logo.png" alt="Logo" className="h-6 sm:h-8 w-auto" />
-          </div>
+      <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-6 absolute left-1/2 -translate-x-1/2 sm:relative sm:left-auto sm:translate-x-0 z-10 flex-1 sm:flex-initial justify-center sm:justify-start min-w-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <img 
+            src="/assets/logo.png" 
+            alt="Logo" 
+            className="h-5 w-auto sm:h-6 md:h-7 lg:h-8 xl:h-10 max-w-[90px] sm:max-w-[110px] md:max-w-[130px] lg:max-w-[150px] xl:max-w-none object-contain" 
+          />
         </div>
 
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-2 bg-[#F5F5F50A]  border border-gray-700 rounded-lg px-4 py-2.5 w-80">
-          <Search className="w-5 h-5 " />
-          {/* verdical line */}
-          <div className="w-px h-[19px] bg-[#787486]" />
+        {/* Search Bar - Responsive */}
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 bg-[#F5F5F50A] border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 w-24 sm:w-40 md:w-48 lg:w-64 xl:w-80">
+          <Search className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 flex-shrink-0" />
+          {/* vertical line */}
+          <div className="w-px h-3 sm:h-3.5 md:h-4 lg:h-[19px] bg-[#787486] hidden sm:block" />
           <input
             type="text"
-            placeholder="Search for anything..."
-            className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm"
+            placeholder="Search..."
+            className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-[10px] sm:text-xs md:text-sm w-0 min-w-0"
           />
         </div>
       </div>
 
       {/* Right Side */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
         {/* Language Selector */}
         {/* Language Dropdown */}
         <div className="relative hidden sm:block" ref={languageRef}>
@@ -180,14 +183,14 @@ export default function Navbar() {
               setIsLanguageOpen(!isLanguageOpen)
               setIsProfileOpen(false)
             }}
-            className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-all w-[107px] h-[22px]"
+            className="flex items-center justify-start gap-1 sm:gap-[10px] text-white hover:text-gray-300 transition-all w-20 sm:w-[107px] h-5 sm:h-[22px]"
             style={{
               background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
             }}
           >
             <Languages className="w-4 h-4" />
             <span
-              className="font-semibold text-[18px] leading-none"
+              className="font-semibold text-sm sm:text-base md:text-[18px] leading-none"
               style={{ fontFamily: 'var(--font-exo2)' }}
             >
               {selectedLanguage}
@@ -267,7 +270,9 @@ export default function Navbar() {
             </div>
             {isWalletHovered && (
               <>
-                <span className="text-white font-semibold text-sm whitespace-nowrap">Wallet</span>
+                <span className="text-white font-semibold text-sm whitespace-nowrap">
+                  {selectedWalletOption || 'Wallet'}
+                </span>
                 <ChevronDown className={`w-4 h-4 text-white transition-transform ${isWalletOpen ? 'rotate-180' : ''}`} />
               </>
             )}
@@ -275,38 +280,79 @@ export default function Navbar() {
 
           {/* Wallet Dropdown Menu */}
           {isWalletOpen && (
-            <div
-              onMouseEnter={() => {
-                setIsWalletHovered(true)
-                setIsWalletOpen(true)
-              }}
-              onMouseLeave={() => {
-                setIsWalletHovered(false)
-                setIsWalletOpen(false)
-              }}
-              className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-              style={{
-                background: 'rgba(17, 24, 39, 0.98)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                backdropFilter: 'blur(20px)',
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
-                minWidth: '200px',
-                zIndex: 1000,
-              }}
-            >
-              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group">
+            <>
+              {/* Invisible bridge to prevent gap issue */}
+              <div
+                onMouseEnter={() => {
+                  setIsWalletHovered(true)
+                  setIsWalletOpen(true)
+                }}
+                className="absolute top-full right-0 w-full h-1"
+                style={{ zIndex: 1001 }}
+              />
+              <div
+                onMouseEnter={() => {
+                  setIsWalletHovered(true)
+                  setIsWalletOpen(true)
+                }}
+                onMouseLeave={() => {
+                  setIsWalletHovered(false)
+                  setIsWalletOpen(false)
+                }}
+                className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                style={{
+                  background: 'rgba(17, 24, 39, 0.98)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                  minWidth: '200px',
+                  zIndex: 1000,
+                }}
+              >
+              <button 
+                onClick={() => {
+                  setSelectedWalletOption('Connect Wallet')
+                  setIsWalletOpen(false)
+                  setIsWalletHovered(false)
+                }}
+                className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group"
+              >
                 <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                 <span className="group-hover:text-purple-300 transition-colors">Connect Wallet</span>
+                {selectedWalletOption === 'Connect Wallet' && (
+                  <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
+                )}
               </button>
-              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
+              <button 
+                onClick={() => {
+                  setSelectedWalletOption('My Wallets')
+                  setIsWalletOpen(false)
+                  setIsWalletHovered(false)
+                }}
+                className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]"
+              >
                 <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                 <span className="group-hover:text-purple-300 transition-colors">My Wallets</span>
+                {selectedWalletOption === 'My Wallets' && (
+                  <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
+                )}
               </button>
-              <button className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]">
+              <button 
+                onClick={() => {
+                  setSelectedWalletOption('Transaction History')
+                  setIsWalletOpen(false)
+                  setIsWalletHovered(false)
+                }}
+                className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]"
+              >
                 <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                 <span className="group-hover:text-purple-300 transition-colors">Transaction History</span>
+                {selectedWalletOption === 'Transaction History' && (
+                  <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
+                )}
               </button>
             </div>
+            </>
           )}
         </div>
 
@@ -385,7 +431,7 @@ export default function Navbar() {
                 </div>
                 {isProfileHovered && (
                   <>
-                    <span className="text-white font-semibold text-sm whitespace-nowrap">Spades</span>
+                    <span className="text-white font-semibold text-sm whitespace-nowrap">{user.name || 'User'}</span>
                     <ChevronDown className={`w-4 h-4 text-white transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                   </>
                 )}
@@ -393,25 +439,35 @@ export default function Navbar() {
 
               {/* Profile Dropdown Menu */}
               {isProfileOpen && (
-                <div
-                  onMouseEnter={() => {
-                    setIsProfileHovered(true)
-                    setIsProfileOpen(true)
-                  }}
-                  onMouseLeave={() => {
-                    setIsProfileHovered(false)
-                    setIsProfileOpen(false)
-                  }}
-                  className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-                  style={{
-                    background: 'rgba(17, 24, 39, 0.98)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    backdropFilter: 'blur(20px)',
-                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
-                    minWidth: '220px',
-                    zIndex: 1000,
-                  }}
-                >
+                <>
+                  {/* Invisible bridge to prevent gap issue */}
+                  <div
+                    onMouseEnter={() => {
+                      setIsProfileHovered(true)
+                      setIsProfileOpen(true)
+                    }}
+                    className="absolute top-full right-0 w-full h-1"
+                    style={{ zIndex: 1001 }}
+                  />
+                  <div
+                    onMouseEnter={() => {
+                      setIsProfileHovered(true)
+                      setIsProfileOpen(true)
+                    }}
+                    onMouseLeave={() => {
+                      setIsProfileHovered(false)
+                      setIsProfileOpen(false)
+                    }}
+                    className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                    style={{
+                      background: 'rgba(17, 24, 39, 0.98)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      backdropFilter: 'blur(20px)',
+                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                      minWidth: '220px',
+                      zIndex: 1000,
+                    }}
+                  >
                   {/* User Info */}
                   <div className="p-4 border-b border-[#2A2F4A]">
                     <div className="flex items-center gap-3 mb-3">
@@ -455,6 +511,7 @@ export default function Navbar() {
                     <span>Logout</span>
                   </button>
                 </div>
+                </>
               )}
             </div>
 

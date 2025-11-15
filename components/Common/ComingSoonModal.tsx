@@ -36,17 +36,18 @@ export default function ComingSoonModal({ isOpen, onClose, title }: ComingSoonMo
   if (!isOpen) return null
 
   return (
-    <div className="w-full h-[50vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-[#020019]">
+    <div className="w-full min-h-[40vh] h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh] xl:h-[70vh] flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 bg-[#020019]">
       {/* Coming Soon Image Container */}
-      <div className="relative w-full max-w-xs sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl h-full rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden shadow-2xl border border-gray-700/50">
+      <div className="relative w-full max-w-[95%] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl h-full max-h-full  overflow-hidden">
         {/* Coming Soon Image */}
         <div className="relative w-full h-full">
           <Image
             src={comingSoonImage}
             alt="Coming Soon"
             fill
-            className="object-contain sm:object-contain md:object-cover"
+            className="object-contain"
             priority
+            sizes="(max-width: 640px) 95vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, (max-width: 1280px) 70vw, 60vw"
           />
         </div>
       </div>
