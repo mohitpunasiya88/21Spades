@@ -15,6 +15,9 @@ import collectionOneImage from "@/components/assets/image21.png"
 import collectionTwoImage from "@/components/assets/image22.png"
 import spadesImage from "@/components/assets/Spades-image-21.png"
 import spadesImageRight from "@/components/assets/Spades-left-Right.png"
+import { useWallet } from "@/app/hooks/useWallet"
+import { useNFTFactory } from "@/app/hooks/contracts/useNFTFactory"
+import { usePrivy, useWallets } from "@privy-io/react-auth"
 
 const { TextArea } = Input
 
@@ -461,10 +464,96 @@ export default function CreateNFTPage() {
       collectionFileInputRef.current.value = ""
     }
   }
+  const { address, isConnected, login, linkGoogle } = useWallet();
+  const { ready, authenticated, createWallet, connectWallet } = usePrivy();
+  const { wallets } = useWallets();
+  
+  const {
+    createCollection,
+    setMintableAddress: setMintableAddressContract,
+    getAllCollection,
+    getUserCollection,
+    getMintableAddress,
+    isLoading,
+    error,
+  } = useNFTFactory();
+
+  const [collectionParams, setCollectionParams] = useState({
+    name: '',
+    symbol: '',
+    contractURI: '',
+    tokenURIPrefix: '',
+    royaltyLimit: 100,
+  });
 
   const handleCreateCollection = async () => {
     console.log("🚀 handleCreateCollection called")
+    debugger;
+    // Check if Privy is ready
+    // if (!ready) {
+    //   message.info("Please wait, wallet is initializing...");
+    //   return;
+    // }
+    console.log("🔑 Authenticated:", authenticated)
     
+    // // Check if user is authenticated
+    // if (!authenticated) {
+    //   message.info("Please login first");
+    //   login();
+    //   return;
+    // }
+    
+    // Check if embedded wallet exists
+    let embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy');
+    console.log("🔑 Embedded wallet:", embeddedWallet)
+    if (!embeddedWallet) {
+      const hideLoading = message.loading("Creating your wallet...", 0);
+      try {
+        await createWallet();
+        hideLoading();
+        console.log("🔑 Wallet created")
+        // Wait for wallet to appear in wallets array (polling with longer wait)
+        let walletFound = false;
+        let attempts = 0;
+        const maxAttempts = 30; // 15 seconds max wait (500ms * 30)
+        
+        message.info("Waiting for wallet to be ready...");
+        
+        while (attempts < maxAttempts && !walletFound) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Re-check wallets array - it should update reactively
+          const currentWallets = wallets;
+          embeddedWallet = currentWallets.find((w: any) => w.walletClientType === 'privy');
+          if (embeddedWallet) {
+            walletFound = true;
+            message.success("Wallet created successfully!");
+            // Give React hooks time to update (especially useWallets in useContract)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            break;
+          }
+          attempts++;
+        }
+        
+        if (!walletFound) {
+          message.error("Wallet creation is taking longer than expected. Please refresh the page and try again.");
+          return;
+        }
+      } catch (error: any) {
+        hideLoading();
+        console.error("Error creating wallet:", error);
+        message.error(error?.message || "Failed to create wallet. Please try again.");
+        return;
+      }
+    }
+    
+    // Final check before proceeding - ensure wallet is still available
+    embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy');
+    if (!embeddedWallet) {
+      message.error("Wallet not available. Please try again.");
+      return;
+    }
+
+    // Validate inputs first
     if (!collectionFile) {
       message.error("Please upload a file")
       return
@@ -481,160 +570,186 @@ export default function CreateNFTPage() {
       message.error("Please enter a description")
       return
     }
-
-    // Use walletAddress from user or a placeholder
-    const walletAddress = user?.walletAddress || "0x0000000000000000000000000000000000000000"
     
-    if (!user?.walletAddress) {
-      console.warn("⚠️ Wallet address not found, using placeholder")
+    // Final wallet check before proceeding with transaction
+    const finalWalletCheck = wallets.find((w: any) => w.walletClientType === 'privy');
+    if (!finalWalletCheck) {
+      message.error("Wallet connection lost. Please refresh and try again.");
+      return;
     }
-
-    let collectionLoadingMessage: any = null
+    
     try {
-      console.log("📝 Starting collection creation process...")
+      const result = await createCollection({
+        name: collectionParams.name,
+        symbol: collectionParams.symbol,
+        contractURI: collectionParams.contractURI,
+        tokenURIPrefix: collectionParams.tokenURIPrefix,
+        royaltyLimit: collectionParams.royaltyLimit,
+      });
       
-      // Convert file to base64 data URL (temporary solution - replace with actual file upload endpoint if available)
-      const fileToDataURL = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-      }
-
-      console.log("🖼️ Converting file to data URL...")
-      const imageUrl = await fileToDataURL(collectionFile)
-      console.log("✅ File converted, length:", imageUrl.length)
+      message.success("Collection created successfully!");
+      console.log("✅ Collection created:", result);
       
-      // Generate slug from token symbol (not display name)
-      const collectionSlug = tokenSymbol
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '')
-
-      // Prepare payload according to API schema
-      const payload = {
-        // walletAddress: walletAddress,
-        walletAddress: '1234567890',
-        collectionName: displayName,
-        collectionDescription: collectionDescription,
-        collectionIpfs: "", // Will be set by backend or IPFS upload
-        imageUrl: imageUrl, // Using data URL for now - replace with actual URL after file upload
-        coverPhoto: imageUrl, // Using same image for cover photo - can be changed later
-        isActive: true,
-        collectionSlug: collectionSlug,
-        isVerified: false,
-        isMultiple: false,
-        blocked: false,
-        floorPrice: "0",
-        chainIndex: 1,
-        totalCollectionNfts: 0
+      // Reset form and close modal on success
+      setCollectionFile(null);
+      if (collectionPreviewUrl) {
+        URL.revokeObjectURL(collectionPreviewUrl);
+        setCollectionPreviewUrl(null);
       }
-
-      console.log("📦 Payload prepared:", {
-        ...payload,
-        imageUrl: payload.imageUrl.substring(0, 50) + "...", // Log only first 50 chars
-        coverPhoto: payload.coverPhoto.substring(0, 50) + "..."
-      })
-
-      collectionLoadingMessage = message.loading("Creating collection...", 0)
-
-      console.log("🌐 Calling API:", authRoutes.createCollection)
-      // Call API
-      const response = await apiCaller('POST', authRoutes.createCollection, payload, true)
-      console.log("📡 API Response:", response)
-
-      // Destroy loading message
-      message.destroy(collectionLoadingMessage as any)
-
-      if (response.success) {
-        // Show success message from API or default
-        message.success(response.message || "Collection created successfully!")
-        
-        // Reset form and close modal
-        setCollectionFile(null)
-        if (collectionPreviewUrl) {
-          URL.revokeObjectURL(collectionPreviewUrl)
-          setCollectionPreviewUrl(null)
-        }
-        setDisplayName("")
-        setTokenSymbol("")
-        setCollectionDescription("")
-        setIsCreateCollectionModalOpen(false)
-        
-        // Refresh collections list
-        await fetchCollections()
-        
-        console.log("✅ Collection created:", response.data)
-      } else {
-        console.error("❌ API returned success: false", response)
-        
-        // Check if error is related to slug - check multiple possible fields
-        const errorMessage = response.message || response.error || response.data?.message || response.data?.error || ""
-        console.log("🔍 Error message for slug check:", errorMessage)
-        
-        // More comprehensive slug error detection
-        const lowerErrorMessage = errorMessage.toLowerCase()
-        if (
-          lowerErrorMessage.includes("slug") || 
-          lowerErrorMessage.includes("collection slug") ||
-          lowerErrorMessage.includes("already exists") ||
-          lowerErrorMessage.includes("unique slug")
-        ) {
-          console.log("✅ Setting symbol error:", errorMessage)
-          setSymbolError(errorMessage)
-        } else {
-          console.log("❌ Not a slug error, clearing symbol error")
-          setSymbolError("")
-        }
-        
-        // Show error message from API
-        message.error(response.message || "Failed to create collection")
-      }
+      setDisplayName("");
+      setTokenSymbol("");
+      setCollectionDescription("");
+      setIsCreateCollectionModalOpen(false);
     } catch (error: any) {
-      console.error("❌ Error creating collection:", error)
-      console.error("❌ Error details:", {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status
-      })
-      
-      // Destroy loading message
-      if (collectionLoadingMessage) {
-        message.destroy(collectionLoadingMessage as any)
-      }
-      
-      // Check if error is related to slug - check multiple possible fields
-      const errorMessage = 
-        error?.response?.data?.message || 
-        error?.response?.data?.error || 
-        error?.message || 
-        error?.error ||
-        ""
-      
-      console.log("🔍 Error message from catch block for slug check:", errorMessage)
-      console.log("🔍 Full error response:", error?.response?.data)
-      
-      // More comprehensive slug error detection
-      const lowerErrorMessage = errorMessage.toLowerCase()
-      if (
-        lowerErrorMessage.includes("slug") || 
-        lowerErrorMessage.includes("collection slug") ||
-        lowerErrorMessage.includes("already exists") ||
-        lowerErrorMessage.includes("unique slug")
-      ) {
-        console.log("✅ Setting symbol error from catch:", errorMessage)
-        setSymbolError(errorMessage)
-      } else {
-        console.log("❌ Not a slug error, clearing symbol error")
-        setSymbolError("")
-      }
-      
-      // Show error from API response or generic error
-      const collectionErrorMessage = error?.response?.data?.message || error?.message || "An error occurred"
-      message.error(collectionErrorMessage)
+      console.error("❌ Error creating collection:", error);
+      const errorMessage = error?.message || "Failed to create collection. Please try again.";
+      message.error(errorMessage);
     }
+    // try {
+    //   console.log("📝 Starting collection creation process...")
+      
+    //   // Convert file to base64 data URL (temporary solution - replace with actual file upload endpoint if available)
+    //   const fileToDataURL = (file: File): Promise<string> => {
+    //     return new Promise((resolve, reject) => {
+    //       const reader = new FileReader()
+    //       reader.onload = () => resolve(reader.result as string)
+    //       reader.onerror = reject
+    //       reader.readAsDataURL(file)
+    //     })
+    //   }
+
+    //   console.log("🖼️ Converting file to data URL...")
+    //   const imageUrl = await fileToDataURL(collectionFile)
+    //   console.log("✅ File converted, length:", imageUrl.length)
+      
+    //   // Generate slug from token symbol (not display name)
+    //   const collectionSlug = tokenSymbol
+    //     .toLowerCase()
+    //     .replace(/[^a-z0-9]+/g, '-')
+    //     .replace(/(^-|-$)/g, '')
+
+    //   // Prepare payload according to API schema
+    //   const payload = {
+    //     // walletAddress: walletAddress,
+    //     walletAddress: '1234567890',
+    //     collectionName: displayName,
+    //     collectionDescription: collectionDescription,
+    //     collectionIpfs: "", // Will be set by backend or IPFS upload
+    //     imageUrl: imageUrl, // Using data URL for now - replace with actual URL after file upload
+    //     coverPhoto: imageUrl, // Using same image for cover photo - can be changed later
+    //     isActive: true,
+    //     collectionSlug: collectionSlug,
+    //     isVerified: false,
+    //     isMultiple: false,
+    //     blocked: false,
+    //     floorPrice: "0",
+    //     chainIndex: 1,
+    //     totalCollectionNfts: 0
+    //   }
+
+    //   console.log("📦 Payload prepared:", {
+    //     ...payload,
+    //     imageUrl: payload.imageUrl.substring(0, 50) + "...", // Log only first 50 chars
+    //     coverPhoto: payload.coverPhoto.substring(0, 50) + "..."
+    //   })
+
+    //   collectionLoadingMessage = message.loading("Creating collection...", 0)
+
+    //   console.log("🌐 Calling API:", authRoutes.createCollection)
+    //   // Call API
+    //   const response = await apiCaller('POST', authRoutes.createCollection, payload, true)
+    //   console.log("📡 API Response:", response)
+
+    //   // Destroy loading message
+    //   message.destroy(collectionLoadingMessage as any)
+
+    //   if (response.success) {
+    //     // Show success message from API or default
+    //     message.success(response.message || "Collection created successfully!")
+        
+    //     // Reset form and close modal
+    //     setCollectionFile(null)
+    //     if (collectionPreviewUrl) {
+    //       URL.revokeObjectURL(collectionPreviewUrl)
+    //       setCollectionPreviewUrl(null)
+    //     }
+    //     setDisplayName("")
+    //     setTokenSymbol("")
+    //     setCollectionDescription("")
+    //     setIsCreateCollectionModalOpen(false)
+        
+    //     // Refresh collections list
+    //     await fetchCollections()
+        
+    //     console.log("✅ Collection created:", response.data)
+    //   } else {
+    //     console.error("❌ API returned success: false", response)
+        
+    //     // Check if error is related to slug - check multiple possible fields
+    //     const errorMessage = response.message || response.error || response.data?.message || response.data?.error || ""
+    //     console.log("🔍 Error message for slug check:", errorMessage)
+        
+    //     // More comprehensive slug error detection
+    //     const lowerErrorMessage = errorMessage.toLowerCase()
+    //     if (
+    //       lowerErrorMessage.includes("slug") || 
+    //       lowerErrorMessage.includes("collection slug") ||
+    //       lowerErrorMessage.includes("already exists") ||
+    //       lowerErrorMessage.includes("unique slug")
+    //     ) {
+    //       console.log("✅ Setting symbol error:", errorMessage)
+    //       setSymbolError(errorMessage)
+    //     } else {
+    //       console.log("❌ Not a slug error, clearing symbol error")
+    //       setSymbolError("")
+    //     }
+        
+    //     // Show error message from API
+    //     message.error(response.message || "Failed to create collection")
+    //   }
+    // } catch (error: any) {
+    //   console.error("❌ Error creating collection:", error)
+    //   console.error("❌ Error details:", {
+    //     message: error?.message,
+    //     response: error?.response?.data,
+    //     status: error?.response?.status
+    //   })
+      
+    //   // Destroy loading message
+    //   if (collectionLoadingMessage) {
+    //     message.destroy(collectionLoadingMessage as any)
+    //   }
+      
+    //   // Check if error is related to slug - check multiple possible fields
+    //   const errorMessage = 
+    //     error?.response?.data?.message || 
+    //     error?.response?.data?.error || 
+    //     error?.message || 
+    //     error?.error ||
+    //     ""
+      
+    //   console.log("🔍 Error message from catch block for slug check:", errorMessage)
+    //   console.log("🔍 Full error response:", error?.response?.data)
+      
+    //   // More comprehensive slug error detection
+    //   const lowerErrorMessage = errorMessage.toLowerCase()
+    //   if (
+    //     lowerErrorMessage.includes("slug") || 
+    //     lowerErrorMessage.includes("collection slug") ||
+    //     lowerErrorMessage.includes("already exists") ||
+    //     lowerErrorMessage.includes("unique slug")
+    //   ) {
+    //     console.log("✅ Setting symbol error from catch:", errorMessage)
+    //     setSymbolError(errorMessage)
+    //   } else {
+    //     console.log("❌ Not a slug error, clearing symbol error")
+    //     setSymbolError("")
+    //   }
+      
+    //   // Show error from API response or generic error
+    //   const collectionErrorMessage = error?.response?.data?.message || error?.message || "An error occurred"
+    //   message.error(collectionErrorMessage)
+    // }
   }
 
   const handleCloseCollectionModal = () => {
