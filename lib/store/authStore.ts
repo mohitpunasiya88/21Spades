@@ -4,7 +4,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, SignUpData, LoginData, OTPData } from '@/types/auth'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
-import authRoutes from '@/app/routes/route'
+import authRoutes from '@/lib/routes'
 
 type PrivyUserLike = {
   id?: string

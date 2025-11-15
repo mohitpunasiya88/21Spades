@@ -1,5 +1,5 @@
 import axios from 'axios';
-import authRoutes from '../routes/route';
+import authRoutes from '@/lib/routes';
 
 
  export const apiClient = axios.create({
