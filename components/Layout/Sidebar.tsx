@@ -34,7 +34,7 @@ const menuItems = [
   // Group 3: Events, News, Dashboard
   { icon: Calendar, label: 'Events', path: '/events' },
   { icon: File, label: 'News', path: '/news' },
-  { icon: User, label: 'Dashboard', path: '/dashboard' },
+  { icon: User, label: 'Dashboard', path: '/landing' },
 ]
 
 const chatData = [

@@ -65,11 +65,11 @@ export default function Navbar() {
       await new Promise(resolve => setTimeout(resolve, 100))
 
       // Use replace to prevent going back to feed page
-      window.location.href = '/login'
+      window.location.href = '/landing'
     } catch (error) {
       console.error('Logout error:', error)
       // Even if logout fails, force redirect
-      window.location.href = '/login'
+      window.location.href = '/landing'
     }
   }
 

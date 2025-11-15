@@ -268,10 +268,10 @@ export default function LoginForm() {
                   {oauthLoading && oauthProvider === 'twitter' ? 'Connecting...' : 'Continue with X'}
                 </button>
 
-                <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
+                {/* <button className="w-full  mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium hover:border-gray-500 transition-all flex items-center justify-center gap-3">
                   <FacebookIcon />
                   Continue with Facebook
-                </button>
+                </button> */}
 
                 <button
                   type="button"

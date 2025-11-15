@@ -1,4 +1,5 @@
-import { Twitter, Facebook, Instagram } from 'lucide-react';
+import { Twitter, Instagram } from 'lucide-react';
+import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -54,15 +55,16 @@ export default function Footer() {
             <div className="flex flex-col items-center md:items-end font-exo2">
               {/* Social Media Icons */}
               <div className="hidden md:flex items-center gap-4 mb-4">
-                <a href="#" className="text-white hover:text-purple-400 transition-colors">
-                  <Twitter className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-white hover:text-purple-400 transition-colors">
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-white hover:text-purple-400 transition-colors">
+              <a href="https://www.instagram.com/21spades.io" target="_blank" aria-label="Instagram" className="text-white hover:text-purple-400 transition-colors">
                   <Instagram className="w-5 h-5" />
                 </a>
+                <a href="https://twitter.com/@21SpadesDPR" target="_blank" aria-label="X (Twitter)" className="text-white hover:text-purple-400 transition-colors">
+                  <Twitter className="w-5 h-5" />
+                </a>
+                <a href="https://t.me/+XyKl3RHYu-QxNWMx" target="_blank" aria-label="Telegram" className="text-white hover:text-purple-400 transition-colors">
+                  <FaTelegram className="w-5 h-5" />
+                </a>
+               
               </div>
               
               
