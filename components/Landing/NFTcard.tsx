@@ -1,6 +1,7 @@
 
 import { ArrowRight, Heart } from 'lucide-react';
 import { useState } from 'react';
+import { CiHeart } from 'react-icons/ci';
 
 interface NFTCardProps {
   title: string;
@@ -13,45 +14,47 @@ interface NFTCardProps {
 
 function NFTCard({ title, creator, price, edition, verified = true }: NFTCardProps) {
   return (
-    <div className="flex justify-center mb-12 z-10">
+    <div
+      className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px]   transition-all hover:scale-[1.03] cursor-pointer z-10"
+    >
+      {/* NFT Image Area */}
       <div
-        className="relative overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer w-full max-w-[300px] rounded-[25px] bg-white"
-        style={{ border: '1.1px solid rgba(242, 242, 242, 0.5)' }}
+        className="w-full h-[160px] sm:h-[280px] md:h-[300px] rounded-t-[10px] flex items-center justify-center relative"
+        style={{
+          background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
+        }}
       >
-        {/* NFT Image Area with Radial Gradient (responsive aspect box) */}
-        <div className="relative mx-2 mt-2 rounded-[25px] overflow-hidden"
-          style={{
-            background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)'
-          }}
-        >
-          {/* Aspect ratio spacer (approx 0.9 of width) */}
-          <div style={{ paddingTop: '90%' }} />
-          {/* Centered content overlay */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <img src="/assets/card-icon.png" alt="Discover Collections" className="object-contain max-w-[70%] max-h-[80%]" />
-          </div>
+        <img
+          src="/assets/card-icon.png"
+          alt="NFT"
+          className="object-contain w-[100px] sm:w-[150px] md:w-[180px]"
+        />
+
+        {/* Heart Icon */}
+        <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
+          <CiHeart className="w-5 h-5 text-white" />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="px-3 py-3 sm:px-4 sm:py-4">
+        <div className="flex items-center gap-1.5 mb-2">
+          <img src="/assets/verify-tick-icon.png" className="w-4 h-4" />
+          <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
         </div>
 
-        {/* Card Details Section (normal flow) */}
-        <div className="px-2 pt-2 pb-2">
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="w-4 h-4 flex items-center justify-center">
-              <img src="/assets/verify-tick-icon.png" alt="Verified" width={16} height={16} />
-            </div>
-            <div className="flex justify-between w-full">
-              <span className="text-[#848484] text-[10px] md:text-[12px] font-medium">{creator}</span>
-              <span className="text-[#848484] text-[10px] md:text-[12px] font-medium">{edition}</span>
-            </div>
+        <h3 className="text-gray-900 font-bold text-base sm:text-lg mb-2 sm:mb-3">Aether Guardian</h3>
+
+        <hr className="border-gray-300 mb-2 sm:mb-3" />
+
+        {/* Floor Price */}
+        <div className="flex items-center justify-between">
+          <span className="text-[#4A01D9] text-xs md:text-sm font-semibold">Floor Price</span>
+
+          <div className="flex items-center gap-1">
+            <span className="text-red-500 text-lg">▲</span>
+            <span className="text-[#000000] font-semibold text-xs md:text-sm">0.01 AVAX</span>
           </div>
-
-          <p className="text-[14px] md:text-xl text-center md:text-left text-[#000000] text-base font-bold mb-3">{title}</p>
-          <hr className="w-full border-gray-200 my-3" />
-
-          {/* Floor Price Section */}
-          <button className="w-full rounded-full text-white font-semibold py-2.5 flex items-center justify-center gap-2" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
-            <span className="text-xs">💎</span>
-            <span className="text-xs md:text-sm">{price}</span>
-          </button>
         </div>
       </div>
     </div>
