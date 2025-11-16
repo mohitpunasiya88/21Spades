@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Badge } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const { logout, user } = useAuthStore()
   console.log('login98989898', user)
 
@@ -64,12 +65,22 @@ export default function Navbar() {
       // Small delay to ensure state is cleared before redirect
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Use replace to prevent going back to feed page
-      window.location.href = '/landing'
+      // If already on feed page, stay there. Otherwise redirect to feed
+      if (pathname === '/feed') {
+        // Already on feed page, just refresh to clear any cached data
+        router.refresh()
+      } else {
+        // Redirect to feed page
+        router.replace('/feed')
+      }
     } catch (error) {
       console.error('Logout error:', error)
-      // Even if logout fails, force redirect
-      window.location.href = '/landing'
+      // Even if logout fails, redirect to feed
+      if (pathname === '/feed') {
+        router.refresh()
+      } else {
+        router.replace('/feed')
+      }
     }
   }
 

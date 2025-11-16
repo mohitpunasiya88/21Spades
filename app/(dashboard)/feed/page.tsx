@@ -29,14 +29,41 @@ function transformPost(post: Post) {
   const isRepost = !!post.originalPost
   const originalPost = post.originalPost
   
-  // For reposts, use original post data for display, but keep repost post ID for interactions
-  const displayPost = isRepost && originalPost ? {
-    text: originalPost.text || post.text || '',
-    postUrl: originalPost.postUrl || post.postUrl || '',
-    likesCount: originalPost.likesCount || post.likesCount || 0,
-    commentsCount: originalPost.commentsCount || post.commentsCount || 0,
-    sharesCount: originalPost.sharesCount || post.sharesCount || 0,
-    savesCount: originalPost.savesCount || post.savesCount || 0,
+  // For reposts, the repost author is the post author (not original post author)
+  const repostAuthor = post.author || {
+    _id: 'unknown',
+    name: 'Unknown User',
+    username: 'unknown',
+    profilePicture: undefined
+  }
+
+  // For reposts, prepare original post data
+  // Note: We need to get the original post's createdAt from the API response
+  // For now, we'll use a placeholder - the API should include this in originalPost
+  const originalPostData = isRepost && originalPost ? {
+    id: originalPost._id,
+    username: originalPost.author?.username || originalPost.author?.name || 'Unknown User',
+    verified: true,
+    timeAgo: formatTimeAgo((originalPost as any).createdAt || post.createdAt || new Date().toISOString()),
+    walletAddress: originalPost.author?._id ? originalPost.author._id.slice(-8) : 'unknown',
+    profilePicture: originalPost.author?.profilePicture,
+    content: originalPost.text || '',
+    image: originalPost.postUrl || '/post/post.png',
+    likes: originalPost.likesCount || 0,
+    comments: originalPost.commentsCount || 0,
+    shares: originalPost.sharesCount || 0,
+    reposts: originalPost.repostsCount || 0,
+    saves: originalPost.savesCount || 0,
+  } : undefined
+
+  // For regular posts, use post data directly
+  const displayPost = isRepost ? {
+    text: '', // Repost caption is in post.text
+    postUrl: '',
+    likesCount: originalPost?.likesCount || 0,
+    commentsCount: originalPost?.commentsCount || 0,
+    sharesCount: originalPost?.sharesCount || 0,
+    savesCount: originalPost?.savesCount || 0,
     repostsCount: post.repostsCount || 0,
   } : {
     text: post.text || '',
@@ -48,24 +75,14 @@ function transformPost(post: Post) {
     repostsCount: post.repostsCount || 0,
   }
 
-  // For reposts, use original post author, otherwise use repost author
-  const author = (isRepost && originalPost?.author) 
-    ? originalPost.author 
-    : (post.author || {
-        _id: 'unknown',
-        name: 'Unknown User',
-        username: 'unknown',
-        profilePicture: undefined
-      })
-
   return {
     id: post._id, // Keep repost post ID for tracking
     originalPostId: isRepost && originalPost ? originalPost._id : undefined, // Store original post ID for likes
-    username: author.username || author.name || 'Unknown User',
+    username: repostAuthor.username || repostAuthor.name || 'Unknown User',
     verified: true, // You can add verified field to user model later
     timeAgo: formatTimeAgo(post.createdAt || new Date().toISOString()),
-    walletAddress: author._id ? author._id.slice(-8) : 'unknown',
-    profilePicture: author.profilePicture,
+    walletAddress: repostAuthor._id ? repostAuthor._id.slice(-8) : 'unknown',
+    profilePicture: repostAuthor.profilePicture,
     content: displayPost.text,
     image: displayPost.postUrl || '/post/post.png',
     likes: displayPost.likesCount,
@@ -76,6 +93,9 @@ function transformPost(post: Post) {
     isLiked: post.isLiked || false,
     isSaved: post.isSaved || false,
     isReposted: post.isReposted || false,
+    // Repost specific data
+    repostCaption: isRepost ? (post.text || '') : undefined,
+    originalPost: originalPostData,
   }
 }
 
@@ -516,7 +536,7 @@ export default function FeedPage() {
         open={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         title="Login Required"
-        message="You need to be logged in to create a post. Please login to continue."
+        message="You are not logged in. Please login to continue."
       />
     </div>
   )
