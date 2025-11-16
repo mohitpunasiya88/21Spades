@@ -418,7 +418,7 @@ export default function Navbar() {
         {/* Create Token Button - Mobile - HIDDEN, now in menu */}
 
         {/* User Profile with Spades Text and Hover Dropdown */}
-        {user && (
+        {user ? (
           <div className="flex items-center gap-1 sm:gap-3">
             {/* Desktop Profile with Hover Dropdown */}
             <div className="relative hidden sm:block" ref={profileRef}>
@@ -621,6 +621,16 @@ export default function Navbar() {
               )}
             </div>
 
+          </div>
+        ) : (
+          // Login Button - Show when user is logged out
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/login')}
+              className="px-4 py-2 sm:px-6 sm:py-2 bg-gradient-to-b from-[#4F01E6] to-[#25016E] hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-full transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl"
+            >
+              Login
+            </button>
           </div>
         )}
       </div>

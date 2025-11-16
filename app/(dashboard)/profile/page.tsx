@@ -63,10 +63,10 @@ export default function ProfilePage() {
     try {
       setProfileLoading(true)
       const profileData = await getProfile()
-      
+
       if (profileData && profileData.user) {
         const userData = profileData.user
-        
+
         // Format joined date
         let joinedDate = ""
         if (userData.createdAt) {
@@ -94,13 +94,13 @@ export default function ProfilePage() {
             contributions: userData.contributions || 0,
           },
           bio: userData.bio || "",
-          interests: Array.isArray(userData.interests) 
-            ? userData.interests 
+          interests: Array.isArray(userData.interests)
+            ? userData.interests
             : userData.interests ? [userData.interests] : [],
           cover: userData.cover || defaultCoverImage.src,
           avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/assets/avatar.jpg",
         })
-        
+
         // Update form initial values
         form.setFieldsValue({
           name: userData.name || user?.name || "",
@@ -109,8 +109,8 @@ export default function ProfilePage() {
           country: userData.country || "",
           phone: userData.phone || userData.phoneNumber || "",
           profession: userData.profession || "",
-          interests: Array.isArray(userData.interests) 
-            ? userData.interests 
+          interests: Array.isArray(userData.interests)
+            ? userData.interests
             : userData.interests ? [userData.interests] : [],
           bio: userData.bio || "",
         })
@@ -118,7 +118,7 @@ export default function ProfilePage() {
     } catch (error: any) {
       console.error('Error fetching profile:', error)
       message.error(error?.response?.data?.message || 'Failed to fetch profile data')
-      
+
       // Set fallback values from user store
       if (user) {
         setProfile({
@@ -141,8 +141,8 @@ export default function ProfilePage() {
             contributions: user.contributions || 0,
           },
           bio: user?.bio || "",
-          interests: Array.isArray(user?.interests) 
-            ? user.interests 
+          interests: Array.isArray(user?.interests)
+            ? user.interests
             : user?.interests ? [user.interests] : [],
           cover: defaultCoverImage.src,
           avatar: user.avatar || user.profilePicture || "/assets/avatar.jpg",
@@ -157,11 +157,11 @@ export default function ProfilePage() {
     try {
       setSaving(true)
       const values = await form.validateFields()
-      
+
       // Extract phone number and country code from phone field
       let phoneNumber = ""
       let countryCode = user?.countryCode || "+1"
-      
+
       if (values.phone) {
         // If phone starts with country code, extract it
         if (values.phone.startsWith("+")) {
@@ -176,7 +176,7 @@ export default function ProfilePage() {
           phoneNumber = values.phone
         }
       }
-      
+
       // Convert interests to array - Select with mode="multiple" returns array
       let interestsArray: string[] = []
       if (values.interests) {
@@ -189,7 +189,7 @@ export default function ProfilePage() {
         // If no interests selected, use existing user interests or empty array
         interestsArray = Array.isArray(user?.interests) ? user.interests : []
       }
-      
+
       // Prepare profile update payload as per API requirements
       const updatePayload = {
         email: values.email || user?.email || "",
@@ -210,12 +210,12 @@ export default function ProfilePage() {
         contributions: user?.contributions || profile.stats.contributions || 0,
         profileView: user?.profileView || profile.stats.posts || 0,
       }
-      
+
       console.log('Profile update payload:', updatePayload)
-      
+
       // Call profile update API
       await updateProfile(updatePayload)
-      
+
       // Update local profile state
       setProfile(prev => ({
         ...prev,
@@ -236,10 +236,10 @@ export default function ProfilePage() {
           contributions: updatePayload.contributions,
         },
       }))
-      
+
       message.success("Profile saved successfully!")
       setEditing(false)
-      
+
       // Refresh profile data
       await fetchProfileData()
     } catch (e: any) {
@@ -262,7 +262,7 @@ export default function ProfilePage() {
     } else if (user?.interests) {
       interestsArray = Array.isArray(user.interests) ? user.interests : []
     }
-    
+
     form.setFieldsValue({
       name: profile.name,
       username: profile.username,
@@ -299,7 +299,7 @@ export default function ProfilePage() {
             className="object-cover opacity-90 rounded-xl"
             sizes="100vw"
           />
-          
+
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
             <a
@@ -396,8 +396,8 @@ export default function ProfilePage() {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    className="!bg-[#FFFFFF1A] border border-white !rounded-full !px-6 !h-10"
+                  <Button
+                    className="!bg-[#FFFFFF1A] !text-white border border-white !rounded-full !px-6 !h-10"
                     onClick={onSave}
                     loading={saving}
                     disabled={saving}
@@ -444,11 +444,10 @@ export default function ProfilePage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${
-                  activeTab === tab
-                    ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${activeTab === tab
+                  ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 {tab}
               </button>
@@ -473,11 +472,11 @@ export default function ProfilePage() {
                 <div className="border-b border-[#2A2F4A]"></div>
                 <Field label="Country:" value={profile.country} />
                 <div className="border-b border-[#2A2F4A]"></div>
-                <Field 
-                  label="Interests:" 
-                  value={Array.isArray(profile.interests) 
-                    ? profile.interests.join(", ") 
-                    : profile.interests || ""} 
+                <Field
+                  label="Interests:"
+                  value={Array.isArray(profile.interests)
+                    ? profile.interests.join(", ")
+                    : profile.interests || ""}
                 />
                 <div className="border-b border-[#2A2F4A]"></div>
                 <Field label="User Since:" value={profile.joined} />
@@ -486,7 +485,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Links + Stats */}
-          <div className="space-y-6">
+          {/* <div className="space-y-6">
           
             <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6">
               <div className="px-5 py-4 text-[24px] text-white font-[700]">
@@ -500,7 +499,7 @@ export default function ProfilePage() {
                 <Field label="Contributions:" value={profile.stats.contributions} />
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       ) : (
         <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6 font-exo2 pb-6">
@@ -522,8 +521,8 @@ export default function ProfilePage() {
                 country: profile.country || user?.country || "",
                 phone: user?.phone || user?.phoneNumber || "",
                 profession: profile.profession || "",
-                interests: Array.isArray(profile.interests) 
-                  ? profile.interests 
+                interests: Array.isArray(profile.interests)
+                  ? profile.interests
                   : profile.interests ? [profile.interests] : [],
                 bio: profile.bio || user?.bio || "",
               }}
@@ -569,14 +568,23 @@ export default function ProfilePage() {
                     suffixIcon={<span className="text-white">▼</span>}
                     options={countries.map((c) => ({ value: c, label: c }))}
                     placeholder="Select Country"
-                    className="profile-select"
-                    popupClassName="profile-select-dropdown"
+                    className="!bg-[#0B0926] !text-white !rounded-xl !h-12 !border !border-[#FFFFFF1A] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selection-placeholder]:!text-[#7D79A8] [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
-                      border: "1px solid #2a2a3e",
+                      border: "1px solid #FFFFFF1A",
+                      borderRadius: "12px",
                     }}
+                    dropdownRender={(menu) => (
+                      <div
+                        className="bg-[#0B0926] text-white [&_.ant-select-item]:!bg-[#0B0926] [&_.ant-select-item]:!text-white [&_.ant-select-item-option-active]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!text-white"
+                      >
+                        {menu}
+                      </div>
+                    )}
+                    style={{ color: "white" }}
                   />
                 </Form.Item>
+
 
                 <Form.Item
                   label={<span className="text-white text-sm">Phone No.</span>}
@@ -599,12 +607,24 @@ export default function ProfilePage() {
                     showSearch
                     suffixIcon={<span className="text-white">▼</span>}
                     placeholder="Select Categories"
-                    className="profile-select"
-                    popupClassName="profile-select-dropdown"
+                    className="!bg-[#0B0926] text-white !text-white !rounded-xl placeholder:text-[#6B7280] [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!border-[#FFFFFF1A] [&_.ant-select-selection-item]:!bg-[#1A183A] [&_.ant-select-selection-item]:!text-white [&_.ant-select-selection-item]:!border-none [&_.ant-select-arrow]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
-                      border: "1px solid #2a2a3e",
+                      border: "1px solid #FFFFFF1A",
+                      borderRadius: "12px",
+                      color: "white !important",
                     }}
+                    dropdownRender={(menu) => (
+                      <div
+                        className="bg-[#0B0926] text-white"
+                      >
+                        {/* Override each dropdown item */}
+                        <div className="[&_.ant-select-item]:!bg-[#0B0926] [&_.ant-select-item]:!text-white [&_.ant-select-item-option-active]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!text-white">
+                          {menu}
+                        </div>
+                      </div>
+                    )}
+                    style={{ color: "white !important" }}
                     options={[
                       { value: "DeFi", label: "DeFi" },
                       { value: "NFTs", label: "NFTs" },
@@ -617,6 +637,7 @@ export default function ProfilePage() {
                   />
                 </Form.Item>
 
+
                 <Form.Item
                   label={<span className="text-white text-sm">Your Bio</span>}
                   name="bio"
@@ -625,7 +646,7 @@ export default function ProfilePage() {
                   <Input.TextArea
                     rows={6}
                     placeholder="Bio"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 placeholder:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selection-placeholder]:!text-[#6B7280]"
                     maxLength={325}
                     showCount={{
                       formatter: ({ count }) => (
