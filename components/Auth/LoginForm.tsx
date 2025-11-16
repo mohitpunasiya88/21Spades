@@ -37,7 +37,6 @@ export default function LoginForm() {
       return
     }
 
-    console.log('Privy OAuth user details:', privyUser)
 
     if (hasCompletedPrivyLoginRef.current) {
       return
@@ -66,7 +65,6 @@ export default function LoginForm() {
     username: '',
     password: '',
   })
-  console.log('loginformuser', user)
   const [errors, setErrors] = useState<Partial<SignUpData>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
@@ -123,7 +121,6 @@ export default function LoginForm() {
 
     try {
       hasCompletedPrivyLoginRef.current = false
-      console.log(`Starting Privy OAuth login for provider: ${provider}`)
       await initOAuth({ provider })
     } catch (error: any) {
       console.error(`OAuth login error for ${provider}:`, error)

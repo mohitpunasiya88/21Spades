@@ -10,7 +10,6 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { logout, user } = useAuthStore()
-  console.log('login98989898', user)
 
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)

@@ -43,7 +43,6 @@ export default function MessagesPage() {
   // Initialize WebSocket connection
   useEffect(() => {
     if (socket && isConnected) {
-      console.log('Setting socket in store, socket connected:', socket.connected)
       setSocket(socket)
     }
     return () => {
@@ -99,36 +98,29 @@ export default function MessagesPage() {
 
   // Search users when typing in new message search (Backend API Call)
   useEffect(() => {
-    console.log('🔍 [SEARCH] newMessageSearch changed:', newMessageSearch)
     const timeoutId = setTimeout(() => {
       if (newMessageSearch.trim()) {
-        console.log('🔍 [SEARCH] Calling searchUsers API with:', newMessageSearch.trim())
         searchUsers(newMessageSearch.trim()).catch((error) => {
           console.error('🔍 [SEARCH] Error in searchUsers:', error)
         })
       } else {
-        console.log('🔍 [SEARCH] Clearing searched users')
         clearSearchedUsers()
       }
     }, 300) // Debounce search
 
     return () => {
-      console.log('🔍 [SEARCH] Cleaning up timeout')
       clearTimeout(timeoutId)
     }
   }, [newMessageSearch]) // Removed searchUsers and clearSearchedUsers from deps to avoid re-renders
 
   // Search users when typing in main search input (Backend API Call)
   useEffect(() => {
-    console.log('🔍 [SEARCH] searchQuery changed:', searchQuery)
     const timeoutId = setTimeout(() => {
       if (searchQuery.trim()) {
-        console.log('🔍 [SEARCH] Calling searchUsers API from main search with:', searchQuery.trim())
         searchUsers(searchQuery.trim()).catch((error) => {
           console.error('🔍 [SEARCH] Error in searchUsers:', error)
         })
       } else {
-        console.log('🔍 [SEARCH] Clearing searched users from main search')
         clearSearchedUsers()
       }
     }, 300) // Debounce search
@@ -368,7 +360,6 @@ export default function MessagesPage() {
               })
               .map((chat) => {
                 if (!chat.participants || !Array.isArray(chat.participants) || chat.participants.length === 0) {
-                  console.log('Chat with no participants:', chat)
                   return null
                 }
                 // API returns only otherUser in participants array, so first participant is the other user
@@ -376,7 +367,6 @@ export default function MessagesPage() {
                 const isSelected = selectedChat?._id === chat._id
                 
                 if (!otherUser) {
-                  console.log('No other user found for chat:', chat)
                   return null
                 }
                 return (

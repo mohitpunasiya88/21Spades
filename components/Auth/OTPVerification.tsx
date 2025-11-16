@@ -71,9 +71,6 @@ export default function OTPVerification() {
   // Debug: Log parsed values
   useEffect(() => {
     if (fullPhone) {
-      console.log('Full phone from URL:', fullPhone)
-      console.log('Parsed countryCode:', countryCode)
-      console.log('Parsed phoneNumber:', phoneNumber)
     }
   }, [fullPhone, countryCode, phoneNumber])
 
@@ -115,12 +112,6 @@ export default function OTPVerification() {
     if (otpString.length !== 4) return
 
     try {
-      // Debug: Log what we're sending
-      console.log('Sending OTP verification with:', {
-        phoneNumber,
-        countryCode,
-        otp: otpString
-      })
       
       // Send phoneNumber and countryCode separately as backend expects
       await verifyOTP({ 

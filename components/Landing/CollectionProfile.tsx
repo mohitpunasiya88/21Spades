@@ -163,15 +163,12 @@ export default function CollectionProfile({
     try {
       setIsLoading(true)
       const url = `${authRoutes.getCollectionById}/${collectionId}`
-      console.log("📡 Fetching collection from:", url)
       
       const response = await apiCaller('GET', url, null, true)
-      console.log("📦 Collection response:", response)
       
       if (response.success && response.data) {
         const collection = response.data.collection || response.data
         setCollectionData(collection)
-        console.log("✅ Collection loaded:", collection)
       } else {
         console.warn("⚠️ Collection not found")
       }
@@ -195,10 +192,8 @@ export default function CollectionProfile({
       queryParams.append('blocked', 'false')
       
       const url = `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`
-      console.log("📡 Fetching NFTs from:", url)
       
       const response = await apiCaller('GET', url, null, true)
-      console.log("📦 NFTs response:", response)
       
       if (response.success && response.data) {
         const nftsData = Array.isArray(response.data) 
@@ -218,7 +213,6 @@ export default function CollectionProfile({
         }))
         
         setNfts(mappedNFTs)
-        console.log("✅ NFTs loaded:", mappedNFTs.length)
       } else {
         console.warn("⚠️ No NFTs found")
         setNfts([])

@@ -102,7 +102,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
         }
 
         if (selectedChat && socket && socket.connected) {
-            console.log('⌨️ [TYPING] Sending typing indicator: true for chat:', selectedChat._id)
             sendTypingIndicator(selectedChat._id, true)
 
             if (typingTimeoutRef.current) {
@@ -110,7 +109,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
             }
 
             typingTimeoutRef.current = setTimeout(() => {
-                console.log('⌨️ [TYPING] Stopping typing indicator after 1s for chat:', selectedChat._id)
                 sendTypingIndicator(selectedChat._id, false)
                 typingTimeoutRef.current = null
             }, 1000)
@@ -266,7 +264,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
 
     // Save edited message
     const handleSaveEdit = async (messageId: string) => {
-        console.log('handleSaveEdit', messageId, editText)
         if (editText.trim()) {
             try {
                 await editMessage(messageId, editText.trim())
@@ -631,7 +628,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                     // Only show if someone else is typing (not the current user)
                     if (otherTypingUsers.length === 0) return null
                     
-                    console.log('⌨️ [UI] Showing typing indicator. Other users typing:', otherTypingUsers)
                     
                     return (
                         <div className="flex justify-start">

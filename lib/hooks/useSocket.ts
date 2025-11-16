@@ -18,7 +18,6 @@ export function useSocket() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
     if (!token) {
-      console.log('No token found, skipping socket connection')
       return
     }
 
@@ -36,12 +35,10 @@ export function useSocket() {
     })
 
     const handleConnect = () => {
-      console.log('Socket connected:', newSocket.id)
       setIsConnected(true)
     }
 
     const handleDisconnect = () => {
-      console.log('Socket disconnected')
       setIsConnected(false)
     }
 

@@ -355,7 +355,6 @@ export default function FeedPost({ post }: FeedPostProps) {
 
       // Update comment count from store
       const updatedPost = useFeedStore.getState().posts.find(p => p._id === post.id)
-      console.log('updatedPost', updatedPost)
       if (updatedPost) {
         setLocalComments(updatedPost.commentsCount || localComments + 1)
       } else {

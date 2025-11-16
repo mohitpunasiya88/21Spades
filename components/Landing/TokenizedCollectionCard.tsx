@@ -235,7 +235,6 @@ const TokenizedCollectionCard: React.FC = () => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   
   const onChange = (currentSlide: number) => {
-    console.log(currentSlide)
   }
 
   // Fetch collections from API
@@ -250,10 +249,8 @@ const TokenizedCollectionCard: React.FC = () => {
       queryParams.append('blocked', 'false')
       
       const url = `${authRoutes.getCollections}?${queryParams.toString()}`
-      console.log("📡 Fetching collections from:", url)
       
       const response = await apiCaller('GET', url, null, true)
-      console.log("📦 Collections response:", response)
       
       if (response.success && response.data) {
         // Handle both array and object with collections property
@@ -261,7 +258,6 @@ const TokenizedCollectionCard: React.FC = () => {
           ? response.data 
           : (response.data.collections || response.data.data || [])
         setCollections(collectionsData)
-        console.log("✅ Collections loaded:", collectionsData.length)
       } else {
         console.warn("⚠️ No collections found or invalid response")
         setCollections([])
@@ -312,7 +308,6 @@ const TokenizedCollectionCard: React.FC = () => {
     if (selectedItem && 'label' in selectedItem) {
       setSelectedNetwork(selectedItem.label as string)
     }
-    console.log('Selected network:', e.key)
   }
 
   // Map collections to NFT card format

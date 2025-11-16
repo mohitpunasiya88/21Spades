@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
 import { Button, Form, Input, Select, Tabs, Avatar, Dropdown, Spin, message } from "antd"
-import { Edit2, Share2, MoreHorizontal, Link, MessageCircle, Space, Camera, MessageSquareCode, MessageSquareText } from "lucide-react"
+import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-react"
 import defaultCoverImage from "@/components/assets/profile-bg.jpg"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -17,6 +17,30 @@ const countries = [
   "Germany",
   "France",
   "Japan",
+]
+
+// Common country codes
+const countryCodes = [
+  { code: '+1', country: 'US', flag: '🇺🇸' },
+  { code: '+91', country: 'IN', flag: '🇮🇳' },
+  { code: '+44', country: 'GB', flag: '🇬🇧' },
+  { code: '+86', country: 'CN', flag: '🇨🇳' },
+  { code: '+81', country: 'JP', flag: '🇯🇵' },
+  { code: '+49', country: 'DE', flag: '🇩🇪' },
+  { code: '+33', country: 'FR', flag: '🇫🇷' },
+  { code: '+61', country: 'AU', flag: '🇦🇺' },
+  { code: '+7', country: 'RU', flag: '🇷🇺' },
+  { code: '+55', country: 'BR', flag: '🇧🇷' },
+  { code: '+52', country: 'MX', flag: '🇲🇽' },
+  { code: '+39', country: 'IT', flag: '🇮🇹' },
+  { code: '+34', country: 'ES', flag: '🇪🇸' },
+  { code: '+82', country: 'KR', flag: '🇰🇷' },
+  { code: '+971', country: 'AE', flag: '🇦🇪' },
+  { code: '+65', country: 'SG', flag: '🇸🇬' },
+  { code: '+60', country: 'MY', flag: '🇲🇾' },
+  { code: '+66', country: 'TH', flag: '🇹🇭' },
+  { code: '+62', country: 'ID', flag: '🇮🇩' },
+  { code: '+84', country: 'VN', flag: '🇻🇳' },
 ]
 
 export default function ProfilePage() {
@@ -32,6 +56,10 @@ export default function ProfilePage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [countryCode, setCountryCode] = useState('+1')
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  const [countrySearchQuery, setCountrySearchQuery] = useState('')
+  const countryDropdownRef = useRef<HTMLDivElement>(null)
   const [profile, setProfile] = useState({
     name: "",
     username: "",
@@ -41,10 +69,11 @@ export default function ProfilePage() {
     profession: "",
     joined: "",
     website: "",
+    phone: "",
     links: {
-      facebook: "",
-      instagram: "",
-      x: "",
+      facebook: "https://t.me/+XyKl3RHYu-QxNWMx",
+      instagram: "https://www.instagram.com/21spades.io",
+      x: "https://twitter.com/@21SpadesDPR",
     },
     stats: {
       posts: 0,
@@ -57,12 +86,39 @@ export default function ProfilePage() {
     avatar: "/assets/avatar.jpg",
   })
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false)
+        setCountrySearchQuery('')
+      }
+    }
+
+    if (showCountryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showCountryDropdown])
+
   // Fetch profile data on component mount
   useEffect(() => {
     fetchProfileData()
-    incrementProfileView()
+    // incrementProfileView()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Update form phone field when profile.phone changes and editing is active
+  useEffect(() => {
+    if (editing && profile.phone) {
+      form.setFieldsValue({
+        phone: profile.phone,
+      })
+    }
+  }, [editing, profile.phone, form])
 
   // Fetch profile data from API
   const fetchProfileData = async () => {
@@ -89,6 +145,7 @@ export default function ProfilePage() {
           profession: userData.profession || "",
           joined: joinedDate,
           website: userData.website || "",
+          phone: userData.phoneNumber || userData.phone || user?.phoneNumber || user?.phone || "",
           links: {
             facebook: userData.facebook || "",
             instagram: userData.instagram || "",
@@ -107,13 +164,17 @@ export default function ProfilePage() {
           avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/assets/avatar.jpg",
         })
 
+        // Set country code from user data
+        const userCountryCode = userData.countryCode || user?.countryCode || '+1'
+        setCountryCode(userCountryCode)
+
         // Update form initial values
         form.setFieldsValue({
           name: userData.name || user?.name || "",
           username: userData.username || user?.username || "",
           email: userData.email || user?.email || "",
           country: userData.country || "",
-          phone: userData.phone || userData.phoneNumber || "",
+          phone: userData.phoneNumber || userData.phone || "",
           profession: userData.profession || "",
           interests: Array.isArray(userData.interests)
             ? userData.interests
@@ -127,6 +188,9 @@ export default function ProfilePage() {
 
       // Set fallback values from user store
       if (user) {
+        const userCountryCode = user.countryCode || '+1'
+        setCountryCode(userCountryCode)
+        
         setProfile({
           name: user.name || "",
           username: user.username || "",
@@ -136,6 +200,7 @@ export default function ProfilePage() {
           profession: "",
           joined: "",
           website: "",
+          phone: user.phoneNumber || user.phone || "",
           links: {
             facebook: user.facebook || "",
             instagram: user.instagram || "",
@@ -164,23 +229,13 @@ export default function ProfilePage() {
       setSaving(true)
       const values = await form.validateFields()
 
-      // Extract phone number and country code from phone field
+      // Extract phone number - use countryCode from state (selected from dropdown)
       let phoneNumber = ""
-      let countryCode = user?.countryCode || "+1"
+      const selectedCountryCode = countryCode || user?.countryCode || "+1"
 
       if (values.phone) {
-        // If phone starts with country code, extract it
-        if (values.phone.startsWith("+")) {
-          const parts = values.phone.split(" ")
-          if (parts.length > 1) {
-            countryCode = parts[0]
-            phoneNumber = parts.slice(1).join("")
-          } else {
-            phoneNumber = values.phone.replace(/^\+/, "")
-          }
-        } else {
-          phoneNumber = values.phone
-        }
+        // Remove any non-digit characters from phone number
+        phoneNumber = values.phone.replace(/\D/g, '')
       }
 
       // Convert interests to array - Select with mode="multiple" returns array
@@ -202,7 +257,7 @@ export default function ProfilePage() {
         name: values.name || "",
         username: values.username || "",
         phoneNumber: phoneNumber || user?.phoneNumber || "",
-        countryCode: countryCode || user?.countryCode || "+1",
+        countryCode: selectedCountryCode || user?.countryCode || "+1",
         country: values.country || user?.country || "",
         interests: interestsArray.length > 0 ? interestsArray : (user?.interests || []),
         portfolio: user?.portfolio || "",
@@ -216,8 +271,6 @@ export default function ProfilePage() {
         contributions: user?.contributions || profile.stats.contributions || 0,
         profileView: user?.profileView || profile.stats.posts || 0,
       }
-
-      console.log('Profile update payload:', updatePayload)
 
       // Call profile update API
       await updateProfile(updatePayload)
@@ -392,28 +445,106 @@ export default function ProfilePage() {
   }
 
   // Handle edit button click - populate form with current profile data
-  const handleEditClick = () => {
-    // Convert interests to array format for the form
-    let interestsArray: string[] = []
-    if (profile.interests) {
-      if (Array.isArray(profile.interests)) {
-        interestsArray = profile.interests
-      }
-    } else if (user?.interests) {
-      interestsArray = Array.isArray(user.interests) ? user.interests : []
-    }
+  const handleEditClick = async () => {
+    setEditing(true) // Set editing mode first
+    
+    // Fetch latest profile data to ensure we have the most up-to-date phone number and country code
+    try {
+      const profileData = await getProfile()
+      if (profileData && profileData.user) {
+        const userData = profileData.user
+        
+        // Set country code from latest user data
+        const userCountryCode = userData.countryCode || user?.countryCode || countryCode || '+1'
+        setCountryCode(userCountryCode)
+        
+        // Get phone number - prioritize API response
+        const phoneNumber = userData.phoneNumber || userData.phone || profile.phone || user?.phoneNumber || user?.phone || ""
+        
+        // Convert interests to array format for the form
+        let interestsArray: string[] = []
+        if (profile.interests) {
+          if (Array.isArray(profile.interests)) {
+            interestsArray = profile.interests
+          }
+        } else if (userData.interests) {
+          interestsArray = Array.isArray(userData.interests) ? userData.interests : []
+        } else if (user?.interests) {
+          interestsArray = Array.isArray(user.interests) ? user.interests : []
+        }
 
-    form.setFieldsValue({
-      name: profile.name,
-      username: profile.username,
-      email: profile.email,
-      country: profile.country,
-      phone: user?.phone || user?.phoneNumber || "",
-      profession: profile.profession,
-      interests: interestsArray,
-      bio: profile.bio,
-    })
-    setEditing(true)
+        // Use setTimeout to ensure form is ready
+        setTimeout(() => {
+          form.setFieldsValue({
+            name: profile.name,
+            username: profile.username,
+            email: profile.email,
+            country: profile.country,
+            phone: phoneNumber,
+            profession: profile.profession,
+            interests: interestsArray,
+            bio: profile.bio,
+          })
+        }, 0)
+      } else {
+        // Fallback to existing logic if profile fetch fails
+        let interestsArray: string[] = []
+        if (profile.interests) {
+          if (Array.isArray(profile.interests)) {
+            interestsArray = profile.interests
+          }
+        } else if (user?.interests) {
+          interestsArray = Array.isArray(user.interests) ? user.interests : []
+        }
+
+        const userCountryCode = user?.countryCode || countryCode || '+1'
+        setCountryCode(userCountryCode)
+
+        const phoneNumber = profile.phone || user?.phoneNumber || user?.phone || ""
+
+        setTimeout(() => {
+          form.setFieldsValue({
+            name: profile.name,
+            username: profile.username,
+            email: profile.email,
+            country: profile.country,
+            phone: phoneNumber,
+            profession: profile.profession,
+            interests: interestsArray,
+            bio: profile.bio,
+          })
+        }, 0)
+      }
+    } catch (error) {
+      console.error('Error fetching profile for edit:', error)
+      // Fallback to existing logic
+      let interestsArray: string[] = []
+      if (profile.interests) {
+        if (Array.isArray(profile.interests)) {
+          interestsArray = profile.interests
+        }
+      } else if (user?.interests) {
+        interestsArray = Array.isArray(user.interests) ? user.interests : []
+      }
+
+      const userCountryCode = user?.countryCode || countryCode || '+1'
+      setCountryCode(userCountryCode)
+
+      const phoneNumber = profile.phone || user?.phoneNumber || user?.phone || ""
+
+      setTimeout(() => {
+        form.setFieldsValue({
+          name: profile.name,
+          username: profile.username,
+          email: profile.email,
+          country: profile.country,
+          phone: phoneNumber,
+          profession: profile.profession,
+          interests: interestsArray,
+          bio: profile.bio,
+        })
+      }, 0)
+    }
   }
 
   if (profileLoading) {
@@ -688,7 +819,7 @@ export default function ProfilePage() {
                 username: profile.username || user?.username || "",
                 email: profile.email || user?.email || "",
                 country: profile.country || user?.country || "",
-                phone: user?.phone || user?.phoneNumber || "",
+                phone: profile.phone || user?.phoneNumber || user?.phone || "",
                 profession: profile.profession || "",
                 interests: Array.isArray(profile.interests)
                   ? profile.interests
@@ -757,13 +888,108 @@ export default function ProfilePage() {
 
                 <Form.Item
                   label={<span className="text-white text-sm">Phone No.</span>}
-                  name="phone"
                   className="col-span-2"
                 >
-                  <Input
-                    placeholder="Phone No."
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
-                  />
+                  <div className="flex items-center gap-2">
+                    {/* Country Code Dropdown */}
+                    <div className="relative" ref={countryDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className="flex items-center gap-2 px-3 py-2.5 border border-[#FFFFFF1A] rounded-xl bg-[#0B0926] text-white hover:bg-[#1A183A] transition-colors min-w-[110px] justify-between h-12"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{countryCodes.find(c => c.code === countryCode)?.flag || '🇺🇸'}</span>
+                          <span className="text-sm font-exo2">{countryCode}</span>
+                        </span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showCountryDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-64 max-h-60 overflow-hidden flex flex-col bg-[#0B0926] border border-[#FFFFFF1A] rounded-xl shadow-2xl z-50">
+                          {/* Search Input */}
+                          <div className="p-2 border-b border-[#FFFFFF1A] sticky top-0 bg-[#0B0926]">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                type="text"
+                                placeholder="Search country..."
+                                value={countrySearchQuery}
+                                onChange={(e) => setCountrySearchQuery(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full pl-10 pr-3 py-2 bg-[#1A183A] border border-[#FFFFFF1A] rounded-lg text-white text-sm font-exo2 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                                autoFocus
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Country List */}
+                          <div className="overflow-y-auto scrollbar-hide flex-1">
+                            <div className="p-2">
+                              {countryCodes
+                                .filter((country) => {
+                                  const query = countrySearchQuery.toLowerCase()
+                                  return (
+                                    country.country.toLowerCase().includes(query) ||
+                                    country.code.includes(query) ||
+                                    country.flag.includes(query)
+                                  )
+                                })
+                                .map((country) => (
+                                  <button
+                                    key={country.code}
+                                    type="button"
+                                    onClick={() => {
+                                      setCountryCode(country.code)
+                                      setShowCountryDropdown(false)
+                                      setCountrySearchQuery('')
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1A183A] transition-colors ${
+                                      countryCode === country.code ? 'bg-[#4A01D8]/30' : ''
+                                    }`}
+                                  >
+                                    <span className="text-xl">{country.flag}</span>
+                                    <span className="text-white text-sm font-exo2 flex-1 text-left">
+                                      {country.code}
+                                    </span>
+                                    {countryCode === country.code && (
+                                      <span className="text-purple-400 text-xs">✓</span>
+                                    )}
+                                  </button>
+                                ))}
+                              {countryCodes.filter((country) => {
+                                const query = countrySearchQuery.toLowerCase()
+                                return (
+                                  country.country.toLowerCase().includes(query) ||
+                                  country.code.includes(query) ||
+                                  country.flag.includes(query)
+                                )
+                              }).length === 0 && (
+                                <div className="px-4 py-3 text-gray-400 text-sm font-exo2 text-center">
+                                  No country found
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Phone Input */}
+                    <Form.Item
+                      name="phone"
+                      noStyle
+                      normalize={(value) => value ? value.replace(/\D/g, '') : value}
+                    >
+                      <Input
+                        placeholder="Enter phone number"
+                        className="flex-1 !bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
+                        type="tel"
+                        maxLength={15}
+                      />
+                    </Form.Item>
+                  </div>
                 </Form.Item>
 
                 <Form.Item

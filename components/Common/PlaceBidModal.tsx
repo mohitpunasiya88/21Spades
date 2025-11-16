@@ -113,7 +113,6 @@ export default function PlaceBidModal({
           <button
             onClick={() => {
               // Handle bid submission
-              console.log('Bid amount:', bidAmount)
             }}
             className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg"
           >

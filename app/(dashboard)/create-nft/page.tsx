@@ -75,10 +75,8 @@ export default function CreateNFTPage() {
       queryParams.append('blocked', 'false')
 
       const url = `${authRoutes.getCollections}?${queryParams.toString()}`
-      console.log("📡 Fetching collections from:", url)
 
       const response = await apiCaller('GET', url, null, true)
-      console.log("📦 Collections response:", response)
 
       if (response.success && response.data) {
         // Handle both array and object with collections property
@@ -86,7 +84,6 @@ export default function CreateNFTPage() {
           ? response.data
           : (response.data.collections || response.data.data || [])
         setCollections(collectionsData)
-        console.log("✅ Collections loaded:", collectionsData.length)
       } else {
         console.warn("⚠️ No collections found or invalid response")
         setCollections([])
@@ -185,46 +182,28 @@ export default function CreateNFTPage() {
   }
 
   const handleCreateItem = async () => {
-    console.log("🚀 handleCreateItem called")
-    console.log("📋 Form state:", {
-      uploadedFile: !!uploadedFile,
-      title,
-      description,
-      selectedCollection,
-      fixedPrice,
-      selectedMethod,
-      expirationDate,
-      walletAddress: user?.walletAddress
-    })
-
     // Validation
     if (!uploadedFile) {
-      console.log("❌ Validation failed: No file uploaded")
       message.error("Please upload a file")
       return
     }
     if (!title.trim()) {
-      console.log("❌ Validation failed: No title")
       message.error("Please enter a title")
       return
     }
     if (!description.trim()) {
-      console.log("❌ Validation failed: No description")
       message.error("Please enter a description")
       return
     }
     if (!selectedCollection) {
-      console.log("❌ Validation failed: No collection selected")
       message.error("Please select or create a collection")
       return
     }
     if ((fixedPrice === null || fixedPrice === undefined) && selectedMethod !== "Open For Bids") {
-      console.log("❌ Validation failed: No fixed price")
       message.error("Please enter a fixed price")
       return
     }
     if (selectedMethod === "Time Auction" && !expirationDate) {
-      console.log("❌ Validation failed: No expiration date for Time Auction")
       message.error("Please select an expiration date")
       return
     }
@@ -232,16 +211,13 @@ export default function CreateNFTPage() {
     // Hardcoded wallet address for testing
     const walletAddress = user?.walletAddress || "1234567890"
     // if (!walletAddress) {
-    //   console.log("❌ Validation failed: No wallet address")
     //   message.error("Wallet address not found. Please connect your wallet.")
     //   return
     // }
 
-    console.log("✅ All validations passed, proceeding with API call...")
 
     let loadingMessage: any = null
     try {
-      console.log("📝 Starting NFT creation process...")
 
       // Convert file to base64 data URL
       const fileToDataURL = (file: File): Promise<string> => {
@@ -253,9 +229,7 @@ export default function CreateNFTPage() {
         })
       }
 
-      console.log("🖼️ Converting file to data URL...")
       const imageUrl = await fileToDataURL(uploadedFile)
-      console.log("✅ File converted, length:", imageUrl.length)
 
       // Determine media type
       const mediaType = uploadedFile.type.startsWith("image/")
@@ -347,23 +321,11 @@ export default function CreateNFTPage() {
         }
       })
 
-      console.log("📦 Payload prepared:", {
-        ...payload,
-        imageUrl: payload.imageUrl?.substring(0, 50) + "...",
-        animationUrl: payload.animationUrl?.substring(0, 50) + "...",
-      })
-
       loadingMessage = message.loading("Creating NFT...", 0)
 
       const apiUrl = authRoutes.createNFT
-      console.log("🌐 Calling API:", apiUrl)
-      console.log("🌐 Full API URL will be:", apiUrl)
-      console.log("📤 Sending payload size:", JSON.stringify(payload).length, "bytes")
 
       const response = await apiCaller('POST', apiUrl, payload, true)
-      console.log("📡 API Response received:", response)
-      console.log("📡 Response success:", response?.success)
-      console.log("📡 Response data:", response?.data)
 
       message.destroy(loadingMessage as any)
 
@@ -390,7 +352,6 @@ export default function CreateNFTPage() {
           fileInputRef.current.value = ""
         }
 
-        console.log("✅ NFT created:", response.data)
       } else {
         console.error("❌ API returned success: false", response)
         message.error(response.message || "Failed to create NFT")
@@ -488,14 +449,12 @@ export default function CreateNFTPage() {
   });
 
   const handleCreateCollection = async () => {
-    console.log("🚀 handleCreateCollection called")
     debugger;
     // Check if Privy is ready
     // if (!ready) {
     //   message.info("Please wait, wallet is initializing...");
     //   return;
     // }
-    console.log("🔑 Authenticated:", authenticated)
 
     // // Check if user is authenticated
     // if (!authenticated) {
@@ -506,13 +465,11 @@ export default function CreateNFTPage() {
 
     // Check if embedded wallet exists
     let embeddedWallet = wallets.find((w: any) => w.walletClientType === 'privy');
-    console.log("🔑 Embedded wallet:", embeddedWallet)
     if (!embeddedWallet) {
       const hideLoading = message.loading("Creating your wallet...", 0);
       try {
         await createWallet();
         hideLoading();
-        console.log("🔑 Wallet created")
         // Wait for wallet to appear in wallets array (polling with longer wait)
         let walletFound = false;
         let attempts = 0;
@@ -589,7 +546,6 @@ export default function CreateNFTPage() {
       });
 
       message.success("Collection created successfully!");
-      console.log("✅ Collection created:", result);
 
       // Reset form and close modal on success
       setCollectionFile(null);
@@ -607,7 +563,6 @@ export default function CreateNFTPage() {
       message.error(errorMessage);
     }
     try {
-      console.log("📝 Starting collection creation process...")
 
       // Convert file to base64 data URL (temporary solution - replace with actual file upload endpoint if available)
       const fileToDataURL = (file: File): Promise<string> => {
@@ -619,9 +574,7 @@ export default function CreateNFTPage() {
         })
       }
 
-      console.log("🖼️ Converting file to data URL...")
       const imageUrl = await fileToDataURL(collectionFile)
-      console.log("✅ File converted, length:", imageUrl.length)
 
       // Generate slug from token symbol (not display name)
       const collectionSlug = tokenSymbol
@@ -648,18 +601,10 @@ export default function CreateNFTPage() {
         totalCollectionNfts: 0
       }
 
-      console.log("📦 Payload prepared:", {
-        ...payload,
-        imageUrl: payload.imageUrl.substring(0, 50) + "...", // Log only first 50 chars
-        coverPhoto: payload.coverPhoto.substring(0, 50) + "..."
-      })
-
       const collectionLoadingMessage = message.loading("Creating collection...", 0)
 
-      console.log("🌐 Calling API:", authRoutes.createCollection)
       // Call API
       const response = await apiCaller('POST', authRoutes.createCollection, payload, true)
-      console.log("📡 API Response:", response)
 
       // Destroy loading message
       message.destroy(collectionLoadingMessage as any)
@@ -682,13 +627,11 @@ export default function CreateNFTPage() {
         // Refresh collections list
         await fetchCollections()
 
-        console.log("✅ Collection created:", response.data)
       } else {
         console.error("❌ API returned success: false", response)
 
         // Check if error is related to slug - check multiple possible fields
         const errorMessage = response.message || response.error || response.data?.message || response.data?.error || ""
-        console.log("🔍 Error message for slug check:", errorMessage)
 
         // More comprehensive slug error detection
         const lowerErrorMessage = errorMessage.toLowerCase()
@@ -698,10 +641,8 @@ export default function CreateNFTPage() {
           lowerErrorMessage.includes("already exists") ||
           lowerErrorMessage.includes("unique slug")
         ) {
-          console.log("✅ Setting symbol error:", errorMessage)
           setSymbolError(errorMessage)
         } else {
-          console.log("❌ Not a slug error, clearing symbol error")
           setSymbolError("")
         }
 
@@ -729,8 +670,6 @@ export default function CreateNFTPage() {
         error?.error ||
         ""
 
-      console.log("🔍 Error message from catch block for slug check:", errorMessage)
-      console.log("🔍 Full error response:", error?.response?.data)
 
       // More comprehensive slug error detection
       const lowerErrorMessage = errorMessage.toLowerCase()
@@ -740,10 +679,8 @@ export default function CreateNFTPage() {
         lowerErrorMessage.includes("already exists") ||
         lowerErrorMessage.includes("unique slug")
       ) {
-        console.log("✅ Setting symbol error from catch:", errorMessage)
         setSymbolError(errorMessage)
       } else {
-        console.log("❌ Not a slug error, clearing symbol error")
         setSymbolError("")
       }
 
