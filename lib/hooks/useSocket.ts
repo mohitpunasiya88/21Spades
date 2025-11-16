@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 
 // const SOCKET_URL = 'http://localhost:8080'
-const SOCKET_URL = 'http://44.200.78.158:8080'
+// const SOCKET_URL = 'http://18.215.86.203:8080'
+const SOCKET_URL = 'https://two1spades-backend.onrender.com'
+
 
 export function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null)

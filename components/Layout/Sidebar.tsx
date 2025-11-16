@@ -20,6 +20,8 @@ import {
   Box,
 } from 'lucide-react'
 import { useUIStore } from '@/lib/store/uiStore'
+import { useChatStore } from '@/lib/store/chatStore'
+import { useAuthStore } from '@/lib/store/authStore'
 import image22 from '@/components/assets/image22.png'
 
 const menuItems = [
@@ -37,38 +39,14 @@ const menuItems = [
   { icon: User, label: 'Dashboard', path: '/landing' },
 ]
 
-const chatData = [
-  {
-    id: 'magnus-nelson',
-    userId: '1',
-    name: 'Magnus Nelson',
-    message: '...is typing',
-    time: '16:45',
-    profilePicture: 'https://img.freepik.com/free-photo/portrait-young-man-with-dark-curly-hair_176420-18744.jpg?size=626&ext=jpg',
-    isTyping: true,
-    unread: 0,
-  },
-  {
-    id: 'jonas-walden',
-    userId: '2',
-    name: 'Jonas Walden',
-    message: 'You: Come back!',
-    time: '16:45',
-    profilePicture: 'https://img.freepik.com/free-photo/portrait-man-with-blue-purple-lighting_23-2149126949.jpg?size=626&ext=jpg',
-    isTyping: false,
-    unread: 0,
-  },
-  {
-    id: 'rose-nelson',
-    userId: '3',
-    name: 'Rose Nelson',
-    message: 'Wait for me',
-    time: '16:45',
-    profilePicture: 'https://img.freepik.com/free-photo/portrait-woman-with-dark-curly-hair_23-2149126948.jpg?size=626&ext=jpg',
-    isTyping: false,
-    unread: 1,
-  },
-]
+// Helper function to format time from timestamp
+function formatTime(timestamp?: string): string {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+}
 
 interface SidebarProps {
   onClose?: () => void
@@ -79,9 +57,57 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
   const [isSpadesFIOpen, setIsSpadesFIOpen] = useState(false)
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { chats, getChats, isLoading: chatsLoading, typingUsers } = useChatStore()
+  const { user } = useAuthStore()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({})
+  const chatsFetchedRef = useRef(false)
+  
+  // Fetch chats only once when sidebar opens for the first time
+  useEffect(() => {
+    if (sidebarOpen && user && !chatsFetchedRef.current) {
+      chatsFetchedRef.current = true
+      getChats()
+    }
+    // Reset when sidebar closes
+    if (!sidebarOpen) {
+      chatsFetchedRef.current = false
+    }
+  }, [sidebarOpen, user, getChats])
+  
+  // Transform API chats to sidebar format and limit to 3 for sidebar preview
+  const chatData = chats.slice(0, 3).map((chat) => {
+    // Get the other participant (not current user)
+    const otherParticipant = chat.participants?.find(
+      (p) => p._id !== user?.id && p._id !== (user as any)?._id
+    ) || chat.participants?.[0]
+    
+    // Check if user is typing
+    const chatTypingUsers = typingUsers[chat._id] || []
+    const isTyping = chatTypingUsers.length > 0 && chatTypingUsers.some(
+      (userId) => userId !== user?.id && userId !== (user as any)?._id
+    )
+    
+    // Get last message text
+    const messageText = chat.lastMessage?.message || ''
+    const isCurrentUserSender = chat.lastMessage?.senderId === user?.id || 
+                                chat.lastMessage?.senderId === (user as any)?._id
+    const displayMessage = isTyping 
+      ? '...is typing' 
+      : (isCurrentUserSender && messageText ? `You: ${messageText}` : messageText)
+    
+    return {
+      id: chat._id,
+      userId: otherParticipant?._id || '',
+      name: otherParticipant?.name || otherParticipant?.username || 'Unknown User',
+      message: displayMessage,
+      time: formatTime(chat.lastMessage?.timestamp || chat.updatedAt),
+      profilePicture: otherParticipant?.profilePicture,
+      isTyping,
+      unread: chat.unreadCount || 0,
+    }
+  })
 
   const handleNavigation = (path: string, label: string) => {
     // For coming soon items, navigate to route and let the page handle the modal
@@ -171,20 +197,19 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     
                     {/* SpadesFI Dropdown */}
                     {isSpadesFIOpen && sidebarOpen && (
-                      <div className="bg-[#0A0519] border-l-2 border-[#2A2F4A] ml-4">
+                      <div className="border-[#2A2F4A] ml-4">
                         {spadesFIItems.map((subItem) => {
                           const isSubActive = pathname === subItem.path
                           return (
                             <button
                               key={subItem.path}
                               onClick={() => handleNavigation(subItem.path, subItem.label)}
-                              className={`w-full text-left px-4 py-2.5 pl-8 text-sm font-exo2 transition-colors flex items-center gap-2 ${
+                              className={`w-full text-left px-4 py-2.5 pl-8 text-sm font-exo2 transition-colors ${
                                 isSubActive
                                   ? 'text-[#FFB600] bg-[#7E6BEF0A]'
                                   : 'text-gray-300 hover:text-white hover:bg-white/5'
                               }`}
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                               {subItem.label}
                             </button>
                           )
@@ -267,9 +292,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
             {/* Chat List */}
             <div className="space-y-2.5 mb-4">
-              {chatData.map((chat, idx) => (
+              {chatsLoading ? (
+                <div className="text-center text-gray-400 py-4 text-sm">Loading chats...</div>
+              ) : chatData.length === 0 ? (
+                <div className="text-center text-gray-400 py-4 text-sm">No chats yet</div>
+              ) : (
+                chatData.map((chat) => (
                 <div
-                  key={idx}
+                  key={chat.id}
                   onClick={() => handleNavigation(`/messages?chat=${chat.id}&userId=${chat.userId}`, 'Messages')}
                   className="flex items-center gap-3 py-2 px-1 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
                 >
@@ -302,7 +332,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     )}
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* View All */}
