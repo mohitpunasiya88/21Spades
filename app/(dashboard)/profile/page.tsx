@@ -568,7 +568,7 @@ export default function ProfilePage() {
                     suffixIcon={<span className="text-white">▼</span>}
                     options={countries.map((c) => ({ value: c, label: c }))}
                     placeholder="Select Country"
-                    className="!bg-[#0B0926] !text-white !rounded-xl !h-12 !border !border-none !outline-none [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
+                    className="!bg-[#0B0926] !text-white !rounded-lg !h-12 !border !border-none !outline-none [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!text-white [&_.ant-select-selector]:!placeholder-[#6B7280] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!block  [&_.ant-select-selection-placeholder]:!z-10 [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-placeholder]:!text-white/60 [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
                       // border: "1px solid #FFFFFF1A",
@@ -646,7 +646,7 @@ export default function ProfilePage() {
                   <Input.TextArea
                     rows={6}
                     placeholder="Bio"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selection-placeholder]:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 [&_.ant-input]:!placeholder-[#6B7280] [&_.ant-input]:!text-white [&_.ant-input::placeholder]:!text-[#6B7280]"
                     maxLength={325}
                     showCount={{
                       formatter: ({ count }) => (
