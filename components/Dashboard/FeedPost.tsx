@@ -300,6 +300,11 @@ export default function FeedPost({ post }: FeedPostProps) {
     if (isOpen) {
       setActiveKey([])
     } else {
+      // Check authentication before loading comments
+      if (!isAuthenticated) {
+        setShowLoginModal(true)
+        return
+      }
       setActiveKey(['comments'])
       // Load first page when accordion opens
       setLoadingComments(true)
@@ -390,6 +395,13 @@ export default function FeedPost({ post }: FeedPostProps) {
   // Load more comments (next page)
   const loadMoreComments = async () => {
     if (isLoadingMore || !hasMoreComments) return
+    
+    // Check authentication before loading more comments
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    
     setIsLoadingMore(true)
     try {
       const nextPage = commentsPage + 1

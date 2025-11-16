@@ -58,7 +58,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [isSpadesFIOpen, setIsSpadesFIOpen] = useState(false)
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { chats, getChats, isLoading: chatsLoading, typingUsers } = useChatStore()
-  const { user } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({})
@@ -260,10 +260,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
           </nav>
 
           {/* Separator Line between Navigation and Chat */}
-          {sidebarOpen && <div className="mx-4 my-2 h-px bg-[#2A2F4A]"></div>}
+          {sidebarOpen && isAuthenticated && user && <div className="mx-4 my-2 h-px bg-[#2A2F4A]"></div>}
 
           {/* Chat Section */}
-          {sidebarOpen && (
+          {sidebarOpen && isAuthenticated && user && (
             <div className="p-4">
             {/* Chat Header */}
             <div className="flex items-center justify-between mb-4">

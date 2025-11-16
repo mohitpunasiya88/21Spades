@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import FeedPost from '@/components/Dashboard/FeedPost'
 import { Image as ImageIcon, Laugh, LayoutGrid, ChevronDown, X, SidebarIcon } from 'lucide-react'
 import FeedRightSidebar from '@/components/Layout/FeedRightSidebar'
-import { Badge, Drawer } from 'antd'
-import { useCategoriesStore, useFeedStore, type Post } from '@/lib/store/authStore'
+import { Badge, Drawer, Select } from 'antd'
+import { useCategoriesStore, useFeedStore, useAuthStore, type Post } from '@/lib/store/authStore'
 import EmojiPicker from 'emoji-picker-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
+import "@/components/Dashboard/style.css"
 
 // Helper function to format time ago
 function formatTimeAgo(dateString: string): string {
@@ -103,13 +104,12 @@ function transformPost(post: Post) {
 export default function FeedPage() {
   const { posts, isLoading, getPosts, createPost } = useFeedStore()
   const { categories, getCategories } = useCategoriesStore()
+  const { user } = useAuthStore()
   const isAuthenticated = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('All') // For filtering posts
   const [postCategory, setPostCategory] = useState('All') // For post creation
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false) // For post creation
   const [isFilterCategoriesOpen, setIsFilterCategoriesOpen] = useState(false) // For filtering
-  const categoriesRef = useRef<HTMLDivElement>(null)
   const filterCategoriesRef = useRef<HTMLDivElement>(null)
   
   // Mobile right sidebar state
@@ -160,17 +160,12 @@ export default function FeedPage() {
     })
   }, [selectedCategory, categories, getPosts])
 
-  // Close categories dropdown and emoji picker on outside click
+  // Close filter categories dropdown and emoji picker on outside click
   useEffect(() => {
-    if (!isCategoriesOpen && !isFilterCategoriesOpen && !isEmojiPickerOpen) return
+    if (!isFilterCategoriesOpen && !isEmojiPickerOpen) return
 
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      
-      // Close post creation categories dropdown
-      if (isCategoriesOpen && categoriesRef.current && !categoriesRef.current.contains(target)) {
-        setIsCategoriesOpen(false)
-      }
       
       // Close filter categories dropdown
       if (isFilterCategoriesOpen && filterCategoriesRef.current && !filterCategoriesRef.current.contains(target)) {
@@ -196,7 +191,7 @@ export default function FeedPage() {
     
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
-  }, [isCategoriesOpen, isFilterCategoriesOpen, isEmojiPickerOpen])
+  }, [isFilterCategoriesOpen, isEmojiPickerOpen])
 
   // Handle image selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -336,7 +331,9 @@ export default function FeedPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 md:gap-6 font-exo2">
         {/* Left column */}
         <div className="p-2 sm:p-3 md:p-4">
-          <h1 className="text-white text-xl sm:text-2xl font-semibold font-exo2 mb-3 md:mb-4">Hello Spades !</h1>
+          <h1 className="text-white text-xl sm:text-2xl font-semibold font-exo2 mb-3 md:mb-4">
+            {isAuthenticated && user ? `Hello ${user.name || user.username}` : 'Hello'}
+          </h1>
 
           {/* Input bar (pixel matched) */}
           <div className="flex items-start gap-3 sm:gap-4 md:gap-6">
@@ -426,48 +423,32 @@ export default function FeedPage() {
                   </div>
                   <div className="w-1 h-1 rounded-full bg-[#FFFFFF4D]" />
                   {/* Categories Dropdown */}
-                  <div className="relative" ref={categoriesRef}>
-                    <button
-                      onClick={() => setIsCategoriesOpen((v) => !v)}
-                      className="flex items-center gap-1.5 sm:gap-2 text-orange-400 px-2 sm:px-3 py-1 rounded-lg hover:bg-white/5 transition-colors"
-                      style={{ backdropFilter: 'blur(4px)' }}
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      {postCategory === 'All' ? <span className="text-[#FFFFFFCC] text-xs sm:text-sm">Categories</span> : <span className="text-[#FFFFFFCC] text-xs sm:text-sm"> {postCategory} </span>}
-                      <ChevronDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400 ml-0.5 sm:ml-1 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {isCategoriesOpen && (
-                      <div
-                        className="absolute left-0 mt-2 rounded-xl overflow-hidden z-50"
-                        style={{
-                          background: 'rgba(17, 24, 39, 0.98)',
-                          border: '1px solid rgba(139, 92, 246, 0.3)',
-                          backdropFilter: 'blur(20px)',
-                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
-                          minWidth: '200px',
-                        }}
-                      >
-                        {categoriesList.map((cat, index) => (
-                          <button
-                            key={cat}
-                            onClick={() => {
-                              setPostCategory(cat)
-                              setIsCategoriesOpen(false)
-                            }}
-                            className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center justify-between group"
-                            style={{
-                              borderBottom: index < categoriesList.length - 1 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
-                            }}
-                          >
-                            <span className="group-hover:text-purple-300 transition-colors">{cat}</span>
-                            {cat === postCategory && (
-                              <span className="text-green-400 text-sm font-bold">✓</span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400 flex-shrink-0" />
+                    <Select
+                      value={postCategory}
+                      onChange={(value) => setPostCategory(value)}
+                      placeholder="Categories"
+                      className="categories-select"
+                      suffixIcon={<ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />}
+                      style={{
+                        minWidth: '100px',
+                      }}
+                      popupClassName="categories-select-dropdown"
+                      optionLabelProp="label"
+                      optionRender={(option) => (
+                        <div className="flex items-center justify-between w-full">
+                          <span>{option.data.value}</span>
+                          {option.data.value === postCategory && (
+                            <span className="text-green-400 text-sm font-bold ml-2">✓</span>
+                          )}
+                        </div>
+                      )}
+                      options={categoriesList.map((cat) => ({
+                        label: cat, // Simple label for trigger display (no checkmark)
+                        value: cat,
+                      }))}
+                    />
                   </div>
                 </div>
                 <button 

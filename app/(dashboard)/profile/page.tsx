@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
 import { Button, Form, Input, Select, Tabs, Avatar, Dropdown, Spin, message } from "antd"
@@ -26,6 +26,12 @@ export default function ProfilePage() {
   const [form] = Form.useForm()
   const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
   const [profile, setProfile] = useState({
     name: "",
     username: "",
@@ -251,6 +257,140 @@ export default function ProfilePage() {
     }
   }
 
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (error) => reject(error)
+    })
+  }
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      message.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('Image size should be less than 5MB')
+      return
+    }
+
+    try {
+      setUploadingAvatar(true)
+      
+      // Convert to base64 for preview
+      const base64 = await fileToBase64(file)
+      setAvatarPreview(base64)
+
+      // Update profile with new avatar
+      await updateProfile({
+        email: profile.email || user?.email || "",
+        name: profile.name || user?.name || "",
+        username: profile.username || user?.username || "",
+        phoneNumber: user?.phoneNumber || "",
+        countryCode: user?.countryCode || "+1",
+        country: profile.country || user?.country || "",
+        interests: Array.isArray(profile.interests) ? profile.interests : (user?.interests || []),
+        portfolio: user?.portfolio || "",
+        facebook: profile.links.facebook || user?.facebook || "",
+        instagram: profile.links.instagram || user?.instagram || "",
+        discord: user?.discord || "",
+        twitter: profile.links.x || user?.twitter || "",
+        bio: profile.bio || user?.bio || "",
+        profilePicture: base64, // In production, upload to server and get URL
+        projects: profile.stats.projects || user?.projects || 0,
+        contributions: profile.stats.contributions || user?.contributions || 0,
+        profileView: profile.stats.posts || user?.profileView || 0,
+      })
+
+      // Update local state
+      setProfile(prev => ({ ...prev, avatar: base64 }))
+      message.success('Avatar updated successfully!')
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error)
+      message.error('Failed to upload avatar. Please try again.')
+    } finally {
+      setUploadingAvatar(false)
+      // Reset input
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Handle cover image upload
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      message.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      message.error('Image size should be less than 10MB')
+      return
+    }
+
+    try {
+      setUploadingCover(true)
+      
+      // Convert to base64 for preview
+      const base64 = await fileToBase64(file)
+      setCoverPreview(base64)
+
+      // Update profile with new cover
+      // Note: Cover image might need a separate endpoint or field
+      // For now, we'll update it in local state
+      // In production, you may need to add a 'cover' field to the updateProfile API
+      await updateProfile({
+        email: profile.email || user?.email || "",
+        name: profile.name || user?.name || "",
+        username: profile.username || user?.username || "",
+        phoneNumber: user?.phoneNumber || "",
+        countryCode: user?.countryCode || "+1",
+        country: profile.country || user?.country || "",
+        interests: Array.isArray(profile.interests) ? profile.interests : (user?.interests || []),
+        portfolio: user?.portfolio || "",
+        facebook: profile.links.facebook || user?.facebook || "",
+        instagram: profile.links.instagram || user?.instagram || "",
+        discord: user?.discord || "",
+        twitter: profile.links.x || user?.twitter || "",
+        bio: profile.bio || user?.bio || "",
+        profilePicture: user?.profilePicture || user?.avatar || profile.avatar || "",
+        projects: profile.stats.projects || user?.projects || 0,
+        contributions: profile.stats.contributions || user?.contributions || 0,
+        profileView: profile.stats.posts || user?.profileView || 0,
+        // cover: base64, // Add this if backend supports cover image field
+      })
+
+      // Update local state
+      setProfile(prev => ({ ...prev, cover: base64 }))
+      message.success('Cover image updated successfully!')
+    } catch (error: any) {
+      console.error('Error uploading cover:', error)
+      message.error('Failed to upload cover image. Please try again.')
+    } finally {
+      setUploadingCover(false)
+      // Reset input
+      if (coverInputRef.current) {
+        coverInputRef.current.value = ''
+      }
+    }
+  }
+
   // Handle edit button click - populate form with current profile data
   const handleEditClick = () => {
     // Convert interests to array format for the form
@@ -290,9 +430,25 @@ export default function ProfilePage() {
       <div className="relative rounded-xl overflow-hidden ">
         {/* Header / Cover Banner */}
         <div className="relative h-40 md:h-48 w-full bg-gradient-to-r from-purple-800/30 to-yellow-500/10">
+          {/* Cover image upload button */}
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            className="absolute top-4 right-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-sm text-white rounded-lg hover:bg-black/70 transition-colors flex items-center gap-2 text-sm"
+            disabled={uploadingCover}
+          >
+            <Camera size={16} />
+            {uploadingCover ? 'Uploading...' : 'Change Cover'}
+          </button>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleCoverUpload}
+            className="hidden"
+          />
           {/* Fallback cover image */}
           <Image
-            src={profile.cover}
+            src={coverPreview || profile.cover}
             alt="Cover"
             fill
             priority
@@ -338,16 +494,29 @@ export default function ProfilePage() {
             <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] bg-gradient-to-br from-[#8D5AFE] to-[#B98CFF] shadow-xl">
               <Avatar
                 size={160}
-                src={profile.avatar}
+                src={avatarPreview || profile.avatar}
                 className="!rounded-full !w-full !h-full "
               />
             </div>
             <button
+              onClick={() => avatarInputRef.current?.click()}
               aria-label="Change avatar"
-              className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF]"
+              className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF] hover:bg-[#7A3FEF] transition-colors disabled:opacity-50"
+              disabled={uploadingAvatar}
             >
-              <Camera size={16} />
+              {uploadingAvatar ? (
+                <Spin size="small" />
+              ) : (
+                <Camera size={16} />
+              )}
             </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
           </div>
         </div>
 
