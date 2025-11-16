@@ -17,7 +17,9 @@ import spadesImage from "@/components/assets/Spades-image-21.png"
 import spadesImageRight from "@/components/assets/Spades-left-Right.png"
 import { useWallet } from "@/app/hooks/useWallet"
 import { useNFTFactory } from "@/app/hooks/contracts/useNFTFactory"
+import { useNFTCollection } from "@/app/hooks/contracts/useNFTCollection"
 import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { useContract } from "@/app/hooks/contracts/useContract"
 
 const { TextArea } = Input
 
@@ -53,6 +55,8 @@ export default function CreateNFTPage() {
   const [collectionDescription, setCollectionDescription] = useState("")
   const [symbolError, setSymbolError] = useState<string>("")
   const collectionFileInputRef = useRef<HTMLInputElement>(null)
+  const [collectionAddress, setCollectionAddress] = useState<string>("")
+  const { getEventFromTx } = useContract()
 
   // Collections state
   const [collections, setCollections] = useState<any[]>([])
@@ -353,6 +357,19 @@ export default function CreateNFTPage() {
       })
 
       loadingMessage = message.loading("Creating NFT...", 0)
+      try {
+        const response = await mint({
+          to: walletAddress,
+          tokenURI: payload.imageUrl,
+          royalty: payload.royalty,
+        },collectionAddress)
+       
+        console.log("📡 Response success:", response)
+        console.log("📡 Response data:", response?.data)
+      } catch (error) {
+        console.error("❌ Error creating NFT:", error)
+      }
+
 
       const apiUrl = authRoutes.createNFT
       console.log("🌐 Calling API:", apiUrl)
@@ -477,6 +494,8 @@ export default function CreateNFTPage() {
     isLoading,
     error,
   } = useNFTFactory();
+  
+  const {mint} = useNFTCollection();
 
   const [collectionParams, setCollectionParams] = useState({
     name: '',
@@ -586,9 +605,23 @@ export default function CreateNFTPage() {
         tokenURIPrefix: collectionParams.tokenURIPrefix,
         royaltyLimit: collectionParams.royaltyLimit,
       });
+      const events = await getEventFromTx(
+      'ERC721Factory', result as any, 'CollectionCreated', 11155111, "",
+    );
+   
+
+
+    
+     
+
       
       message.success("Collection created successfully!");
-      console.log("✅ Collection created:", result);
+      console.log("✅ Collection created:", events[0].args.collection);
+      setCollectionAddress(events[0].args.collection);
+
+    // todo save the collection address in db these is need for create the NFT
+    // todo save this address via event listener via backend websocket event listener in collecttion api 
+      
       
       // Reset form and close modal on success
       setCollectionFile(null);
