@@ -568,10 +568,10 @@ export default function ProfilePage() {
                     suffixIcon={<span className="text-white">▼</span>}
                     options={countries.map((c) => ({ value: c, label: c }))}
                     placeholder="Select Country"
-                    className="!bg-[#0B0926] !text-white !rounded-xl !h-12 !border !border-[#FFFFFF1A] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selection-placeholder]:!text-[#7D79A8] [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
+                    className="!bg-[#0B0926] !text-white !rounded-xl !h-12 !border !border-none !outline-none [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
-                      border: "1px solid #FFFFFF1A",
+                      // border: "1px solid #FFFFFF1A",
                       borderRadius: "12px",
                     }}
                     dropdownRender={(menu) => (
@@ -581,7 +581,7 @@ export default function ProfilePage() {
                         {menu}
                       </div>
                     )}
-                    style={{ color: "white" }}
+                    style={{ color: "white", borderColor: "#FFFFFF1A !important" }}
                   />
                 </Form.Item>
 
@@ -607,10 +607,10 @@ export default function ProfilePage() {
                     showSearch
                     suffixIcon={<span className="text-white">▼</span>}
                     placeholder="Select Categories"
-                    className="!bg-[#0B0926] text-white !text-white !rounded-xl placeholder:text-[#6B7280] [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!border-[#FFFFFF1A] [&_.ant-select-selection-item]:!bg-[#1A183A] [&_.ant-select-selection-item]:!text-white [&_.ant-select-selection-item]:!border-none [&_.ant-select-arrow]:!text-white"
+                    className="!bg-[#0B0926] !border-none text-white !text-white !rounded-xl placeholder:text-[#6B7280] !outline-none [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!border-[#FFFFFF1A] [&_.ant-select-selection-item]:!bg-[#1A183A] [&_.ant-select-selection-item]:!text-white [&_.ant-select-selection-item]:!border-none [&_.ant-select-arrow]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
-                      border: "1px solid #FFFFFF1A",
+                      // border: "1px solid #FFFFFF1A",
                       borderRadius: "12px",
                       color: "white !important",
                     }}
