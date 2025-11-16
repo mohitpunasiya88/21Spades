@@ -1,12 +1,15 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { ArrowUp, Heart, Check, AlertTriangle } from 'lucide-react'
-import { Carousel, Dropdown, Space } from 'antd'
+import { Carousel, Dropdown, Space, Spin } from 'antd'
 import { DownOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useRouter } from 'next/navigation'
+import { apiCaller } from '@/app/interceptors/apicall/apicall'
+import authRoutes from '@/lib/routes'
+import { useAuthStore } from '@/lib/store/authStore'
 import spadesImage from '../assets/21spades.png'
 
 interface marketplace {
@@ -99,16 +102,24 @@ interface NFTCardProps {
   price: string
   floorPrice?: string
   verified?: boolean
+  collectionId?: string
+  imageUrl?: string
 }
 
-function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = true }: NFTCardProps) {
+function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = true, collectionId, imageUrl }: NFTCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const router = useRouter()
 
   const handleCardClick = () => {
-    // Navigate to collection page with collection ID based on title
-    const collectionId = title.toLowerCase().replace(/\s+/g, '-')
-    router.push(`/marketplace/collection/${collectionId}`)
+    // Navigate to collection page with actual collection ID
+    if (collectionId) {
+      router.push(`/marketplace/collection/${collectionId}`)
+    } else {
+      // Fallback to slug-based ID if collectionId not provided
+      const slugId = title.toLowerCase().replace(/\s+/g, '-')
+      router.push(`/marketplace/collection/${slugId}`)
+    }
   }
 
   return (
@@ -151,14 +162,27 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
               />
               <div className="pointer-events-none absolute inset-0 ring-1 ring-[#7E6BEF]/25 rounded-[10px] sm:rounded-[12px] md:rounded-[14px]" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Image 
-                  src={spadesImage} 
-                  alt="21 Spade" 
-                  width={120}
-                  height={120}
-                  className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[145px] md:h-[145px] object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
-                  priority
-                />
+                {imageUrl && !imageError ? (
+                  <Image 
+                    src={imageUrl} 
+                    alt={title} 
+                    fill
+                    className="object-cover rounded-[10px] sm:rounded-[12px] md:rounded-[14px] pointer-events-none select-none"
+                    onError={() => {
+                      // Fallback to default image if API image fails to load
+                      setImageError(true)
+                    }}
+                  />
+                ) : (
+                  <Image 
+                    src={spadesImage} 
+                    alt="21 Spade" 
+                    width={120}
+                    height={120}
+                    className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[145px] md:h-[145px] object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
+                    priority
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -202,14 +226,59 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
 
 // Main Component with Carousel
 const TokenizedCollectionCard: React.FC = () => {
+  const { user } = useAuthStore()
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [selectedNetwork, setSelectedNetwork] = useState('Avalanche')
   const [visibleCards, setVisibleCards] = useState(3)
+  const [collections, setCollections] = useState<any[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false)
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   
   const onChange = (currentSlide: number) => {
     console.log(currentSlide)
   }
+
+  // Fetch collections from API
+  const fetchCollections = async () => {
+    try {
+      setIsLoadingCollections(true)
+      
+      // Build query params - fetch all collections (not filtered by wallet)
+      const queryParams = new URLSearchParams()
+      queryParams.append('page', '1')
+      queryParams.append('limit', '100')
+      queryParams.append('blocked', 'false')
+      
+      const url = `${authRoutes.getCollections}?${queryParams.toString()}`
+      console.log("📡 Fetching collections from:", url)
+      
+      const response = await apiCaller('GET', url, null, true)
+      console.log("📦 Collections response:", response)
+      
+      if (response.success && response.data) {
+        // Handle both array and object with collections property
+        const collectionsData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.collections || response.data.data || [])
+        setCollections(collectionsData)
+        console.log("✅ Collections loaded:", collectionsData.length)
+      } else {
+        console.warn("⚠️ No collections found or invalid response")
+        setCollections([])
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching collections:", error)
+      setCollections([])
+    } finally {
+      setIsLoadingCollections(false)
+    }
+  }
+
+  // Fetch collections on component mount
+  useEffect(() => {
+    fetchCollections()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Dropdown menu items
   const items: MenuProps['items'] = [
@@ -246,22 +315,29 @@ const TokenizedCollectionCard: React.FC = () => {
     console.log('Selected network:', e.key)
   }
 
-  const allNfts = [
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '0.01 AVAX', floorPrice: '0.01 AVAX', category: 'Crypto' },
-  ];
-
+  // Map collections to NFT card format
+  const mappedCollections = collections.map((collection: any) => {
+    const collectionId = collection._id || collection.id || collection.collectionId
+    const collectionName = collection.collectionName || collection.name || 'Unnamed Collection'
+    const creatorName = collection.creator?.name || collection.creator?.username || 'Unknown Creator'
+    const floorPrice = collection.floorPrice ? `${collection.floorPrice} AVAX` : '0.01 AVAX'
+    const imageUrl = collection.imageUrl || collection.coverPhoto || null
+    
+    return {
+      title: collectionName,
+      creator: creatorName,
+      price: '0.01 AVAX', // Default price
+      floorPrice: floorPrice,
+      category: collection.category || 'Crypto',
+      collectionId: collectionId,
+      imageUrl: imageUrl,
+      verified: collection.isVerified || false,
+    }
+  })
 
   const filteredNfts = activeCategory === 'ALL' 
-    ? allNfts 
-    : allNfts.filter(nft => nft.category === activeCategory);
+    ? mappedCollections 
+    : mappedCollections.filter(nft => nft.category === activeCategory);
 
   // Handle scroll to load more cards
   React.useEffect(() => {
@@ -390,27 +466,33 @@ const TokenizedCollectionCard: React.FC = () => {
         </div>
 
         <div className="mt-6 sm:mt-8 md:mt-10 mb-8 sm:mb-10 md:mb-12">
-          {filteredNfts.length > 0 ? (
+          {isLoadingCollections ? (
+            <div className="flex justify-center items-center py-12">
+              <Spin size="large" />
+            </div>
+          ) : filteredNfts.length > 0 ? (
             <div 
               ref={scrollContainerRef}
               className="flex gap-4 sm:gap-6 md:gap-10 lg:gap-12 overflow-x-auto pb-4 scrollbar-hide" 
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {filteredNfts.slice(0, visibleCards).map((nft, index) => (
-                <div key={index} className="flex-shrink-0">
+                <div key={nft.collectionId || index} className="flex-shrink-0">
                   <NFTCard 
                     title={nft.title}
                     creator={nft.creator}
                     price={nft.price}
                     floorPrice={nft.floorPrice}
-                    verified={true}
+                    verified={nft.verified}
+                    collectionId={nft.collectionId}
+                    imageUrl={nft.imageUrl}
                   />
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center text-gray-400 py-12">
-              No NFTs found in this category
+              No collections found
             </div>
           )}
         </div>

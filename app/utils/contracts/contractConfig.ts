@@ -1,5 +1,5 @@
 // Contract ABIs and addresses
-import ERC721Marketplace from './abi/ERC721MarketPlace.sol/ERC721MarketPlace.json';
+import ERC721Marketplace from './abi/ERC721Marketplace.sol/ERC721MarketPlace.json';
 import ERC721Mintable from './abi/ERC721Mintable.sol/ERC721Mintable.json';
 import ERC721Factory from './abi/ERC721Factory.sol/ERC721Factory.json';
 import ERC721Collection from './abi/ERC721Collection.sol/ERC721Collection.json';

@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
-import authRoutes from '@/app/routes/route'
+import authRoutes from '@/lib/routes'
 import type { Socket } from 'socket.io-client'
 
 export interface Chat {

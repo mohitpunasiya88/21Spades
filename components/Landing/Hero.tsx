@@ -1,10 +1,11 @@
 'use client'
 
-import { Facebook, Instagram, Twitter } from "lucide-react";
+import { Instagram, Twitter } from "lucide-react";
 import Header from "./Header";
 import './landingPage.css'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useRouter } from 'next/navigation'
+import { FaTelegram } from "react-icons/fa";
 
 export default function Hero() {
   const isAuthenticated = useAuth()
@@ -95,14 +96,14 @@ export default function Hero() {
         </div>
         {/* right side image */}
       <div className="social-rail">
-          <a href="#" aria-label="Instagram" className="social-btn">
+          <a href="https://www.instagram.com/21spades.io" target="_blank" aria-label="Instagram" className="social-btn">
             <Instagram />
           </a>
-          <a href="#" aria-label="X (Twitter)" className="social-btn">
+          <a href="https://twitter.com/@21SpadesDPR" target="_blank" aria-label="X (Twitter)" className="social-btn">
             <Twitter />
           </a>
-          <a href="#" aria-label="Facebook" className="social-btn">
-            <Facebook />
+          <a href="https://t.me/+XyKl3RHYu-QxNWMx" target="_blank" aria-label="Telegram" className="social-btn">
+            <FaTelegram />
           </a>
         </div>
       </div>

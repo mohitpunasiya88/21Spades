@@ -65,11 +65,11 @@ export default function Navbar() {
       await new Promise(resolve => setTimeout(resolve, 100))
 
       // Use replace to prevent going back to feed page
-      window.location.href = '/login'
+      window.location.href = '/landing'
     } catch (error) {
       console.error('Logout error:', error)
       // Even if logout fails, force redirect
-      window.location.href = '/login'
+      window.location.href = '/landing'
     }
   }
 
@@ -104,6 +104,19 @@ export default function Navbar() {
               zIndex: 1000,
             }}
           >
+            {/* Search Bar - Mobile Only */}
+            <div className="p-4 border-b border-[#2A2F4A]">
+              <div className="flex items-center gap-2 bg-[#F5F5F50A] border border-gray-700 rounded-lg px-3 py-2.5">
+                <Search className="w-4 h-4 flex-shrink-0 text-gray-400" />
+                <div className="w-px h-4 bg-[#787486]" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm w-0 min-w-0"
+                />
+              </div>
+            </div>
+
             {/* Language Selector */}
             <div className="border-b border-[#2A2F4A] p-4">
               <p className="text-gray-400 text-xs mb-2">Language</p>
@@ -160,15 +173,15 @@ export default function Navbar() {
           />
         </div>
 
-        {/* Search Bar - Responsive */}
-        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 bg-[#F5F5F50A] border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 w-24 sm:w-40 md:w-48 lg:w-64 xl:w-80">
-          <Search className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 flex-shrink-0" />
+        {/* Search Bar - Hidden on Mobile, Visible on Desktop */}
+        <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 md:gap-2 bg-[#F5F5F50A] border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 w-40 md:w-48 lg:w-64 xl:w-80">
+          <Search className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 flex-shrink-0" />
           {/* vertical line */}
-          <div className="w-px h-3 sm:h-3.5 md:h-4 lg:h-[19px] bg-[#787486] hidden sm:block" />
+          <div className="w-px h-3.5 md:h-4 lg:h-[19px] bg-[#787486]" />
           <input
             type="text"
             placeholder="Search..."
-            className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-[10px] sm:text-xs md:text-sm w-0 min-w-0"
+            className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-xs md:text-sm w-0 min-w-0"
           />
         </div>
       </div>

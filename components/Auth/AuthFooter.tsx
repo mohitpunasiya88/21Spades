@@ -6,29 +6,31 @@ interface AuthFooterProps {
 }
 
 export default function AuthFooter({ showCopyright = true, className = '' }: AuthFooterProps) {
+    const currentYear = new Date().getFullYear();
+    
     return (
-        <footer className={`relative md:absolute md:bottom-0 md:left-0 md:right-0 w-full z-20 ${className}`}>
-            {/* Horizontal line above footer */}
-            <div className="h-px bg-gray-600 w-[85%] mx-6 sm:mx-12 md:mx-12 lg:mx-24"></div>
+        <footer className={`absolute bottom-0 left-0 right-0 w-full z-20 ${className}`}>
+            {/* Horizontal border line - light gray, 85% width with margins matching Figma */}
+            <div className="h-px bg-gray-400/50 w-[84%] mx-6 sm:mx-12 md:mx-12 lg:mx-24"></div>
 
-            {/* Footer content */}
-            <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-[10px] sm:text-xs text-white mx-3 sm:mx-6 md:mx-6 gap-2 sm:gap-3 md:gap-0">
-                {/* Left side - Copyright */}
+            {/* Footer content - exactly aligned with border width and margins */}
+            <div className="flex flex-col sm:flex-row items-center justify-between w-[84%] mx-6 sm:mx-12 md:mx-12 lg:mx-24 pt-3 sm:pt-4 pb-2 sm:pb-3 text-white">
+                {/* Left side - Copyright text, left-aligned */}
                 {showCopyright && (
-                    <div className="text-white font-exo2 text-center sm:text-left sm:text-lg mx-0 sm:mx-12">
-                        © 2025 21 Spades. All Rights Reserved.
+                    <div className="text-white font-exo2 text-sm sm:text-base text-left">
+                        © {currentYear} 21 Spades. All Rights Reserved.
                     </div>
                 )}
 
-                {/* Right side - Links */}
-                <div className="flex gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-end  sm:mx-4 md:mx-12">
-                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
+                {/* Right side - Navigation links, right-aligned */}
+                <div className="flex items-center gap-4 sm:gap-5 md:gap-6 mt-3 sm:mt-0">
+                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-sm sm:text-base">
                         Marketplace
                     </button>
-                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
+                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-sm sm:text-base">
                         License
                     </button>
-                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-[10px] sm:text-xs py-1">
+                    <button className="text-white font-exo2 hover:text-gray-300 transition-colors font-normal whitespace-nowrap text-sm sm:text-base">
                         Terms of Use
                     </button>
                 </div>
