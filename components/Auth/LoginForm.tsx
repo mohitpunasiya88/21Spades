@@ -133,13 +133,13 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="flex-1 min-h-screen h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-2 md:py-8 relative pb-24 md:pb-24 m-2 sm:m-4 z-10">
-      {/* Right bottom corner color */}
-      <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96  rounded-full opacity-30 blur-3xl pointer-events-none"></div>
+    <div className="flex-1 h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-2 md:py-8 relative pb-20 md:pb-20 m-2 sm:m-4 z-10 bg-black">
+      {/* Right bottom corner purple glow - matching Figma */}
+      <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
       <div className="w-full max-w-md sm:max-w-lg relative z-10">
         {/* Form container with gray border */}
-        <div className="relative rounded-xl  md:rounded-2xl border-1 border-gray-600">
-        <div className="bg-blur bg-opacity-20 bg-[linear-gradient(135deg,rgba(74,1,216,0.3)_10%,#000_25%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/40">            {/* Header Section */}
+        <div className="relative rounded-xl md:rounded-2xl border border-gray-700/50">
+        <div className="bg-[linear-gradient(135deg,rgba(74,1,216,0.2)_0%,rgba(74,1,216,0.1)_10%,rgba(0,0,0,0.98)_40%,#000_100%)] rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 min-h-[560px] sm:min-h-[620px] md:min-h-[720px] shadow-2xl shadow-black/60 backdrop-blur-[1px]">            {/* Header Section */}
             <div className="mb-2 md:mb-3 text-center">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-audiowide font-bold mb-1 bg-gradient-to-r from-[#ffcc00] via-orange-400 to-orange-500 bg-clip-text text-transparent">
                 WELCOME BACK!
@@ -159,8 +159,8 @@ export default function LoginForm() {
               <button
                 onClick={() => setLoginMethod('email')}
                 className={`flex-1 whitespace-nowrap py-1.5 sm:py-2 px-2 font-exo2 rounded-md font-medium text-sm sm:text-base transition-all ${loginMethod === 'email'
-                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white bg-transparent'
                   }`}
               >
                 Email ID
@@ -172,8 +172,8 @@ export default function LoginForm() {
               <button
                 onClick={() => router.push('/send-verification')}
                 className={`flex-1 whitespace-nowrap py-1.5 sm:py-2 px-2 font-exo2 rounded-md font-medium text-sm sm:text-base transition-all ${loginMethod === 'phone'
-                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white bg-transparent'
                   }`}
               >
                 Phone number
@@ -195,7 +195,7 @@ export default function LoginForm() {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Enter user name"
-                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-3 sm:pr-4 text-white bg-black/40 placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
                       errors.username ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
                     }`}
                     required
@@ -217,7 +217,7 @@ export default function LoginForm() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
-                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
+                    className={`w-full border font-exo2 rounded-lg py-2 sm:py-2.5 pl-12 sm:pl-14 pr-8 sm:pr-10 text-white bg-black/40 placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors text-sm sm:text-base ${
                       errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-gray-500 focus:ring-gray-500'
                     }`}
                     required
@@ -286,7 +286,7 @@ export default function LoginForm() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full mt-3 rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold btn-purple-gradient transition-all duration-200"
+                  className="w-full mt-3 rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold transition-all duration-200 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
                 >
                   {isLoading ? 'Logging in...' : 'Log In'}
                 </button>
