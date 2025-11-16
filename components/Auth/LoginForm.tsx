@@ -133,7 +133,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="flex-1 h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-2 md:py-8 relative pb-20 md:pb-20 m-2 sm:m-4 z-10 bg-black">
+    <div className="flex-1 min-h-screen md:min-h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-8 md:py-8 relative pb-20 md:pb-20 m-2 sm:m-4 z-10 bg-black overflow-y-auto">
       {/* Right bottom corner purple glow - matching Figma */}
       <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
       <div className="w-full max-w-md sm:max-w-lg relative z-10">

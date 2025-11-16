@@ -259,7 +259,7 @@ export default function SignUpForm() {
   }
 
   return (
-    <div className="flex-1 min-h-screen h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 md:py-8 bg-[##03020800] relative pb-20 md:pb-24 m-2 sm:m-4">
+    <div className="flex-1 min-h-screen md:min-h-full flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 md:py-8 bg-[##03020800] relative pb-20 md:pb-24 m-2 sm:m-4 overflow-y-auto">
       {/* Right bottom corner color */}
       <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-[#480C64] rounded-full opacity-30 blur-3xl pointer-events-none"></div>
       <div className="w-full max-w-md sm:max-w-lg relative z-10">
