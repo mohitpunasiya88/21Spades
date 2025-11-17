@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Audiowide, Asul, Exo_2 } from "next/font/google";
 import "./globals.css";
 import { PrivyAuthProvider } from "@/components/providers/PrivyAuthProvider";
+import AntdConfigProvider from "@/components/providers/AntdConfigProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,9 +39,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${audiowide.variable} ${asul.variable} ${exo2.variable} antialiased`}>
-        <PrivyAuthProvider>
-          {children}
-        </PrivyAuthProvider>
+        <AntdConfigProvider>
+          <PrivyAuthProvider>
+            {children}
+          </PrivyAuthProvider>
+        </AntdConfigProvider>
       </body>
     </html>
   );
