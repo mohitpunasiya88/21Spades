@@ -112,6 +112,20 @@ export default function FeedPage() {
   const [isFilterCategoriesOpen, setIsFilterCategoriesOpen] = useState(false) // For filtering
   const filterCategoriesRef = useRef<HTMLDivElement>(null)
   
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) {
+      return { label: 'Good Morning', icon: '☀️' }
+    }
+    if (hour < 17) {
+      return { label: 'Good Afternoon', icon: '🌤️' }
+    }
+    if (hour < 21) {
+      return { label: 'Good Evening', icon: '🌆' }
+    }
+    return { label: 'Good Night', icon: '🌙' }
+  }, [])
+
   // Mobile right sidebar state
   const [isMobileRightSidebarOpen, setIsMobileRightSidebarOpen] = useState(false)
   
@@ -331,8 +345,15 @@ export default function FeedPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 md:gap-6 font-exo2">
         {/* Left column */}
         <div className="p-2 sm:p-3 md:p-4">
-          <h1 className="text-white text-xl sm:text-2xl font-semibold font-exo2 mb-3 md:mb-4">
-            {isAuthenticated && user ? `Hello ${user.name || user.username}` : 'Hello'}
+          <h1 className="text-white text-xl sm:text-2xl font-semibold font-exo2 mb-3 md:mb-4 flex items-center gap-2">
+            <span className="text-2xl sm:text-3xl" aria-hidden="true">
+              {greeting.icon}
+            </span>
+            <span>
+              {isAuthenticated && user
+                ? `${greeting.label}, ${user.name || user.username || ''}`.trim()
+                : greeting.label}
+            </span>
           </h1>
 
           {/* Input bar (pixel matched) */}

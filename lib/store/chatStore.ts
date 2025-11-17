@@ -425,10 +425,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setSelectedChat: (chat: Chat | null) => {
     set({ selectedChat: chat })
     if (chat) {
-      // Load messages for selected chat
-      get().getMessages(chat._id)
-      // Mark messages as read
-      get().markAsRead(chat._id)
+      const state = get()
+      const existingMessages = state.messages[chat._id]
+      if (!existingMessages || existingMessages.length === 0) {
+        state.getMessages(chat._id)
+      }
+      state.markAsRead(chat._id)
     }
   },
 

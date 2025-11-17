@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
-import { Button, Form, Input, Select, Tabs, Avatar, Dropdown, Spin, message } from "antd"
+import { Button, Form, Input, Select, Tabs, Dropdown, Spin, message } from "antd"
 import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-react"
 import defaultCoverImage from "@/components/assets/profile-bg.jpg"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
@@ -623,11 +623,30 @@ export default function ProfilePage() {
         <div className="relative px-1 md:px-2-mt-24 md:-mt-28">
           <div className="relative flex-shrink-0 w-[120px] h-[120px] md:w-[160px] md:h-[160px]">
             <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] bg-gradient-to-br from-[#8D5AFE] to-[#B98CFF] shadow-xl">
-              <Avatar
-                size={160}
-                src={avatarPreview || profile.avatar}
-                className="!rounded-full !w-full !h-full "
-              />
+              {(() => {
+                const hasAvatarImage = Boolean((avatarPreview || profile.avatar)?.trim())
+                const fallbackSrc = '/post/card-21.png'
+                const avatarSrc = hasAvatarImage ? (avatarPreview || profile.avatar) : fallbackSrc
+                return (
+                  <div
+                    className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
+                    style={
+                      hasAvatarImage
+                        ? undefined
+                        : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                    }
+                  >
+                    <img
+                      src={avatarSrc}
+                      alt="Profile avatar"
+                      className={`w-full h-full ${hasAvatarImage ? 'object-cover' : 'object-contain'}`}
+                      onError={(e) => {
+                        e.currentTarget.src = fallbackSrc
+                      }}
+                    />
+                  </div>
+                )
+              })()}
             </div>
             <button
               onClick={() => avatarInputRef.current?.click()}

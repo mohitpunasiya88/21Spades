@@ -13,14 +13,12 @@ export default function MessagesPage() {
   const { user } = useAuthStore()
   const {
     chats,
-    messages,
     searchedUsers,
     selectedChat,
     isLoading,
     isSearchingUsers,
     typingUsers,
     getChats,
-    getMessages,
     createOrGetChat,
     searchUsers,
     clearSearchedUsers,
@@ -66,10 +64,6 @@ export default function MessagesPage() {
       if (chat) {
         setSelectedChat(chat)
         setIsMobileChatOpen(true)
-        // Ensure messages are loaded for this chat
-        if (!messages[chatId] || messages[chatId]?.length === 0) {
-          getMessages(chatId)
-        }
       }
     } else if (userId && chats.length > 0) {
       // Find chat by userId - check both _id and id formats
@@ -81,10 +75,6 @@ export default function MessagesPage() {
       if (chat) {
         setSelectedChat(chat)
         setIsMobileChatOpen(true)
-        // Ensure messages are loaded for this chat
-        if (!messages[chat._id] || messages[chat._id]?.length === 0) {
-          getMessages(chat._id)
-        }
       } else {
         // Create new chat with this user
         createOrGetChat(userId).then((chat) => {
@@ -94,7 +84,7 @@ export default function MessagesPage() {
         })
       }
     }
-  }, [searchParams, chats, setSelectedChat, createOrGetChat, messages, getMessages])
+  }, [searchParams, chats, setSelectedChat, createOrGetChat])
 
   // Search users when typing in new message search (Backend API Call)
   useEffect(() => {
@@ -132,13 +122,8 @@ export default function MessagesPage() {
 
   const handleSelectChat = useCallback((chat: Chat) => {
     setSelectedChat(chat)
-    // Ensure messages are loaded when chat is selected
-    if (!messages[chat._id] || messages[chat._id]?.length === 0) {
-      getMessages(chat._id)
-    }
-    // On mobile, open chat window and hide chat list
     setIsMobileChatOpen(true)
-  }, [setSelectedChat, messages, getMessages])
+  }, [setSelectedChat])
 
   // Handle back button - close chat on mobile
   const handleBackToChatList = useCallback(() => {

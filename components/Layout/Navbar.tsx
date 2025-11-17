@@ -201,7 +201,7 @@ export default function Navbar() {
         {/* Language Selector */}
         {/* Language Dropdown */}
         <div className="relative hidden sm:block" ref={languageRef}>
-          <button
+          {/* <button
             onClick={() => {
               setIsLanguageOpen(!isLanguageOpen)
               setIsProfileOpen(false)
@@ -210,22 +210,22 @@ export default function Navbar() {
             style={{
               background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
             }}
-          >
-            <Languages className="w-4 h-4" />
+          > */}
+            {/* <Languages className="w-4 h-4" />
             <span
               className="font-semibold text-sm sm:text-base md:text-[18px] leading-none"
               style={{ fontFamily: 'var(--font-exo2)' }}
             >
               {selectedLanguage}
-            </span>
+            </span> */}
             {/* Custom small caret (7.58 x 4.33) */}
-            <svg
+            {/* <svg
               className={`ml-1 ${isLanguageOpen ? 'rotate-180' : ''}`}
               width="7.58" height="4.33" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg"
             >
               <path d="M1 1.5L8 7.5L15 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            </svg> */}
+          {/* </button> */}
 
           {/* Language Dropdown Menu */}
           {isLanguageOpen && (

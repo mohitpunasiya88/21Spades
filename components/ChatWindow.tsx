@@ -21,7 +21,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
         isLoading,
         isSendingMessage,
         typingUsers,
-        getMessages,
         deleteChat,
         editMessage,
         deleteMessage,
@@ -29,7 +28,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
         setSelectedChat,
         sendTypingIndicator,
         getChats,
-        markAsRead,
     } = useChatStore()
 
     const { socket } = useSocket()
@@ -55,27 +53,7 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
     const messageInputRef = useRef<HTMLInputElement>(null)
 
     const currentUserId = user?.id || (user as any)?._id || ''
-    const lastLoadedChatIdRef = useRef<string | null>(null)
-
-    // Load messages when chat is selected (only once per chat)
-    useEffect(() => {
-        if (selectedChat?._id) {
-            const chatId = selectedChat._id
-            
-            // Only load if this is a different chat than last time
-            if (lastLoadedChatIdRef.current !== chatId) {
-                lastLoadedChatIdRef.current = chatId
-                // Check if messages already exist in store
-                const existingMessages = messages[chatId]
-                if (!existingMessages || existingMessages.length === 0) {
-                    getMessages(chatId)
-                }
-                
-                // Mark messages as read when chat is selected (like HTML file)
-                markAsRead(chatId)
-            }
-        }
-    }, [selectedChat?._id, getMessages, markAsRead, messages])
+    // Load messages handled by store when chat is selected
 
     // Get current chat's messages
     const currentMessages = selectedChat ? (messages[selectedChat._id] || []) : []
