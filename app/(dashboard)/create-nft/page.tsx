@@ -17,24 +17,32 @@ import spadesImage from "@/components/assets/Spades-image-21.png"
 import spadesImageRight from "@/components/assets/Spades-left-Right.png"
 import { useWallet } from "@/app/hooks/useWallet"
 import { useNFTFactory } from "@/app/hooks/contracts/useNFTFactory"
+import { useNFTCollection } from "@/app/hooks/contracts/useNFTCollection"
 import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { useContract } from "@/app/hooks/contracts/useContract"
 
 const { TextArea } = Input
 
 export default function CreateNFTPage() {
   const { user } = useAuthStore()
+  const {address } = useWallet();
+  const { ready, authenticated, createWallet, connectWallet } = usePrivy();
+  const { wallets } = useWallets();
   const { getCoinPrice, coinAmount } = useMarketDataStore()
-  const [selectedMethod, setSelectedMethod] = useState("Open For Bids")
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
+  const [selectedMethod, setSelectedMethod] = useState("Fixed Rate")
+  const [title, setTitle] = useState("test")
+  const [description, setDescription] = useState("test")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [fixedPrice, setFixedPrice] = useState<number | null>(null)
+  const [fixedPrice, setFixedPrice] = useState<number | null>(0.002 )
   const [size, setSize] = useState<string>("")
   const [category, setCategory] = useState<string>("")
-  const [royalties, setRoyalties] = useState<number | null>(null)
+  const [royalties, setRoyalties] = useState<number | null>(50)
   const [redeemCode, setRedeemCode] = useState<string>("")
   const [selectedCollection, setSelectedCollection] = useState<string>("")
+  const [selectedCollectionAddress, setSelectedCollectionAddress] = useState<string>("") // I need this to pass the collection address to the mint function you can addujset thise by manage in backend
+
+
   const [postToFeed, setPostToFeed] = useState<boolean>(true)
   const [freeMinting, setFreeMinting] = useState<boolean>(true)
   const [putOnMarketplace, setPutOnMarketplace] = useState<boolean>(true)
@@ -55,6 +63,8 @@ export default function CreateNFTPage() {
   const [symbolError, setSymbolError] = useState<string>("")
   const collectionFileInputRef = useRef<HTMLInputElement>(null)
 
+  const { getEventFromTx } = useContract()
+
   // Collections state
   const [collections, setCollections] = useState<any[]>([])
   const [isLoadingCollections, setIsLoadingCollections] = useState(false)
@@ -63,13 +73,14 @@ export default function CreateNFTPage() {
   const fetchCollections = async () => {
     try {
       setIsLoadingCollections(true)
-      const walletAddress = user?.walletAddress || ""
+      const walletAddress = address|| ""
 
       // Build query params
       const queryParams = new URLSearchParams()
       if (walletAddress) {
         queryParams.append('walletAddress', walletAddress)
       }
+      
       queryParams.append('page', '1')
       queryParams.append('limit', '100')
       queryParams.append('blocked', 'false')
@@ -209,7 +220,7 @@ export default function CreateNFTPage() {
     }
 
     // Hardcoded wallet address for testing
-    const walletAddress = user?.walletAddress || "1234567890"
+    const walletAddress = address
     // if (!walletAddress) {
     //   message.error("Wallet address not found. Please connect your wallet.")
     //   return
@@ -322,6 +333,24 @@ export default function CreateNFTPage() {
       })
 
       loadingMessage = message.loading("Creating NFT...", 0)
+      try {
+        /// fix the token URL we need url of pinata i
+        const response = await mint({
+          to: address as string,
+          tokenURI:  "test/pinata", //payload.imageUrl,
+          royalty: payload.royalty,
+        },selectedCollectionAddress)
+
+        payload.nftId = Number(response[0].args.tokenId).toString()
+       
+       
+       debugger;
+        console.log("📡 Response success:", response)
+        console.log("📡 Response data tokenId:", response[0].args.tokenId)
+      } catch (error) {
+        console.error("❌ Error creating NFT:", error)
+      }
+
 
       const apiUrl = authRoutes.createNFT
 
@@ -426,9 +455,7 @@ export default function CreateNFTPage() {
       collectionFileInputRef.current.value = ""
     }
   }
-  const { address, isConnected, login, linkGoogle } = useWallet();
-  const { ready, authenticated, createWallet, connectWallet } = usePrivy();
-  const { wallets } = useWallets();
+
 
   const {
     createCollection,
@@ -439,6 +466,8 @@ export default function CreateNFTPage() {
     isLoading,
     error,
   } = useNFTFactory();
+  
+  const {mint} = useNFTCollection();
 
   const [collectionParams, setCollectionParams] = useState({
     name: '',
@@ -449,7 +478,8 @@ export default function CreateNFTPage() {
   });
 
   const handleCreateCollection = async () => {
-    debugger;
+    console.log("🚀 handleCreateCollection called")
+
     // Check if Privy is ready
     // if (!ready) {
     //   message.info("Please wait, wallet is initializing...");
@@ -535,6 +565,7 @@ export default function CreateNFTPage() {
       message.error("Wallet connection lost. Please refresh and try again.");
       return;
     }
+    let collectionAddress = ""
 
     try {
       const result = await createCollection({
@@ -544,8 +575,26 @@ export default function CreateNFTPage() {
         tokenURIPrefix: collectionParams.tokenURIPrefix,
         royaltyLimit: collectionParams.royaltyLimit,
       });
+      const events = await getEventFromTx(
+      'ERC721Factory', result as any, 'CollectionCreated', 11155111, "",
+    );
+   
+
+
+    
+     
+
 
       message.success("Collection created successfully!");
+      console.log("✅ Collection created:", events[0].args.collection);
+      collectionAddress = events[0].args.collection;
+      
+
+      // events[0].args.collection save this in db these is need for create the NFT
+
+    // todo save the collection address in db these is need for create the NFT
+    // todo save this address via event listener via backend websocket event listener in collecttion api 
+      
 
       // Reset form and close modal on success
       setCollectionFile(null);
@@ -585,7 +634,8 @@ export default function CreateNFTPage() {
       // Prepare payload according to API schema
       const payload = {
         // walletAddress: walletAddress,
-        walletAddress: '1234567890',
+        walletAddress: address,
+        collectionAddress: collectionAddress,
         collectionName: displayName,
         collectionDescription: collectionDescription,
         collectionIpfs: "", // Will be set by backend or IPFS upload
@@ -1117,18 +1167,22 @@ export default function CreateNFTPage() {
               ) : collections.length > 0 ? (
                 collections.map((collection) => {
                   const collectionId = collection._id || collection.collectionId || collection.id
+                  const collectionAddress = collection.collectionAddress 
                   const isSelected = selectedCollection === collectionId
                   const collectionImage = collection.imageUrl || collection.coverPhoto || collectionOneImage
                   const collectionName = collection.collectionName || collection.name || "Unnamed Collection"
+                 
                   const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
-
+                 
                   const handleCollectionClick = () => {
                     if (isSelected) {
                       // If already selected, deselect it
                       setSelectedCollection("")
+                      setSelectedCollectionAddress("")
                     } else {
                       // Select this collection
                       setSelectedCollection(collectionId)
+                      setSelectedCollectionAddress(collectionAddress)
                     }
                   }
 
