@@ -10,6 +10,7 @@ import EmojiPicker from 'emoji-picker-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
 import "@/components/Dashboard/style.css"
+import { Ddrop } from '@/components/Ddrop'
 
 // Helper function to format time ago
 function formatTimeAgo(dateString: string): string {
@@ -502,7 +503,7 @@ export default function FeedPage() {
           </div>
 
           <div className="border-b-1 border-[#FFFFFF33] mb-4" ></div>
-
+          <Ddrop />
          
           {/* Explore Feed Section */}
           <div className="mb-4 sm:mb-6">

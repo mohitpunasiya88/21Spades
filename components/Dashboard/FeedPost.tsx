@@ -141,19 +141,6 @@ export default function FeedPost({ post }: FeedPostProps) {
   
   // Get currency
   const priceCurrency = post.currency || post.nft?.currency || 'AVAX'
-  
-  // Debug logs - remove after fixing
-  console.log('FeedPost Debug:', {
-    postId: post.id,
-    'post.price': post.price,
-    'post.nft?.price': post.nft?.price,
-    rawPrice,
-    numericPrice,
-    hasPrice,
-    formattedPrice,
-    priceCurrency
-  })
-
   const handleLike = async () => {
     if (!isAuthenticated) {
       setShowLoginModal(true)
@@ -729,18 +716,16 @@ export default function FeedPost({ post }: FeedPostProps) {
       
       {/* Price and Buy Button Section - Only show if price exists */}
       {hasPrice && (
-        <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4 p-3 sm:p-4 bg-[#FFFFFF08] rounded-lg sm:rounded-xl border border-[#FFFFFF1A]">
-          {/* Price Section */}
-          <div className="flex flex-col">
-            <span className="text-gray-400 text-xs sm:text-sm font-exo2 mb-1">Price</span>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-white text-base sm:text-lg md:text-xl font-bold font-exo2">
-                {formattedPrice}
-              </span>
-              <span className="text-gray-300 text-sm sm:text-base font-exo2">
-                {priceCurrency}
-              </span>
-            </div>
+        <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+          {/* Price Section - Single line format: "Price: 1.34 AVAX" */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-gray-400 text-sm sm:text-base font-exo2">Price:</span>
+            <span className="text-white text-base sm:text-lg md:text-xl font-bold font-exo2">
+              {formattedPrice}
+            </span>
+            <span className="text-red-500 text-sm sm:text-base font-exo2 font-semibold">
+              {priceCurrency}
+            </span>
           </div>
           
           {/* Buy Button */}
@@ -753,7 +738,7 @@ export default function FeedPost({ post }: FeedPostProps) {
               // TODO: Implement buy functionality
               console.log('Buy clicked for post:', post.id, 'Price:', post.price)
             }}
-            className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base whitespace-nowrap flex-shrink-0"
+            className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base whitespace-nowrap flex-shrink-0"
           >
             Buy
           </button>
@@ -903,7 +888,7 @@ export default function FeedPost({ post }: FeedPostProps) {
 
                     {/* Comments */}
                     <div className="w-full ">
-                      <div className="flex-1 flex flex-col h-[200px] overflow-y-auto gap-8 scrollbar-hide">
+                      <div className={`flex-1 flex flex-col ${comments && comments.length > 0 ? 'h-[200px] overflow-y-auto' : ''} gap-8 scrollbar-hide`}>
                         {comments && comments.length > 0 ? (
                           comments.map((comment: any, idx: number) => (
                             <div key={idx} className="relative flex gap-3">
@@ -1037,7 +1022,7 @@ export default function FeedPost({ post }: FeedPostProps) {
 
 
                       {/* comment Input Section */}
-                      <div className="mt-4">
+                      <div className="mt-1">
                         <form onSubmit={handleSubmitComment} className="flex items-center gap-3">
                           {/* User Profile Picture */}
                           <Avatar
