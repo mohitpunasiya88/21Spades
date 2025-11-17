@@ -179,7 +179,7 @@ export default function LiveAuctions() {
             ))}
           </div>
           <div className="flex justify-center items-center mt-6 ">
-            <button className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center gap-4" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+            <button className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center hover:scale-105 gap-4" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
               View All
               <PiArrowBendUpRightBold className="w-5 h-5" />
             </button>

@@ -21,7 +21,7 @@ export default function Footer() {
           <h2 className="text-[#FFB600] font-audiowide text-2xl sm:text-[42px] md:text-[48px] mb-4 sm:mb-8 relative">
             JOIN THE WORLD OF WEB3 TODAY
           </h2>
-          <button className="px-6 sm:px-8 py-2.5 sm:py-3 mb-6 sm:mb-8 bg-white cursor-pointer text-black rounded-full font-semibold transition-all relative font-exo2">
+          <button className="px-6 sm:px-8 py-2.5 sm:py-3 mb-6 sm:mb-8 bg-white cursor-pointer text-black rounded-full font-semibold transition-all relative font-exo2 hover:scale-105">
             Get Started Now
           </button>
         </div>
