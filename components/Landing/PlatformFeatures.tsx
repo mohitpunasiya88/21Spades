@@ -1,3 +1,5 @@
+import { BsSuitSpade } from "react-icons/bs";
+
 export default function PlatformFeatures() {
   const features = [
     {
@@ -27,67 +29,65 @@ export default function PlatformFeatures() {
   ];
 
   return (
-    <section className="w-full md:w-[97%] mx-auto py-8 sm:py-10 md:py-12 lg:py-16">
+    <section className="w-full md:w-[97%] mx-auto mt-5 py-10 px-5 rounded-lg border border-[#FFFFFF33] border-[0.6px]">
       {/* Outer Frame */}
-      <div className="mx-auto w-full rounded-[10px] border border-[#FFFFFF33] border-[0.6px] backdrop-blur-md overflow-hidden">
+      {/* <div className="overflow-hidden"> */}
 
-        {/* Heading */}
-        <div className="flex flex-col items-center pt-8 sm:pt-10 md:pt-12 lg:pt-14 px-4 sm:px-6">
-          <div className="text-white/90 mb-2 sm:mb-3 text-3xl sm:text-4xl md:text-[40px] font-semibold">♠</div>
-
-          <p className="text-center text-[20px] sm:text-3xl md:text-4xl lg:text-5xl px-4 leading-tight font-audiowide gold-gradient-text">
-            Your All-in-One Gateway to Web3 World
-          </p>
+      {/* Heading */}
+      <div className="flex flex-col items-center">
+        <div className="flex justify-center items-center my-2">
+          <BsSuitSpade className="text-white w-6 h-6" />
         </div>
 
-        {/* Features Grid */}
-        <div className="mx-auto mt-8 sm:mt-10 md:mt-12 lg:mt-16 w-full px-4 sm:px-6 md:px-8 lg:px-12 pb-8 sm:pb-10 md:pb-12">
+        <p className="text-center text-[32px] md:text-[48px] font-audiowide gold-gradient-text">
+          Your All-in-One Gateway to Web3 World
+        </p>
+      </div>
 
-          <div className="
-        grid grid-cols-1 
-        sm:grid-cols-2 
-        lg:grid-cols-3 
-        divide-y divide-white/20 
-        sm:divide-y-0 sm:divide-x sm:divide-y 
-        lg:divide-y lg:divide-x
-      ">
+      {/* Features Grid */}
+      <div className="mx-auto mt-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 
-            {features.map((f, idx) => (
+          {features.map((f, idx) => {
+            const rightBorder = [0, 1, 3, 4].includes(idx)
+              ? "md:border-r md:border-[#A3AED033]"
+              : ""
+
+            const bottomBorder = [0, 1, 2].includes(idx)
+              ? "md:border-b md:border-[#A3AED033]"
+              : ""
+
+            return (
               <div
                 key={f.title}
-                className="
-              flex flex-col items-start sm:items-center justify-start 
-              text-left sm:text-center gap-2 sm:gap-4 px-4 sm:px-6 md:px-8 lg:px-10 
-              py-6 sm:py-8 md:py-10
-              min-h-[160px] sm:min-h-[220px] md:min-h-[20px]
-            "
+                className={
+                  `flex flex-col items-start sm:items-center justify-start text-left sm:text-center gap-2 sm:gap-4 p-4  ${rightBorder} ${bottomBorder}`
+                }
               >
                 {/* Icon */}
-                <div className="w-7 h-7 rounded-[5px] bg-[#6E58E6]/40 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-[5px] bg-[#6E58E6]/40 flex items-center justify-center ">
                   <span className="text-lg text-white">▣</span>
                 </div>
 
                 {/* Title */}
-                <div className="min-h-[32px] sm:min-h-[40px] flex items-center mt-1">
-                  <h3 className="text-white uppercase tracking-wide 
-                text-[16px] sm:text-xl md:text-2xl lg:text-[28px] 
-                leading-tight font-audiowide font-[400]">
+                <div className="min-h-[20px] sm:min-h-[20px] flex items-center mt-1">
+                  <h3 className="text-white uppercase tracking-wide text-[16px] sm:text-[18px] md:text-[24px] lg:text-[24px] leading-tight font-audiowide font-[400]">
                     {f.title}
                   </h3>
                 </div>
 
                 {/* Description */}
-                <p className="text-[12px] sm:text-base md:text-[18px] lg:text-[20px] 
-              text-[#E5C9B8] max-w-[308px] leading-snug sm:leading-relaxed font-exo2">
+                <p className="text-[14px] sm:text-[16px] md:text-[20px] lg:text-[20px] text-[#E5C9B8] sm:leading-relaxed font-exo2">
                   {f.description}
                 </p>
-
               </div>
-            ))}
+            )
+          })}
 
-          </div>
         </div>
       </div>
+
+      {/* </div> */}
     </section>
 
   );
