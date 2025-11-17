@@ -1,7 +1,6 @@
 "use client"
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { User, SignUpData, LoginData, OTPData } from '@/types/auth'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
@@ -249,8 +248,7 @@ const mapPrivyUserToUser = (privyUser: unknown): User => {
 }
 
 export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
@@ -453,7 +451,16 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           if (typeof window !== 'undefined') {
+            // Clear all localStorage
             localStorage.clear()
+            // Clear persisted auth-storage if it exists
+            try {
+              localStorage.removeItem('auth-storage')
+            } catch (e) {
+              // Ignore if storage doesn't exist
+            }
+            // Set a flag to prevent auto-login
+            sessionStorage.setItem('explicit-logout', 'true')
           }
           set({
             user: null,
@@ -586,11 +593,7 @@ export const useAuthStore = create<AuthState>()(
           // Don't throw error for view increment
         }
       },
-    }),
-    {
-      name: 'auth-storage',
-    }
-  )
+    })
 )
 
 export const useFeedStore = create<FeedState>()(
