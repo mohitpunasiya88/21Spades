@@ -135,13 +135,11 @@ export function useContract() {
             const tx = await contract[method](...args, {
                 ...overrides,
                 value: overrides.value || 0,
-                gasLimit: overrides.gasLimit || 500000,
+                gasLimit: overrides.gasLimit || 500000 ,
             });
 
             setTransaction(tx);
             const receipt = await tx.wait();
-            
-           
             if (options.onSuccess) {
                 options.onSuccess(receipt);
             }

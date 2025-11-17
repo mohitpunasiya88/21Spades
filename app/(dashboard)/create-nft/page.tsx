@@ -25,16 +25,19 @@ const { TextArea } = Input
 
 export default function CreateNFTPage() {
   const { user } = useAuthStore()
+  const {address } = useWallet();
+  const { ready, authenticated, createWallet, connectWallet } = usePrivy();
+  const { wallets } = useWallets();
   const { getCoinPrice, coinAmount } = useMarketDataStore()
-  const [selectedMethod, setSelectedMethod] = useState("Open For Bids")
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
+  const [selectedMethod, setSelectedMethod] = useState("Fixed Rate")
+  const [title, setTitle] = useState("test")
+  const [description, setDescription] = useState("test")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [fixedPrice, setFixedPrice] = useState<number | null>(null)
+  const [fixedPrice, setFixedPrice] = useState<number | null>(0.002 )
   const [size, setSize] = useState<string>("")
   const [category, setCategory] = useState<string>("")
-  const [royalties, setRoyalties] = useState<number | null>(null)
+  const [royalties, setRoyalties] = useState<number | null>(50)
   const [redeemCode, setRedeemCode] = useState<string>("")
   const [selectedCollection, setSelectedCollection] = useState<string>("")
   const [postToFeed, setPostToFeed] = useState<boolean>(true)
@@ -56,7 +59,7 @@ export default function CreateNFTPage() {
   const [collectionDescription, setCollectionDescription] = useState("")
   const [symbolError, setSymbolError] = useState<string>("")
   const collectionFileInputRef = useRef<HTMLInputElement>(null)
-  const [collectionAddress, setCollectionAddress] = useState<string>("")
+
   const { getEventFromTx } = useContract()
 
   // Collections state
@@ -67,13 +70,14 @@ export default function CreateNFTPage() {
   const fetchCollections = async () => {
     try {
       setIsLoadingCollections(true)
-      const walletAddress = user?.walletAddress || ""
+      const walletAddress = address|| ""
 
       // Build query params
       const queryParams = new URLSearchParams()
       if (walletAddress) {
         queryParams.append('walletAddress', walletAddress)
       }
+      
       queryParams.append('page', '1')
       queryParams.append('limit', '100')
       queryParams.append('blocked', 'false')
@@ -234,7 +238,7 @@ export default function CreateNFTPage() {
     }
 
     // Hardcoded wallet address for testing
-    const walletAddress = user?.walletAddress || "1234567890"
+    const walletAddress = address
     // if (!walletAddress) {
     //   console.log("❌ Validation failed: No wallet address")
     //   message.error("Wallet address not found. Please connect your wallet.")
@@ -359,11 +363,12 @@ export default function CreateNFTPage() {
 
       loadingMessage = message.loading("Creating NFT...", 0)
       try {
+        /// fix the token URL we need url of pinata i
         const response = await mint({
-          to: walletAddress,
-          tokenURI: payload.imageUrl,
+          to: address as string,
+          tokenURI:  "test/pinata", //payload.imageUrl,
           royalty: payload.royalty,
-        },collectionAddress)
+        },selectedCollection)
        
         console.log("📡 Response success:", response)
         console.log("📡 Response data:", response?.data)
@@ -372,46 +377,46 @@ export default function CreateNFTPage() {
       }
 
 
-      const apiUrl = authRoutes.createNFT
-      console.log("🌐 Calling API:", apiUrl)
-      console.log("🌐 Full API URL will be:", apiUrl)
-      console.log("📤 Sending payload size:", JSON.stringify(payload).length, "bytes")
+      // const apiUrl = authRoutes.createNFT
+      // console.log("🌐 Calling API:", apiUrl)
+      // console.log("🌐 Full API URL will be:", apiUrl)
+      // console.log("📤 Sending payload size:", JSON.stringify(payload).length, "bytes")
 
-      const response = await apiCaller('POST', apiUrl, payload, true)
-      console.log("📡 API Response received:", response)
-      console.log("📡 Response success:", response?.success)
-      console.log("📡 Response data:", response?.data)
+      // const response = await apiCaller('POST', apiUrl, payload, true)
+      // console.log("📡 API Response received:", response)
+      // console.log("📡 Response success:", response?.success)
+      // console.log("📡 Response data:", response?.data)
 
-      message.destroy(loadingMessage as any)
+      // message.destroy(loadingMessage as any)
 
-      if (response.success) {
-        message.success(response.message || "NFT created successfully!")
+      // if (response.success) {
+      //   message.success(response.message || "NFT created successfully!")
 
-        // Reset form
-        setUploadedFile(null)
-        if (previewUrl) {
-          URL.revokeObjectURL(previewUrl)
-          setPreviewUrl(null)
-        }
-        setTitle("")
-        setDescription("")
-        setFixedPrice(null)
-        setSize("")
-        setCategory("")
-        setRoyalties(null)
-        setSelectedCollection("")
-        setExpirationDate(null)
-        setStartingDate(null)
+      //   // Reset form
+      //   setUploadedFile(null)
+      //   if (previewUrl) {
+      //     URL.revokeObjectURL(previewUrl)
+      //     setPreviewUrl(null)
+      //   }
+      //   setTitle("")
+      //   setDescription("")
+      //   setFixedPrice(null)
+      //   setSize("")
+      //   setCategory("")
+      //   setRoyalties(null)
+      //   setSelectedCollection("")
+      //   setExpirationDate(null)
+      //   setStartingDate(null)
 
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
+      //   if (fileInputRef.current) {
+      //     fileInputRef.current.value = ""
+      //   }
 
-        console.log("✅ NFT created:", response.data)
-      } else {
-        console.error("❌ API returned success: false", response)
-        message.error(response.message || "Failed to create NFT")
-      }
+      //   console.log("✅ NFT created:", response.data)
+      // } else {
+      //   console.error("❌ API returned success: false", response)
+      //   message.error(response.message || "Failed to create NFT")
+      // }
     } catch (error: any) {
       console.error("❌ Error creating NFT:", error)
       console.error("❌ Error details:", {
@@ -482,9 +487,7 @@ export default function CreateNFTPage() {
       collectionFileInputRef.current.value = ""
     }
   }
-  const { address, isConnected, login, linkGoogle } = useWallet();
-  const { ready, authenticated, createWallet, connectWallet } = usePrivy();
-  const { wallets } = useWallets();
+
 
   const {
     createCollection,
@@ -508,7 +511,7 @@ export default function CreateNFTPage() {
 
   const handleCreateCollection = async () => {
     console.log("🚀 handleCreateCollection called")
-    debugger;
+
     // Check if Privy is ready
     // if (!ready) {
     //   message.info("Please wait, wallet is initializing...");
@@ -597,6 +600,7 @@ export default function CreateNFTPage() {
       message.error("Wallet connection lost. Please refresh and try again.");
       return;
     }
+    let collectionAddress = ""
 
     try {
       const result = await createCollection({
@@ -618,7 +622,10 @@ export default function CreateNFTPage() {
 
       message.success("Collection created successfully!");
       console.log("✅ Collection created:", events[0].args.collection);
-      setCollectionAddress(events[0].args.collection);
+      collectionAddress = events[0].args.collection;
+      
+
+      // events[0].args.collection save this in db these is need for create the NFT
 
     // todo save the collection address in db these is need for create the NFT
     // todo save this address via event listener via backend websocket event listener in collecttion api 
@@ -665,7 +672,8 @@ export default function CreateNFTPage() {
       // Prepare payload according to API schema
       const payload = {
         // walletAddress: walletAddress,
-        walletAddress: '1234567890',
+        walletAddress: address,
+        collectionAddress: collectionAddress,
         collectionName: displayName,
         collectionDescription: collectionDescription,
         collectionIpfs: "", // Will be set by backend or IPFS upload
@@ -1213,18 +1221,20 @@ export default function CreateNFTPage() {
               ) : collections.length > 0 ? (
                 collections.map((collection) => {
                   const collectionId = collection._id || collection.collectionId || collection.id
-                  const isSelected = selectedCollection === collectionId
+                  const collectionAddress = collection.collectionAddress 
+                  const isSelected = selectedCollection === collectionAddress
                   const collectionImage = collection.imageUrl || collection.coverPhoto || collectionOneImage
                   const collectionName = collection.collectionName || collection.name || "Unnamed Collection"
+                 
                   const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
-
+                 
                   const handleCollectionClick = () => {
                     if (isSelected) {
                       // If already selected, deselect it
                       setSelectedCollection("")
                     } else {
                       // Select this collection
-                      setSelectedCollection(collectionId)
+                      setSelectedCollection(collectionAddress)
                     }
                   }
 
@@ -1235,7 +1245,7 @@ export default function CreateNFTPage() {
 
                   return (
                     <button
-                      key={collectionId}
+                      key={collectionAddress}
                       type="button"
                       onClick={handleCollectionClick}
                       className={`group relative flex h-full overflow-hidden rounded-2xl duration-300 border-2 ${isSelected

@@ -4,7 +4,7 @@ import authRoutes from '@/lib/routes';
 
  export const apiClient = axios.create({
     // baseURL: "http://localhost:8080/api/",
-    baseURL: "http://44.200.78.158:8080/api/",
+    baseURL: "http://18.215.86.203:8080/api/",
 });
 
 const routes = authRoutes;

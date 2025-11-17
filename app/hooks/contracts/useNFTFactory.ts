@@ -11,19 +11,27 @@ type CreateCollectionParams = {
 };
 
 export function useNFTFactory() {
-  const { call, execute, ...rest } = useContract();
+  const { call, execute,getGasLimit, ...rest } = useContract();
 
   // Mint a new NFT
   const createCollection = useCallback(async (params: CreateCollectionParams): Promise<ethers.ContractTransaction> => {
+      const gas = await getGasLimit(
+      'ERC721Factory', 'createCollection', 11155111, "",
+      [params.name, params.symbol, params.contractURI, params.tokenURIPrefix, params.royaltyLimit],
+
+    );
     const receipt=  await execute('ERC721Factory', 'createCollection', 11155111,"", [
       params.name,
       params.symbol,
       params.contractURI,
       params.tokenURIPrefix,
       params.royaltyLimit,
-    ]);
+    ],
+    {
+      gasLimit: gas,
+    });
     return receipt
-  }, [execute]);
+  }, [execute,getGasLimit]);
 
   const setMintableAddress = useCallback(async (address: string) => {
     return execute('ERC721Factory', 'setMintableAddress', 11155111,"", [address]);

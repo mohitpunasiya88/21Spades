@@ -17,17 +17,31 @@ type LazyMintParams = {
 };
 
 export function useNFTCollection() {
-  const { call, execute, ...rest } = useContract();
+  const { call, execute,getGasLimit, ...rest } = useContract();
 
   // Mint a new NFT
   const mint = useCallback(async (params: MintParams, contractAddress?: string) => {
-    // debugger;
+    debugger;
+
+    const mintCharges = await call('ERC721Mintable', 'mintingCharge', 11155111, contractAddress, []);
+
+    const gas = await getGasLimit(
+      'ERC721Collection', 'mint', 11155111, contractAddress, [
+        params.tokenURI,
+        params.royalty,
+        params.to,
+      ],
+      {
+        value: mintCharges
+      }
+    );
     return execute('ERC721Collection', 'mint', 11155111, contractAddress, [
-      params.tokenURI,
+     params.tokenURI,
       params.royalty,
       params.to,
     ], {
-      value: ethers.parseEther("0.00001"),
+      value: mintCharges,
+      gasLimit: gas,
     });
   }, [execute]);
 
