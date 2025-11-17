@@ -7,6 +7,7 @@ interface UIState {
   activeChat: string | null
   toggleSidebar: () => void
   setActiveChat: (chatId: string | null) => void
+  setSidebarOpen: (isOpen: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -14,5 +15,6 @@ export const useUIStore = create<UIState>((set) => ({
   activeChat: null,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setActiveChat: (chatId: string | null) => set({ activeChat: chatId }),
+  setSidebarOpen: (isOpen: boolean) => set({ sidebarOpen: isOpen }),
 }))
 
