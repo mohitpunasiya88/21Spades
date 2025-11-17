@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
+import { usePrivy } from '@privy-io/react-auth'
 import { Badge } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet } from 'lucide-react'
 
@@ -10,6 +11,7 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { logout, user } = useAuthStore()
+  const { logout: privyLogout, ready: privyReady } = usePrivy()
 
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -58,7 +60,17 @@ export default function Navbar() {
     try {
       setIsMobileProfileOpen(false)
 
-      // Clear state first
+      // Logout from Privy first if ready
+      if (privyReady) {
+        try {
+          await privyLogout()
+        } catch (privyError) {
+          console.error('Privy logout error:', privyError)
+          // Continue with logout even if Privy logout fails
+        }
+      }
+
+      // Clear state
       await logout()
 
       // Small delay to ensure state is cleared before redirect

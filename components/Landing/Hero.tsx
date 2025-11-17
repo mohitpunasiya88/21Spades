@@ -68,25 +68,27 @@ export default function Hero() {
               transparently.
             </p>
           </div>
-          <div className="flex gap-4 md:gap-10 font-exo2 mt-5 md:mt-10">
+          <div className="flex gap-2 md:gap-5 font-exo2 mt-5 md:mt-10">
             <button
-              className="text-black cursor-pointer font-[700] bg-white rounded-full px-6 md:text-[20px] text-[14px]">Explore
+              className="text-black cursor-pointer font-[700] bg-white backdrop-blur-[20px] border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px] md:min-w-[160px] transition-all duration-300 ease-in-out hover:text-white hover:bg-[#FFFFFF2A] hover:border-[#CBD5E180] hover:scale-105 hover:shadow-lg hover:shadow-white/10 active:scale-95">Explore
               more
             </button>
             <button onClick={handleExploreFeed}
-              className="text-white cursor-pointer font-[700] bg-[#FFFFFF1A] backdrop-blur-[20px] border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px]">
+              className="text-white cursor-pointer font-[700] bg-[#FFFFFF1A] backdrop-blur-[20px] border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px] md:min-w-[160px] transition-all duration-300 ease-in-out hover:bg-[#FFFFFF2A] hover:border-[#CBD5E180] hover:scale-105 hover:shadow-lg hover:shadow-white/10 active:scale-95">
               Explore feed
             </button>
             {/* Show Chat button only if user is logged in */}
             {isAuthenticated && (
-              <button onClick={handleChatClick}
-                className="text-white cursor-pointer font-[700] bg-transparent border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px]">
+              <button 
+                onClick={handleChatClick}
+                className="text-white cursor-pointer font-[700] bg-[#FFFFFF1A] backdrop-blur-[20px] border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px] md:min-w-[160px] transition-all duration-300 ease-in-out hover:bg-[#FFFFFF2A] hover:border-[#CBD5E180] hover:scale-105 hover:shadow-lg hover:shadow-white/10 active:scale-95"
+              >
                 Chat
               </button>
             )}
           </div>
 
-          <div className="hidden md:flex flex-col gap-4 absolute top-1/3 right-4">
+          <div className="hidden md:flex flex-col gap-4 absolute top-1/5 right-4">
             {/* Instagram */}
             <a href="https://www.instagram.com/21spades.io" target="_blank" aria-label="Instagram"
               className="group w-12 h-12 rounded-full border border-[#A3AED033] bg-white/10 bg-blue-50 backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 hover:bg-white"
