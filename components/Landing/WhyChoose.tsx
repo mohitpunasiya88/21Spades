@@ -21,7 +21,7 @@ export default function WhyChoose() {
     ];
   
     return (
-      <section className="py-5 md:py-10">
+      <section className="mt-10 ">
         <div className="flex flex-col justify-center items-center">
         {/* White spade icon at top center */}
         <div className="flex justify-center items-center">
@@ -39,7 +39,7 @@ export default function WhyChoose() {
           </div>
   
           {/* Content Grid Container - 2x2 Grid Layout */}
-          <div className="flex justify-center md:px-4 w-full mt-8">
+          <div className="flex justify-center md:px-4 w-full ">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0 w-full md:w-[80%] md:mx-auto">
               {features.map((feature, index) => (
                 <div 

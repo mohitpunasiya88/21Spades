@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter,usePathname } from 'next/navigation'
 import { Search, ChevronDown, Bell, Settings, Languages, Menu, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/authStore'
+import { usePrivy } from '@privy-io/react-auth'
 
 export default function Header() {
   const router = useRouter()
+  const pathname = usePathname()
   const { isAuthenticated, user, logout } = useAuthStore()
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -14,7 +16,7 @@ export default function Header() {
   const [selectedLanguage, setSelectedLanguage] = useState('English')
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
-
+  const { logout: privyLogout, ready: privyReady } = usePrivy()
   // Get user's initial (first letter of name or username)
   const getUserInitial = () => {
     if (user?.name) return user.name.charAt(0).toUpperCase()
@@ -43,7 +45,42 @@ export default function Header() {
   }, [])
 
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
+  const handleLogout = async () => {
+    try {
 
+      // Logout from Privy first if ready
+      if (privyReady) {
+        try {
+          await privyLogout()
+        } catch (privyError) {
+          console.error('Privy logout error:', privyError)
+          // Continue with logout even if Privy logout fails
+        }
+      }
+
+      // Clear state
+      await logout()
+      setIsProfileOpen(false)
+      // Small delay to ensure state is cleared before redirect
+      await new Promise(resolve => setTimeout(resolve, 100))
+      // If already on landing page, stay there. Otherwise redirect to landing
+      if (pathname === '/landing') {
+        // Already on landing page, just refresh to clear any cached data
+        router.refresh()
+      } else {
+        // Redirect to landing page
+        router.replace('/landing')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if logout fails, redirect to feed
+      if (pathname === '/landing') {
+        router.refresh()
+      } else {
+        router.replace('/landing')
+      }
+    }
+  }
   return (
     <header
       className="flex items-center justify-center w-full mx-4 md:mx-8"
@@ -232,8 +269,8 @@ export default function Header() {
                     </div>
 
                     {/* Menu Items */}
-                    <div className="py-2">
-                      {/* <button className="w-full text-left px-5 py-3 text-sm text-white hover:bg-purple-600/30 transition-all flex items-center gap-3 group">
+                    {/* <div className="py-2">
+                      <button className="w-full text-left px-5 py-3 text-sm text-white hover:bg-purple-600/30 transition-all flex items-center gap-3 group">
                         <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -257,8 +294,8 @@ export default function Header() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         <span className="group-hover:text-purple-300 transition-colors">Wallet</span>
-                      </button> */}
-                    </div>
+                      </button> 
+                    </div> */}
 
                     {/* Logout Section */}
                     <div
@@ -267,9 +304,8 @@ export default function Header() {
                     >
                       <button
                         onClick={async () => {
-                          setIsProfileOpen(false)
-                          await logout()
-                          router.push('/login')
+                    
+                          handleLogout()
                         }}
                         className="w-full text-left px-5 py-3 text-sm text-red-400 hover:bg-red-500/20 transition-all flex items-center gap-3 group"
                       >

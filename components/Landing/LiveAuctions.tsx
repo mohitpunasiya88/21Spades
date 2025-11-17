@@ -61,7 +61,7 @@ export default function LiveAuctions() {
   }, [isPaused, direction]);
 
   return (
-    <section className="mb-5 mt-5 overflow-hidden">
+    <section className="mt-5 overflow-hidden">
       <div className="flex flex-col justify-center items-center w-[100%]">
         <div className="flex flex-col md:relative justify-center items-center mb-8 md:mb-12 mt-10 w-full px-4">
           <div className="flex flex-col items-center gap-4 w-full max-w-[670px]">
@@ -179,7 +179,7 @@ export default function LiveAuctions() {
             ))}
           </div>
           <div className="flex justify-center items-center mt-6 ">
-            <button className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center gap-4" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+            <button className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center hover:scale-105 gap-4" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
               View All
               <PiArrowBendUpRightBold className="w-5 h-5" />
             </button>

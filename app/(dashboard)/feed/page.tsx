@@ -133,15 +133,19 @@ export default function FeedPage() {
   
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
-    if (hour < 12) {
+    // 5-12: Good Morning
+    if (hour >= 5 && hour < 12) {
       return { label: 'Good Morning', icon: '☀️' }
     }
-    if (hour < 17) {
+    // 12-17: Good Afternoon
+    if (hour >= 12 && hour < 17) {
       return { label: 'Good Afternoon', icon: '🌤️' }
     }
-    if (hour < 21) {
+    // 17-21: Good Evening
+    if (hour >= 17 && hour < 21) {
       return { label: 'Good Evening', icon: '🌆' }
     }
+    // 21-5: Good Night (21 to 23 and 0 to 4)
     return { label: 'Good Night', icon: '🌙' }
   }, [])
 
