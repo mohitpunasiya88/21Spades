@@ -45,16 +45,15 @@ export default function Header() {
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
 
   return (
-    <header 
-       className="flex items-center justify-center mt-4 md:mt-10 px-4"
-       style={{marginTop: '20px'}}
+    <header
+      className="flex items-center justify-center w-full mx-4 md:mx-8"
     >
-      <div className="container mx-auto px-3 md:px-8 py-3 md:py-4 w-full">
+      <div className="mx-auto w-full">
         <div className="flex items-center justify-between relative">
           {/* Left Side - Mobile Menu / Desktop Search & Language */}
           <div className="flex items-center gap-4 md:gap-6">
             {/* Mobile Hamburger Menu */}
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden flex items-center justify-center text-white hover:text-gray-300 transition-colors w-8 h-8"
             >
@@ -63,84 +62,84 @@ export default function Header() {
 
             {/* Desktop Search & Language - Hidden on mobile */}
             <div className="hidden md:flex items-center gap-4 md:gap-6">
-            {/* Search (84x22, gap 10) */}
-            <button 
-              className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-colors w-[84px] h-[22px]"
-            >
-              <Search className="w-4 h-4" />
-              <span 
-                className="hidden md:inline font-semibold text-[18px] leading-none"
-                style={{ fontFamily: 'var(--font-exo2)' }}
-              >
-                Search
-              </span>
-            </button>
-
-            {/* Separator (1x19) */}
-            <span className="w-px h-[19px] bg-white/60 rounded-full" />
-
-            {/* Language Dropdown */}
-            <div className="relative" ref={languageRef}>
+              {/* Search (84x22, gap 10) */}
               <button
-                onClick={() => {
-                  setIsLanguageOpen(!isLanguageOpen)
-                  setIsProfileOpen(false)
-                }}
-                className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-all w-[107px] h-[22px]"
-                style={{
-                  background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
-                }}
+                className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-colors w-[84px] h-[22px]"
               >
-                <Languages className="w-4 h-4" />
-                <span 
-                  className="font-semibold text-[18px] leading-none"
+                <Search className="w-4 h-4" />
+                <span
+                  className="hidden md:inline font-semibold text-[18px] leading-none"
                   style={{ fontFamily: 'var(--font-exo2)' }}
                 >
-                  {selectedLanguage}
+                  Search
                 </span>
-                {/* Custom small caret (7.58 x 4.33) */}
-                <svg 
-                  className={`ml-1 ${isLanguageOpen ? 'rotate-180' : ''}`} 
-                  width="7.58" height="4.33" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M1 1.5L8 7.5L15 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
               </button>
 
-              {/* Language Dropdown Menu */}
-              {isLanguageOpen && (
-                <div 
-                  className="absolute top-full left-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              {/* Separator (1x19) */}
+              {/* <span className="w-px h-[19px] bg-white/60 rounded-full" /> */}
+
+              {/* Language Dropdown */}
+              {/* <div className="relative" ref={languageRef}>
+                <button
+                  onClick={() => {
+                    setIsLanguageOpen(!isLanguageOpen)
+                    setIsProfileOpen(false)
+                  }}
+                  className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-all w-[107px] h-[22px]"
                   style={{
-                    background: 'rgba(17, 24, 39, 0.98)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    backdropFilter: 'blur(20px)',
-                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
-                    minWidth: '200px',
-                    zIndex: 1000,
+                    background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
                   }}
                 >
-                  {languages.map((lang, index) => (
-                    <button
-                      key={lang}
-                      onClick={() => {
-                        setSelectedLanguage(lang)
-                        setIsLanguageOpen(false)
-                      }}
-                      className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center justify-between group"
-                      style={{
-                        borderBottom: index < languages.length - 1 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
-                      }}
-                    >
-                      <span className="group-hover:text-purple-300 transition-colors">{lang}</span>
-                      {lang === selectedLanguage && (
-                        <span className="text-green-400 text-sm font-bold">✓</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  <Languages className="w-4 h-4" />
+                  <span
+                    className="font-semibold text-[18px] leading-none"
+                    style={{ fontFamily: 'var(--font-exo2)' }}
+                  >
+                    {selectedLanguage}
+                  </span>
+                  Custom small caret (7.58 x 4.33)
+                  <svg
+                    className={`ml-1 ${isLanguageOpen ? 'rotate-180' : ''}`}
+                    width="7.58" height="4.33" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M1 1.5L8 7.5L15 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                // Language Dropdown Menu 
+                {isLanguageOpen && (
+                  <div
+                    className="absolute top-full left-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                    style={{
+                      background: 'rgba(17, 24, 39, 0.98)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      backdropFilter: 'blur(20px)',
+                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                      minWidth: '200px',
+                      zIndex: 1000,
+                    }}
+                  >
+                    {languages.map((lang, index) => (
+                      <button
+                        key={lang}
+                        onClick={() => {
+                          setSelectedLanguage(lang)
+                          setIsLanguageOpen(false)
+                        }}
+                        className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center justify-between group"
+                        style={{
+                          borderBottom: index < languages.length - 1 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
+                        }}
+                      >
+                        <span className="group-hover:text-purple-300 transition-colors">{lang}</span>
+                        {lang === selectedLanguage && (
+                          <span className="text-green-400 text-sm font-bold">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )} 
+              </div> */}
             </div>
           </div>
 
@@ -179,9 +178,9 @@ export default function Header() {
                 >
                   <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-600 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-purple-500/50 transition-all ">
                     {user?.profilePicture || user?.avatar ? (
-                      <img 
-                        src={user.profilePicture || user.avatar} 
-                        alt={getUserDisplayName()} 
+                      <img
+                        src={user.profilePicture || user.avatar}
+                        alt={getUserDisplayName()}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -189,15 +188,15 @@ export default function Header() {
                     )}
                   </div>
                   <span className="hidden lg:inline text-sm font-medium">{getUserDisplayName()}</span>
-                  <ChevronDown 
-                    size={16} 
+                  <ChevronDown
+                    size={16}
                     className={`hidden md:block transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
                 {/* Profile Dropdown Menu */}
                 {isProfileOpen && (
-                  <div 
+                  <div
                     className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                     style={{
                       background: 'rgba(17, 24, 39, 0.98)',
@@ -209,16 +208,16 @@ export default function Header() {
                     }}
                   >
                     {/* User Info Section */}
-                    <div 
+                    <div
                       className="px-5 py-4 border-b"
                       style={{ borderColor: 'rgba(139, 92, 246, 0.2)' }}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-600 flex items-center justify-center overflow-hidden">
                           {user?.profilePicture || user?.avatar ? (
-                            <img 
-                              src={user.profilePicture || user.avatar} 
-                              alt={getUserDisplayName()} 
+                            <img
+                              src={user.profilePicture || user.avatar}
+                              alt={getUserDisplayName()}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -231,7 +230,7 @@ export default function Header() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Menu Items */}
                     <div className="py-2">
                       {/* <button className="w-full text-left px-5 py-3 text-sm text-white hover:bg-purple-600/30 transition-all flex items-center gap-3 group">
@@ -262,11 +261,11 @@ export default function Header() {
                     </div>
 
                     {/* Logout Section */}
-                    <div 
+                    <div
                       className="border-t py-2"
                       style={{ borderColor: 'rgba(139, 92, 246, 0.2)' }}
                     >
-                      <button 
+                      <button
                         onClick={async () => {
                           setIsProfileOpen(false)
                           await logout()
@@ -286,11 +285,11 @@ export default function Header() {
             )}
           </div>
         </div>
-        
+
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
           <div className="md:hidden mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div 
+            <div
               className="rounded-xl overflow-hidden"
               style={{
                 background: 'rgba(17, 24, 39, 0.95)',
@@ -303,14 +302,14 @@ export default function Header() {
                 <Search className="w-4 h-4" />
                 <span className="font-medium text-sm" style={{ fontFamily: 'var(--font-exo2)' }}>Search</span>
               </button>
-              
+
               {/* Language */}
-              <div className="flex items-center justify-between px-4 py-3 hover:bg-purple-600/20 transition-all">
+              {/* <div className="flex items-center justify-between px-4 py-3 hover:bg-purple-600/20 transition-all">
                 <div className="flex items-center gap-3">
                   <Languages className="w-4 h-4 text-white" />
                   <span className="font-medium text-sm text-white" style={{ fontFamily: 'var(--font-exo2)' }}>Language</span>
                 </div>
-                <select 
+                <select
                   value={selectedLanguage}
                   onChange={(e) => setSelectedLanguage(e.target.value)}
                   className="bg-purple-900/30 text-white border border-white/20 rounded-md px-2 py-1 text-xs font-medium"
@@ -320,12 +319,12 @@ export default function Header() {
                     <option key={lang} value={lang} className="bg-gray-900">{lang}</option>
                   ))}
                 </select>
-              </div>
+              </div> */}
             </div>
           </div>
         )}
-        
-      <hr className="border-white/30 w-full my-4" />
+
+        <hr className="border-white/30 w-full my-4" />
       </div>
     </header>
   )

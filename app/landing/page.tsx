@@ -16,8 +16,8 @@ export default function LandingPage() {
   return (
     <div style={{ background: '#0F0F23', minHeight: '100vh', width: '100%', overflowX: 'hidden'}}>
       <Hero />
-      <PlatformFeatures />
       <LogoAnimation />
+      <PlatformFeatures />
       <Trending />
       <LiveAuctions />
       <DiscoverCollections />
