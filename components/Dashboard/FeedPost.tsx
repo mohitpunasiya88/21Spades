@@ -29,6 +29,12 @@ interface FeedPostProps {
     isLiked?: boolean
     isSaved?: boolean
     isReposted?: boolean
+    price?: number
+    currency?: string
+    nft?: {
+      price?: number
+      currency?: string
+    }
     // For reposts - original post data
     repostCaption?: string // Caption added when reposting
     originalPost?: {
@@ -45,6 +51,8 @@ interface FeedPostProps {
       shares: number
       reposts?: number
       saves: number
+      price?: number
+      currency?: string
     }
   }
 }
@@ -112,6 +120,39 @@ export default function FeedPost({ post }: FeedPostProps) {
   
   // Check if this is a repost
   const isRepost = !!post.originalPost
+  
+  // Get price from post.price or post.nft.price
+  const rawPrice = post.price !== undefined && post.price !== null 
+    ? post.price 
+    : (post.nft?.price !== undefined && post.nft?.price !== null ? post.nft?.price : undefined)
+  
+  // Convert to number if it's a string
+  const numericPrice = rawPrice !== undefined && rawPrice !== null
+    ? (typeof rawPrice === 'string' ? parseFloat(rawPrice) : typeof rawPrice === 'number' ? rawPrice : undefined)
+    : undefined
+  
+  // Check if we have a valid numeric price
+  const hasPrice = numericPrice !== undefined && numericPrice !== null && typeof numericPrice === 'number' && !Number.isNaN(numericPrice) && numericPrice >= 0
+  
+  // Format the price
+  const formattedPrice = hasPrice 
+    ? (numericPrice >= 1 ? numericPrice.toFixed(2) : numericPrice.toFixed(4)) 
+    : ''
+  
+  // Get currency
+  const priceCurrency = post.currency || post.nft?.currency || 'AVAX'
+  
+  // Debug logs - remove after fixing
+  console.log('FeedPost Debug:', {
+    postId: post.id,
+    'post.price': post.price,
+    'post.nft?.price': post.nft?.price,
+    rawPrice,
+    numericPrice,
+    hasPrice,
+    formattedPrice,
+    priceCurrency
+  })
 
   const handleLike = async () => {
     if (!isAuthenticated) {
@@ -685,6 +726,40 @@ export default function FeedPost({ post }: FeedPostProps) {
           )}
         </>
       )}
+      
+      {/* Price and Buy Button Section - Only show if price exists */}
+      {hasPrice && (
+        <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4 p-3 sm:p-4 bg-[#FFFFFF08] rounded-lg sm:rounded-xl border border-[#FFFFFF1A]">
+          {/* Price Section */}
+          <div className="flex flex-col">
+            <span className="text-gray-400 text-xs sm:text-sm font-exo2 mb-1">Price</span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-white text-base sm:text-lg md:text-xl font-bold font-exo2">
+                {formattedPrice}
+              </span>
+              <span className="text-gray-300 text-sm sm:text-base font-exo2">
+                {priceCurrency}
+              </span>
+            </div>
+          </div>
+          
+          {/* Buy Button */}
+          <button
+            onClick={() => {
+              if (!isAuthenticated) {
+                setShowLoginModal(true)
+                return
+              }
+              // TODO: Implement buy functionality
+              console.log('Buy clicked for post:', post.id, 'Price:', post.price)
+            }}
+            className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base whitespace-nowrap flex-shrink-0"
+          >
+            Buy
+          </button>
+        </div>
+      )}
+      
       <div className="border-b border-[#6B757E4D] mb-2 sm:mb-3" />
       {/* Actions */}
       <div className="flex justify-between items-center gap-1.5 sm:gap-2 md:gap-3 text-gray-400 flex-wrap">

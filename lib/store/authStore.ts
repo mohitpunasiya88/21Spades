@@ -49,6 +49,11 @@ export interface Post {
     name: string
     slug: string
   } | null
+  nft?: {
+    price?: number
+    currency?: string
+    [key: string]: any
+  } | null
   originalPost?: {
     _id: string
     text?: string
@@ -64,6 +69,11 @@ export interface Post {
     repostsCount?: number
     sharesCount?: number
     savesCount?: number
+    nft?: {
+      price?: number
+      currency?: string
+      [key: string]: any
+    } | null
   } | null
   likesCount?: number
   commentsCount?: number

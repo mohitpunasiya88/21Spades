@@ -25,6 +25,18 @@ function formatTimeAgo(dateString: string): string {
 }
 
 // Transform API Post to FeedPost props
+function normalizePrice(value: unknown) {
+  if (value === undefined || value === null) return undefined
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined
+  }
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value)
+    return Number.isNaN(parsed) ? undefined : parsed
+  }
+  return undefined
+}
+
 function transformPost(post: Post) {
   // Check if this is a repost (has originalPost)
   const isRepost = !!post.originalPost
@@ -55,6 +67,8 @@ function transformPost(post: Post) {
     shares: originalPost.sharesCount || 0,
     reposts: originalPost.repostsCount || 0,
     saves: originalPost.savesCount || 0,
+    price: normalizePrice(originalPost.nft?.price),
+    currency: originalPost.nft?.currency || 'AVAX',
   } : undefined
 
   // For regular posts, use post data directly
@@ -94,6 +108,10 @@ function transformPost(post: Post) {
     isLiked: post.isLiked || false,
     isSaved: post.isSaved || false,
     isReposted: post.isReposted || false,
+    // NFT price data - extract from post.nft.price
+    price: normalizePrice(isRepost ? originalPost?.nft?.price : post.nft?.price),
+    currency: isRepost ? (originalPost?.nft?.currency || 'AVAX') : (post.nft?.currency || 'AVAX'),
+    nft: isRepost ? (originalPost?.nft || undefined) : (post.nft || undefined),
     // Repost specific data
     repostCaption: isRepost ? (post.text || '') : undefined,
     originalPost: originalPostData,

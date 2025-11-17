@@ -8,7 +8,6 @@ import {
   FileText,
   ShoppingBag,
   BarChart,
-  User,
   Search,
   Calendar,
   File,
@@ -18,6 +17,7 @@ import {
   Send,
   Flame,
   Box,
+  LayoutDashboard,
 } from 'lucide-react'
 import { useUIStore } from '@/lib/store/uiStore'
 import { useChatStore } from '@/lib/store/chatStore'
@@ -36,7 +36,7 @@ const menuItems = [
   // Group 3: Events, News, Dashboard
   { icon: Calendar, label: 'Events', path: '/events' },
   { icon: File, label: 'News', path: '/news' },
-  { icon: User, label: 'Dashboard', path: '/landing' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/landing' },
 ]
 
 // Helper function to format time from timestamp
@@ -56,13 +56,28 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isSpadesFIOpen, setIsSpadesFIOpen] = useState(false)
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore()
   const { chats, getChats, isLoading: chatsLoading, typingUsers } = useChatStore()
   const { user, isAuthenticated } = useAuthStore()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({})
   const chatsFetchedRef = useRef(false)
+
+  const isFeedPage = pathname === '/feed'
+  const isMarketplacePage = pathname === '/marketplace'
+  const shouldForceFullSidebar = isFeedPage
+
+  useEffect(() => {
+    if (shouldForceFullSidebar && !sidebarOpen) {
+      setSidebarOpen(true)
+    }
+  }, [shouldForceFullSidebar, sidebarOpen, setSidebarOpen])
+
+  const handleToggleSidebar = () => {
+    if (shouldForceFullSidebar) return
+    toggleSidebar()
+  }
 
   // Fetch chats only once when sidebar opens for the first time
   useEffect(() => {
@@ -130,20 +145,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Combined Container */}
       <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4 ${!sidebarOpen ? 'overflow-visible' : ''}`}>
         <div className={`rounded-lg bg-[#090721] border border-[#2A2F4A] ${!sidebarOpen ? 'overflow-visible' : ''}`}>
-          {/* Toggle Button */}
-          <div className="flex justify-center   border-b border-[#2A2F4A]">
-            <button
-              onClick={toggleSidebar}
-              className="p-1.5 rounded-lg  text-white transition-colors"
-              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-            >
-              {sidebarOpen ? (
-                <h1 className="text-white text-2xl font-exo2">MENU</h1>
-              ) : (
-                <Image src={image22} alt="Collapse" width={40} height={40} className="object-contain" />
-              )}
-            </button>
-          </div>
+          {isMarketplacePage && (
+            <div className="flex justify-center border-b border-[#2A2F4A]">
+              <button
+                onClick={handleToggleSidebar}
+                className="p-1.5 rounded-lg text-white transition-colors"
+                title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              >
+                <Image src={image22} alt="Toggle sidebar" width={40} height={40} className="object-contain" />
+              </button>
+            </div>
+          )}
 
           {/* Menu Items */}
           <nav className={!sidebarOpen ? 'overflow-visible' : ''}>
@@ -172,17 +184,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           setTooltipPosition(null)
                         }}
                         onClick={() => setIsSpadesFIOpen(!isSpadesFIOpen)}
-                        className={`relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${isActive
+                        className={`relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                          isActive
                             ? 'text-[#FFB600] bg-[#7E6BEF0A]'
-                            : 'text-white hover:bg-white/5'
-                          }`}
+                            : 'text-[#A3AED0] hover:text-white hover:bg-white/5'
+                        }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon
-                            className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`}
+                            className={`w-5 h-5 flex-shrink-0 ${
+                              isActive ? 'text-[#FFB600]' : 'text-[#A3AED0]'
+                            }`}
                             strokeWidth={1.5}
                           />
-                          {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
+                          {sidebarOpen && (
+                            <span className="text-sm font-exo2">{item.label}</span>
+                          )}
                         </div>
                         {sidebarOpen && (
                           <ChevronDown
@@ -233,16 +250,21 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           setTooltipPosition(null)
                         }}
                         onClick={() => handleNavigation(item.path, item.label)}
-                        className={`relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${isActive
+                        className={`relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                          isActive
                             ? 'text-[#FFB600] bg-[#7E6BEF0A]'
-                            : 'text-white hover:bg-white/5'
-                          }`}
+                            : 'text-[#A3AED0] hover:text-white hover:bg-white/5'
+                        }`}
                       >
                         <Icon
-                          className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#FFB600]' : 'text-white'}`}
+                          className={`w-5 h-5 flex-shrink-0 ${
+                            isActive ? 'text-[#FFB600]' : 'text-[#A3AED0]'
+                          }`}
                           strokeWidth={1.5}
                         />
-                        {sidebarOpen && <span className="text-sm font-exo2">{item.label}</span>}
+                        {sidebarOpen && (
+                          <span className="text-sm font-exo2">{item.label}</span>
+                        )}
                         {isActive && sidebarOpen && (
                           <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#FFB600] rounded-l"></span>
                         )}
