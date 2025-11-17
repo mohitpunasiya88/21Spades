@@ -40,6 +40,9 @@ export default function CreateNFTPage() {
   const [royalties, setRoyalties] = useState<number | null>(50)
   const [redeemCode, setRedeemCode] = useState<string>("")
   const [selectedCollection, setSelectedCollection] = useState<string>("")
+  const [selectedCollectionAddress, setSelectedCollectionAddress] = useState<string>("") // I need this to pass the collection address to the mint function you can addujset thise by manage in backend
+
+
   const [postToFeed, setPostToFeed] = useState<boolean>(true)
   const [freeMinting, setFreeMinting] = useState<boolean>(true)
   const [putOnMarketplace, setPutOnMarketplace] = useState<boolean>(true)
@@ -368,55 +371,59 @@ export default function CreateNFTPage() {
           to: address as string,
           tokenURI:  "test/pinata", //payload.imageUrl,
           royalty: payload.royalty,
-        },selectedCollection)
+        },selectedCollectionAddress)
+
+        payload.nftId = Number(response[0].args.tokenId).toString()
        
+       
+       debugger;
         console.log("📡 Response success:", response)
-        console.log("📡 Response data:", response?.data)
+        console.log("📡 Response data tokenId:", response[0].args.tokenId)
       } catch (error) {
         console.error("❌ Error creating NFT:", error)
       }
 
 
-      // const apiUrl = authRoutes.createNFT
-      // console.log("🌐 Calling API:", apiUrl)
-      // console.log("🌐 Full API URL will be:", apiUrl)
-      // console.log("📤 Sending payload size:", JSON.stringify(payload).length, "bytes")
+      const apiUrl = authRoutes.createNFT
+      console.log("🌐 Calling API:", apiUrl)
+      console.log("🌐 Full API URL will be:", apiUrl)
+      console.log("📤 Sending payload size:", JSON.stringify(payload).length, "bytes")
 
-      // const response = await apiCaller('POST', apiUrl, payload, true)
-      // console.log("📡 API Response received:", response)
-      // console.log("📡 Response success:", response?.success)
-      // console.log("📡 Response data:", response?.data)
+      const response = await apiCaller('POST', apiUrl, payload, true)
+      console.log("📡 API Response received:", response)
+      console.log("📡 Response success:", response?.success)
+      console.log("📡 Response data:", response?.data)
 
-      // message.destroy(loadingMessage as any)
+      message.destroy(loadingMessage as any)
 
-      // if (response.success) {
-      //   message.success(response.message || "NFT created successfully!")
+      if (response.success) {
+        message.success(response.message || "NFT created successfully!")
 
-      //   // Reset form
-      //   setUploadedFile(null)
-      //   if (previewUrl) {
-      //     URL.revokeObjectURL(previewUrl)
-      //     setPreviewUrl(null)
-      //   }
-      //   setTitle("")
-      //   setDescription("")
-      //   setFixedPrice(null)
-      //   setSize("")
-      //   setCategory("")
-      //   setRoyalties(null)
-      //   setSelectedCollection("")
-      //   setExpirationDate(null)
-      //   setStartingDate(null)
+        // Reset form
+        setUploadedFile(null)
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl)
+          setPreviewUrl(null)
+        }
+        setTitle("")
+        setDescription("")
+        setFixedPrice(null)
+        setSize("")
+        setCategory("")
+        setRoyalties(null)
+        setSelectedCollection("")
+        setExpirationDate(null)
+        setStartingDate(null)
 
-      //   if (fileInputRef.current) {
-      //     fileInputRef.current.value = ""
-      //   }
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
 
-      //   console.log("✅ NFT created:", response.data)
-      // } else {
-      //   console.error("❌ API returned success: false", response)
-      //   message.error(response.message || "Failed to create NFT")
-      // }
+        console.log("✅ NFT created:", response.data)
+      } else {
+        console.error("❌ API returned success: false", response)
+        message.error(response.message || "Failed to create NFT")
+      }
     } catch (error: any) {
       console.error("❌ Error creating NFT:", error)
       console.error("❌ Error details:", {
@@ -1222,7 +1229,7 @@ export default function CreateNFTPage() {
                 collections.map((collection) => {
                   const collectionId = collection._id || collection.collectionId || collection.id
                   const collectionAddress = collection.collectionAddress 
-                  const isSelected = selectedCollection === collectionAddress
+                  const isSelected = selectedCollection === collectionId
                   const collectionImage = collection.imageUrl || collection.coverPhoto || collectionOneImage
                   const collectionName = collection.collectionName || collection.name || "Unnamed Collection"
                  
@@ -1232,9 +1239,11 @@ export default function CreateNFTPage() {
                     if (isSelected) {
                       // If already selected, deselect it
                       setSelectedCollection("")
+                      setSelectedCollectionAddress("")
                     } else {
                       // Select this collection
-                      setSelectedCollection(collectionAddress)
+                      setSelectedCollection(collectionId)
+                      setSelectedCollectionAddress(collectionAddress)
                     }
                   }
 
@@ -1245,7 +1254,7 @@ export default function CreateNFTPage() {
 
                   return (
                     <button
-                      key={collectionAddress}
+                      key={collectionId}
                       type="button"
                       onClick={handleCollectionClick}
                       className={`group relative flex h-full overflow-hidden rounded-2xl duration-300 border-2 ${isSelected
