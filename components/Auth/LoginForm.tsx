@@ -33,10 +33,18 @@ export default function LoginForm() {
   }, [oauthState])
 
   useEffect(() => {
-    if (!privyReady || !privyAuthenticated || !privyUser) {
+    // Check if user explicitly logged out - don't auto-login in that case
+    const explicitLogout = typeof window !== 'undefined' && sessionStorage.getItem('explicit-logout') === 'true'
+    
+    if (explicitLogout) {
+      // Clear the flag and don't auto-login
+      sessionStorage.removeItem('explicit-logout')
       return
     }
 
+    if (!privyReady || !privyAuthenticated || !privyUser) {
+      return
+    }
 
     if (hasCompletedPrivyLoginRef.current) {
       return

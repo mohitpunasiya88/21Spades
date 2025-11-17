@@ -141,6 +141,26 @@ export default function FeedPost({ post }: FeedPostProps) {
   
   // Get currency
   const priceCurrency = post.currency || post.nft?.currency || 'AVAX'
+    // Debug logs - only log when post price data actually changes (not on every render)
+    useEffect(() => {
+      const currentRawPrice = post.price !== undefined && post.price !== null 
+        ? post.price 
+        : (post.nft?.price !== undefined && post.nft?.price !== null ? post.nft?.price : undefined)
+      
+      const currentNumericPrice = currentRawPrice !== undefined && currentRawPrice !== null
+        ? (typeof currentRawPrice === 'string' ? parseFloat(currentRawPrice) : typeof currentRawPrice === 'number' ? currentRawPrice : undefined)
+        : undefined
+      
+      const currentHasPrice = currentNumericPrice !== undefined && currentNumericPrice !== null && typeof currentNumericPrice === 'number' && !Number.isNaN(currentNumericPrice) && currentNumericPrice >= 0
+      
+      const currentFormattedPrice = currentHasPrice 
+        ? (currentNumericPrice >= 1 ? currentNumericPrice.toFixed(2) : currentNumericPrice.toFixed(4)) 
+        : ''
+      
+      const currentPriceCurrency = post.currency || post.nft?.currency || 'AVAX'
+      
+    
+    }, [post.id, post.price, post.nft?.price, post.currency, post.nft?.currency])
   const handleLike = async () => {
     if (!isAuthenticated) {
       setShowLoginModal(true)
