@@ -1,3 +1,5 @@
+import { BsSuitSpade } from "react-icons/bs";
+
 export default function WhyChoose() {
     const features = [
       {
@@ -19,48 +21,44 @@ export default function WhyChoose() {
     ];
   
     return (
-      <section className="py-20 relative">
+      <section className="py-5 md:py-10">
+        <div className="flex flex-col justify-center items-center">
         {/* White spade icon at top center */}
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
-          <span className="text-white text-5xl font-bold">♠</span>
+        <div className="flex justify-center items-center">
+          <BsSuitSpade className="text-white w-6 h-6" />
         </div>
   
-        <div className="container mx-auto px-4">
           {/* Header Section */}
           <div className="text-center mt-5">
             <h2 className="gold-gradient-text font-audiowide text-xl md:text-5xl mb-6 text-center">
-              Why Choose Our Platform
+              Why 21spades
             </h2>
-            <p className="text-white text-base sm:text-lg font-exo2 font-medium max-w-3xl w-full mx-auto text-center px-2 mb-4">
+            <p className="text-[#A3AED0] text-base sm:text-lg font-exo2 font-medium max-w-[600px] w-full mx-auto text-center px-2 mb-4">
               All-in-one access to social, Tokenization, events, and news powered by Web3 simplicity.
             </p>
           </div>
   
-          {/* Content Grid Container - Centered with responsive dimensions */}
-          <div className="flex justify-center px-4">
-            <div 
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 w-full max-w-[1000px] mx-auto my-0 md:min-h-[350px]"
-            >
+          {/* Content Grid Container - 2x2 Grid Layout */}
+          <div className="flex justify-center md:px-4 w-full mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 w-full md:w-[80%] md:mx-auto">
               {features.map((feature, index) => (
-                <div key={index} className="relative flex flex-col items-center justify-center">
-                  <h3
-                    className="
-                      text-white text-[14px] sm:text-base font-bold font-audiowide text-center mb-2
-                      uppercase tracking-wider
-                      px-4 py-2 rounded-[14px]
-                      gold-gradient-text 
-                      md:text-[#884DFF] !important
-
-                    "
-                    style={{ letterSpacing: '0.1em' }}
-                  >
+                <div 
+                  key={index} 
+                  className={`
+                    relative flex flex-col
+                    p-6 md:p-8
+                    ${index === 0 ? 'justify-start items-start text-start' : ''}
+                    ${index === 1 ? 'justify-start md:justify-end items-start md:items-end text-start md:text-end' : ''}
+                    ${index === 2 ? 'justify-start items-start text-start' : ''}
+                    ${index === 3 ? 'justify-start md:justify-end items-start md:items-end text-start md:text-end' : ''}
+                  `}
+                >
+                  <h3 className="text-white text-sm md:text-base font-[400] font-audiowide uppercase tracking-wider mb-3 md:mb-4">
                     {feature.title}
                   </h3>
-                  <p className="text-[#E5C9B8] text-[12px] sm:text-sm md:text-base leading-relaxed font-exo2 w-full max-w-md sm:max-w-lg md:max-w-xl text-center px-2 sm:px-4">
+                  <p className="text-[#E5C9B8] text-xs md:text-sm leading-relaxed font-exo2 w-full md:w-[300px]">
                     {feature.description}
                   </p>
-                  {/* Mobile-only divider */}
-                  <hr className="w-4/5 border-white/30 mt-4 md:hidden" />
                 </div>
               ))}
             </div>

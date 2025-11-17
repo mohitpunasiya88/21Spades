@@ -1,11 +1,11 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
-import { Button, Form, Input, Select, Tabs, Avatar, Dropdown, Spin, message } from "antd"
-import { Edit2, Share2, MoreHorizontal, Link, MessageCircle, Space, Camera, MessageSquareCode, MessageSquareText } from "lucide-react"
+import { Button, Form, Input, Select, Tabs, Dropdown, Spin, message } from "antd"
+import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-react"
 import defaultCoverImage from "@/components/assets/profile-bg.jpg"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -19,6 +19,30 @@ const countries = [
   "Japan",
 ]
 
+// Common country codes
+const countryCodes = [
+  { code: '+1', country: 'US', flag: '🇺🇸' },
+  { code: '+91', country: 'IN', flag: '🇮🇳' },
+  { code: '+44', country: 'GB', flag: '🇬🇧' },
+  { code: '+86', country: 'CN', flag: '🇨🇳' },
+  { code: '+81', country: 'JP', flag: '🇯🇵' },
+  { code: '+49', country: 'DE', flag: '🇩🇪' },
+  { code: '+33', country: 'FR', flag: '🇫🇷' },
+  { code: '+61', country: 'AU', flag: '🇦🇺' },
+  { code: '+7', country: 'RU', flag: '🇷🇺' },
+  { code: '+55', country: 'BR', flag: '🇧🇷' },
+  { code: '+52', country: 'MX', flag: '🇲🇽' },
+  { code: '+39', country: 'IT', flag: '🇮🇹' },
+  { code: '+34', country: 'ES', flag: '🇪🇸' },
+  { code: '+82', country: 'KR', flag: '🇰🇷' },
+  { code: '+971', country: 'AE', flag: '🇦🇪' },
+  { code: '+65', country: 'SG', flag: '🇸🇬' },
+  { code: '+60', country: 'MY', flag: '🇲🇾' },
+  { code: '+66', country: 'TH', flag: '🇹🇭' },
+  { code: '+62', country: 'ID', flag: '🇮🇩' },
+  { code: '+84', country: 'VN', flag: '🇻🇳' },
+]
+
 export default function ProfilePage() {
   const { user, getProfile, updateProfile, incrementProfileView } = useAuthStore()
   const [editing, setEditing] = useState(false)
@@ -26,6 +50,16 @@ export default function ProfilePage() {
   const [form] = Form.useForm()
   const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const [countryCode, setCountryCode] = useState('+1')
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  const [countrySearchQuery, setCountrySearchQuery] = useState('')
+  const countryDropdownRef = useRef<HTMLDivElement>(null)
   const [profile, setProfile] = useState({
     name: "",
     username: "",
@@ -35,10 +69,11 @@ export default function ProfilePage() {
     profession: "",
     joined: "",
     website: "",
+    phone: "",
     links: {
-      facebook: "",
-      instagram: "",
-      x: "",
+      facebook: "https://t.me/+XyKl3RHYu-QxNWMx",
+      instagram: "https://www.instagram.com/21spades.io",
+      x: "https://twitter.com/@21SpadesDPR",
     },
     stats: {
       posts: 0,
@@ -51,22 +86,49 @@ export default function ProfilePage() {
     avatar: "/assets/avatar.jpg",
   })
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false)
+        setCountrySearchQuery('')
+      }
+    }
+
+    if (showCountryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showCountryDropdown])
+
   // Fetch profile data on component mount
   useEffect(() => {
     fetchProfileData()
-    incrementProfileView()
+    // incrementProfileView()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Update form phone field when profile.phone changes and editing is active
+  useEffect(() => {
+    if (editing && profile.phone) {
+      form.setFieldsValue({
+        phone: profile.phone,
+      })
+    }
+  }, [editing, profile.phone, form])
 
   // Fetch profile data from API
   const fetchProfileData = async () => {
     try {
       setProfileLoading(true)
       const profileData = await getProfile()
-      
+
       if (profileData && profileData.user) {
         const userData = profileData.user
-        
+
         // Format joined date
         let joinedDate = ""
         if (userData.createdAt) {
@@ -83,6 +145,7 @@ export default function ProfilePage() {
           profession: userData.profession || "",
           joined: joinedDate,
           website: userData.website || "",
+          phone: userData.phoneNumber || userData.phone || user?.phoneNumber || user?.phone || "",
           links: {
             facebook: userData.facebook || "",
             instagram: userData.instagram || "",
@@ -94,23 +157,27 @@ export default function ProfilePage() {
             contributions: userData.contributions || 0,
           },
           bio: userData.bio || "",
-          interests: Array.isArray(userData.interests) 
-            ? userData.interests 
+          interests: Array.isArray(userData.interests)
+            ? userData.interests
             : userData.interests ? [userData.interests] : [],
           cover: userData.cover || defaultCoverImage.src,
           avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/assets/avatar.jpg",
         })
-        
+
+        // Set country code from user data
+        const userCountryCode = userData.countryCode || user?.countryCode || '+1'
+        setCountryCode(userCountryCode)
+
         // Update form initial values
         form.setFieldsValue({
           name: userData.name || user?.name || "",
           username: userData.username || user?.username || "",
           email: userData.email || user?.email || "",
           country: userData.country || "",
-          phone: userData.phone || userData.phoneNumber || "",
+          phone: userData.phoneNumber || userData.phone || "",
           profession: userData.profession || "",
-          interests: Array.isArray(userData.interests) 
-            ? userData.interests 
+          interests: Array.isArray(userData.interests)
+            ? userData.interests
             : userData.interests ? [userData.interests] : [],
           bio: userData.bio || "",
         })
@@ -118,9 +185,12 @@ export default function ProfilePage() {
     } catch (error: any) {
       console.error('Error fetching profile:', error)
       message.error(error?.response?.data?.message || 'Failed to fetch profile data')
-      
+
       // Set fallback values from user store
       if (user) {
+        const userCountryCode = user.countryCode || '+1'
+        setCountryCode(userCountryCode)
+        
         setProfile({
           name: user.name || "",
           username: user.username || "",
@@ -130,6 +200,7 @@ export default function ProfilePage() {
           profession: "",
           joined: "",
           website: "",
+          phone: user.phoneNumber || user.phone || "",
           links: {
             facebook: user.facebook || "",
             instagram: user.instagram || "",
@@ -141,8 +212,8 @@ export default function ProfilePage() {
             contributions: user.contributions || 0,
           },
           bio: user?.bio || "",
-          interests: Array.isArray(user?.interests) 
-            ? user.interests 
+          interests: Array.isArray(user?.interests)
+            ? user.interests
             : user?.interests ? [user.interests] : [],
           cover: defaultCoverImage.src,
           avatar: user.avatar || user.profilePicture || "/assets/avatar.jpg",
@@ -157,26 +228,16 @@ export default function ProfilePage() {
     try {
       setSaving(true)
       const values = await form.validateFields()
-      
-      // Extract phone number and country code from phone field
+
+      // Extract phone number - use countryCode from state (selected from dropdown)
       let phoneNumber = ""
-      let countryCode = user?.countryCode || "+1"
-      
+      const selectedCountryCode = countryCode || user?.countryCode || "+1"
+
       if (values.phone) {
-        // If phone starts with country code, extract it
-        if (values.phone.startsWith("+")) {
-          const parts = values.phone.split(" ")
-          if (parts.length > 1) {
-            countryCode = parts[0]
-            phoneNumber = parts.slice(1).join("")
-          } else {
-            phoneNumber = values.phone.replace(/^\+/, "")
-          }
-        } else {
-          phoneNumber = values.phone
-        }
+        // Remove any non-digit characters from phone number
+        phoneNumber = values.phone.replace(/\D/g, '')
       }
-      
+
       // Convert interests to array - Select with mode="multiple" returns array
       let interestsArray: string[] = []
       if (values.interests) {
@@ -189,14 +250,14 @@ export default function ProfilePage() {
         // If no interests selected, use existing user interests or empty array
         interestsArray = Array.isArray(user?.interests) ? user.interests : []
       }
-      
+
       // Prepare profile update payload as per API requirements
       const updatePayload = {
         email: values.email || user?.email || "",
         name: values.name || "",
         username: values.username || "",
         phoneNumber: phoneNumber || user?.phoneNumber || "",
-        countryCode: countryCode || user?.countryCode || "+1",
+        countryCode: selectedCountryCode || user?.countryCode || "+1",
         country: values.country || user?.country || "",
         interests: interestsArray.length > 0 ? interestsArray : (user?.interests || []),
         portfolio: user?.portfolio || "",
@@ -210,12 +271,10 @@ export default function ProfilePage() {
         contributions: user?.contributions || profile.stats.contributions || 0,
         profileView: user?.profileView || profile.stats.posts || 0,
       }
-      
-      console.log('Profile update payload:', updatePayload)
-      
+
       // Call profile update API
       await updateProfile(updatePayload)
-      
+
       // Update local profile state
       setProfile(prev => ({
         ...prev,
@@ -236,10 +295,10 @@ export default function ProfilePage() {
           contributions: updatePayload.contributions,
         },
       }))
-      
+
       message.success("Profile saved successfully!")
       setEditing(false)
-      
+
       // Refresh profile data
       await fetchProfileData()
     } catch (e: any) {
@@ -251,29 +310,241 @@ export default function ProfilePage() {
     }
   }
 
-  // Handle edit button click - populate form with current profile data
-  const handleEditClick = () => {
-    // Convert interests to array format for the form
-    let interestsArray: string[] = []
-    if (profile.interests) {
-      if (Array.isArray(profile.interests)) {
-        interestsArray = profile.interests
-      }
-    } else if (user?.interests) {
-      interestsArray = Array.isArray(user.interests) ? user.interests : []
-    }
-    
-    form.setFieldsValue({
-      name: profile.name,
-      username: profile.username,
-      email: profile.email,
-      country: profile.country,
-      phone: user?.phone || user?.phoneNumber || "",
-      profession: profile.profession,
-      interests: interestsArray,
-      bio: profile.bio,
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (error) => reject(error)
     })
-    setEditing(true)
+  }
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      message.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('Image size should be less than 5MB')
+      return
+    }
+
+    try {
+      setUploadingAvatar(true)
+      
+      // Convert to base64 for preview
+      const base64 = await fileToBase64(file)
+      setAvatarPreview(base64)
+
+      // Update profile with new avatar
+      await updateProfile({
+        email: profile.email || user?.email || "",
+        name: profile.name || user?.name || "",
+        username: profile.username || user?.username || "",
+        phoneNumber: user?.phoneNumber || "",
+        countryCode: user?.countryCode || "+1",
+        country: profile.country || user?.country || "",
+        interests: Array.isArray(profile.interests) ? profile.interests : (user?.interests || []),
+        portfolio: user?.portfolio || "",
+        facebook: profile.links.facebook || user?.facebook || "",
+        instagram: profile.links.instagram || user?.instagram || "",
+        discord: user?.discord || "",
+        twitter: profile.links.x || user?.twitter || "",
+        bio: profile.bio || user?.bio || "",
+        profilePicture: base64, // In production, upload to server and get URL
+        projects: profile.stats.projects || user?.projects || 0,
+        contributions: profile.stats.contributions || user?.contributions || 0,
+        profileView: profile.stats.posts || user?.profileView || 0,
+      })
+
+      // Update local state
+      setProfile(prev => ({ ...prev, avatar: base64 }))
+      message.success('Avatar updated successfully!')
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error)
+      message.error('Failed to upload avatar. Please try again.')
+    } finally {
+      setUploadingAvatar(false)
+      // Reset input
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Handle cover image upload
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      message.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      message.error('Image size should be less than 10MB')
+      return
+    }
+
+    try {
+      setUploadingCover(true)
+      
+      // Convert to base64 for preview
+      const base64 = await fileToBase64(file)
+      setCoverPreview(base64)
+
+      // Update profile with new cover
+      // Note: Cover image might need a separate endpoint or field
+      // For now, we'll update it in local state
+      // In production, you may need to add a 'cover' field to the updateProfile API
+      await updateProfile({
+        email: profile.email || user?.email || "",
+        name: profile.name || user?.name || "",
+        username: profile.username || user?.username || "",
+        phoneNumber: user?.phoneNumber || "",
+        countryCode: user?.countryCode || "+1",
+        country: profile.country || user?.country || "",
+        interests: Array.isArray(profile.interests) ? profile.interests : (user?.interests || []),
+        portfolio: user?.portfolio || "",
+        facebook: profile.links.facebook || user?.facebook || "",
+        instagram: profile.links.instagram || user?.instagram || "",
+        discord: user?.discord || "",
+        twitter: profile.links.x || user?.twitter || "",
+        bio: profile.bio || user?.bio || "",
+        profilePicture: user?.profilePicture || user?.avatar || profile.avatar || "",
+        projects: profile.stats.projects || user?.projects || 0,
+        contributions: profile.stats.contributions || user?.contributions || 0,
+        profileView: profile.stats.posts || user?.profileView || 0,
+        // cover: base64, // Add this if backend supports cover image field
+      })
+
+      // Update local state
+      setProfile(prev => ({ ...prev, cover: base64 }))
+      message.success('Cover image updated successfully!')
+    } catch (error: any) {
+      console.error('Error uploading cover:', error)
+      message.error('Failed to upload cover image. Please try again.')
+    } finally {
+      setUploadingCover(false)
+      // Reset input
+      if (coverInputRef.current) {
+        coverInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Handle edit button click - populate form with current profile data
+  const handleEditClick = async () => {
+    setEditing(true) // Set editing mode first
+    
+    // Fetch latest profile data to ensure we have the most up-to-date phone number and country code
+    try {
+      const profileData = await getProfile()
+      if (profileData && profileData.user) {
+        const userData = profileData.user
+        
+        // Set country code from latest user data
+        const userCountryCode = userData.countryCode || user?.countryCode || countryCode || '+1'
+        setCountryCode(userCountryCode)
+        
+        // Get phone number - prioritize API response
+        const phoneNumber = userData.phoneNumber || userData.phone || profile.phone || user?.phoneNumber || user?.phone || ""
+        
+        // Convert interests to array format for the form
+        let interestsArray: string[] = []
+        if (profile.interests) {
+          if (Array.isArray(profile.interests)) {
+            interestsArray = profile.interests
+          }
+        } else if (userData.interests) {
+          interestsArray = Array.isArray(userData.interests) ? userData.interests : []
+        } else if (user?.interests) {
+          interestsArray = Array.isArray(user.interests) ? user.interests : []
+        }
+
+        // Use setTimeout to ensure form is ready
+        setTimeout(() => {
+          form.setFieldsValue({
+            name: profile.name,
+            username: profile.username,
+            email: profile.email,
+            country: profile.country,
+            phone: phoneNumber,
+            profession: profile.profession,
+            interests: interestsArray,
+            bio: profile.bio,
+          })
+        }, 0)
+      } else {
+        // Fallback to existing logic if profile fetch fails
+        let interestsArray: string[] = []
+        if (profile.interests) {
+          if (Array.isArray(profile.interests)) {
+            interestsArray = profile.interests
+          }
+        } else if (user?.interests) {
+          interestsArray = Array.isArray(user.interests) ? user.interests : []
+        }
+
+        const userCountryCode = user?.countryCode || countryCode || '+1'
+        setCountryCode(userCountryCode)
+
+        const phoneNumber = profile.phone || user?.phoneNumber || user?.phone || ""
+
+        setTimeout(() => {
+          form.setFieldsValue({
+            name: profile.name,
+            username: profile.username,
+            email: profile.email,
+            country: profile.country,
+            phone: phoneNumber,
+            profession: profile.profession,
+            interests: interestsArray,
+            bio: profile.bio,
+          })
+        }, 0)
+      }
+    } catch (error) {
+      console.error('Error fetching profile for edit:', error)
+      // Fallback to existing logic
+      let interestsArray: string[] = []
+      if (profile.interests) {
+        if (Array.isArray(profile.interests)) {
+          interestsArray = profile.interests
+        }
+      } else if (user?.interests) {
+        interestsArray = Array.isArray(user.interests) ? user.interests : []
+      }
+
+      const userCountryCode = user?.countryCode || countryCode || '+1'
+      setCountryCode(userCountryCode)
+
+      const phoneNumber = profile.phone || user?.phoneNumber || user?.phone || ""
+
+      setTimeout(() => {
+        form.setFieldsValue({
+          name: profile.name,
+          username: profile.username,
+          email: profile.email,
+          country: profile.country,
+          phone: phoneNumber,
+          profession: profile.profession,
+          interests: interestsArray,
+          bio: profile.bio,
+        })
+      }, 0)
+    }
   }
 
   if (profileLoading) {
@@ -290,16 +561,32 @@ export default function ProfilePage() {
       <div className="relative rounded-xl overflow-hidden ">
         {/* Header / Cover Banner */}
         <div className="relative h-40 md:h-48 w-full bg-gradient-to-r from-purple-800/30 to-yellow-500/10">
+          {/* Cover image upload button */}
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            className="absolute top-4 right-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-sm text-white rounded-lg hover:bg-black/70 transition-colors flex items-center gap-2 text-sm"
+            disabled={uploadingCover}
+          >
+            <Camera size={16} />
+            {uploadingCover ? 'Uploading...' : 'Change Cover'}
+          </button>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleCoverUpload}
+            className="hidden"
+          />
           {/* Fallback cover image */}
           <Image
-            src={profile.cover}
+            src={coverPreview || profile.cover}
             alt="Cover"
             fill
             priority
             className="object-cover opacity-90 rounded-xl"
             sizes="100vw"
           />
-          
+
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
             <a
@@ -336,18 +623,50 @@ export default function ProfilePage() {
         <div className="relative px-1 md:px-2-mt-24 md:-mt-28">
           <div className="relative flex-shrink-0 w-[120px] h-[120px] md:w-[160px] md:h-[160px]">
             <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] bg-gradient-to-br from-[#8D5AFE] to-[#B98CFF] shadow-xl">
-              <Avatar
-                size={160}
-                src={profile.avatar}
-                className="!rounded-full !w-full !h-full "
-              />
+              {(() => {
+                const hasAvatarImage = Boolean((avatarPreview || profile.avatar)?.trim())
+                const fallbackSrc = '/post/card-21.png'
+                const avatarSrc = hasAvatarImage ? (avatarPreview || profile.avatar) : fallbackSrc
+                return (
+                  <div
+                    className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
+                    style={
+                      hasAvatarImage
+                        ? undefined
+                        : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                    }
+                  >
+                    <img
+                      src={avatarSrc}
+                      alt="Profile avatar"
+                      className={`w-full h-full ${hasAvatarImage ? 'object-cover' : 'object-contain'}`}
+                      onError={(e) => {
+                        e.currentTarget.src = fallbackSrc
+                      }}
+                    />
+                  </div>
+                )
+              })()}
             </div>
             <button
+              onClick={() => avatarInputRef.current?.click()}
               aria-label="Change avatar"
-              className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF]"
+              className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF] hover:bg-[#7A3FEF] transition-colors disabled:opacity-50"
+              disabled={uploadingAvatar}
             >
-              <Camera size={16} />
+              {uploadingAvatar ? (
+                <Spin size="small" />
+              ) : (
+                <Camera size={16} />
+              )}
             </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
           </div>
         </div>
 
@@ -396,8 +715,8 @@ export default function ProfilePage() {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    className="!bg-[#FFFFFF1A] border border-white !rounded-full !px-6 !h-10"
+                  <Button
+                    className="!bg-[#FFFFFF1A] !text-white border border-white !rounded-full !px-6 !h-10"
                     onClick={onSave}
                     loading={saving}
                     disabled={saving}
@@ -444,11 +763,10 @@ export default function ProfilePage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${
-                  activeTab === tab
-                    ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${activeTab === tab
+                  ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 {tab}
               </button>
@@ -473,11 +791,11 @@ export default function ProfilePage() {
                 <div className="border-b border-[#2A2F4A]"></div>
                 <Field label="Country:" value={profile.country} />
                 <div className="border-b border-[#2A2F4A]"></div>
-                <Field 
-                  label="Interests:" 
-                  value={Array.isArray(profile.interests) 
-                    ? profile.interests.join(", ") 
-                    : profile.interests || ""} 
+                <Field
+                  label="Interests:"
+                  value={Array.isArray(profile.interests)
+                    ? profile.interests.join(", ")
+                    : profile.interests || ""}
                 />
                 <div className="border-b border-[#2A2F4A]"></div>
                 <Field label="User Since:" value={profile.joined} />
@@ -486,7 +804,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Links + Stats */}
-          <div className="space-y-6">
+          {/* <div className="space-y-6">
           
             <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6">
               <div className="px-5 py-4 text-[24px] text-white font-[700]">
@@ -500,7 +818,7 @@ export default function ProfilePage() {
                 <Field label="Contributions:" value={profile.stats.contributions} />
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       ) : (
         <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6 font-exo2 pb-6">
@@ -520,10 +838,10 @@ export default function ProfilePage() {
                 username: profile.username || user?.username || "",
                 email: profile.email || user?.email || "",
                 country: profile.country || user?.country || "",
-                phone: user?.phone || user?.phoneNumber || "",
+                phone: profile.phone || user?.phoneNumber || user?.phone || "",
                 profession: profile.profession || "",
-                interests: Array.isArray(profile.interests) 
-                  ? profile.interests 
+                interests: Array.isArray(profile.interests)
+                  ? profile.interests
                   : profile.interests ? [profile.interests] : [],
                 bio: profile.bio || user?.bio || "",
               }}
@@ -569,24 +887,128 @@ export default function ProfilePage() {
                     suffixIcon={<span className="text-white">▼</span>}
                     options={countries.map((c) => ({ value: c, label: c }))}
                     placeholder="Select Country"
-                    className="profile-select"
-                    popupClassName="profile-select-dropdown"
+                    className="!bg-[#0B0926] !text-white !rounded-lg !h-12 !border !border-none !outline-none [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!text-white [&_.ant-select-selector]:!placeholder-[#6B7280] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!block  [&_.ant-select-selection-placeholder]:!z-10 [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-placeholder]:!text-white/60 [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
-                      border: "1px solid #2a2a3e",
+                      // border: "1px solid #FFFFFF1A",
+                      borderRadius: "12px",
                     }}
+                    dropdownRender={(menu) => (
+                      <div
+                        className="bg-[#0B0926] text-white [&_.ant-select-item]:!bg-[#0B0926] [&_.ant-select-item]:!text-white [&_.ant-select-item-option-active]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!text-white"
+                      >
+                        {menu}
+                      </div>
+                    )}
+                    style={{ color: "white", borderColor: "#FFFFFF1A !important" }}
                   />
                 </Form.Item>
 
+
                 <Form.Item
                   label={<span className="text-white text-sm">Phone No.</span>}
-                  name="phone"
                   className="col-span-2"
                 >
-                  <Input
-                    placeholder="Phone No."
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
-                  />
+                  <div className="flex items-center gap-2">
+                    {/* Country Code Dropdown */}
+                    <div className="relative" ref={countryDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className="flex items-center gap-2 px-3 py-2.5 border border-[#FFFFFF1A] rounded-xl bg-[#0B0926] text-white hover:bg-[#1A183A] transition-colors min-w-[110px] justify-between h-12"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{countryCodes.find(c => c.code === countryCode)?.flag || '🇺🇸'}</span>
+                          <span className="text-sm font-exo2">{countryCode}</span>
+                        </span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showCountryDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-64 max-h-60 overflow-hidden flex flex-col bg-[#0B0926] border border-[#FFFFFF1A] rounded-xl shadow-2xl z-50">
+                          {/* Search Input */}
+                          <div className="p-2 border-b border-[#FFFFFF1A] sticky top-0 bg-[#0B0926]">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                type="text"
+                                placeholder="Search country..."
+                                value={countrySearchQuery}
+                                onChange={(e) => setCountrySearchQuery(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full pl-10 pr-3 py-2 bg-[#1A183A] border border-[#FFFFFF1A] rounded-lg text-white text-sm font-exo2 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                                autoFocus
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Country List */}
+                          <div className="overflow-y-auto scrollbar-hide flex-1">
+                            <div className="p-2">
+                              {countryCodes
+                                .filter((country) => {
+                                  const query = countrySearchQuery.toLowerCase()
+                                  return (
+                                    country.country.toLowerCase().includes(query) ||
+                                    country.code.includes(query) ||
+                                    country.flag.includes(query)
+                                  )
+                                })
+                                .map((country) => (
+                                  <button
+                                    key={country.code}
+                                    type="button"
+                                    onClick={() => {
+                                      setCountryCode(country.code)
+                                      setShowCountryDropdown(false)
+                                      setCountrySearchQuery('')
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1A183A] transition-colors ${
+                                      countryCode === country.code ? 'bg-[#4A01D8]/30' : ''
+                                    }`}
+                                  >
+                                    <span className="text-xl">{country.flag}</span>
+                                    <span className="text-white text-sm font-exo2 flex-1 text-left">
+                                      {country.code}
+                                    </span>
+                                    {countryCode === country.code && (
+                                      <span className="text-purple-400 text-xs">✓</span>
+                                    )}
+                                  </button>
+                                ))}
+                              {countryCodes.filter((country) => {
+                                const query = countrySearchQuery.toLowerCase()
+                                return (
+                                  country.country.toLowerCase().includes(query) ||
+                                  country.code.includes(query) ||
+                                  country.flag.includes(query)
+                                )
+                              }).length === 0 && (
+                                <div className="px-4 py-3 text-gray-400 text-sm font-exo2 text-center">
+                                  No country found
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Phone Input */}
+                    <Form.Item
+                      name="phone"
+                      noStyle
+                      normalize={(value) => value ? value.replace(/\D/g, '') : value}
+                    >
+                      <Input
+                        placeholder="Enter phone number"
+                        className="flex-1 !bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
+                        type="tel"
+                        maxLength={15}
+                      />
+                    </Form.Item>
+                  </div>
                 </Form.Item>
 
                 <Form.Item
@@ -599,12 +1021,24 @@ export default function ProfilePage() {
                     showSearch
                     suffixIcon={<span className="text-white">▼</span>}
                     placeholder="Select Categories"
-                    className="profile-select"
-                    popupClassName="profile-select-dropdown"
+                    className="!bg-[#0B0926] !border-none text-white !text-white !rounded-xl placeholder:text-[#6B7280] !outline-none [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!border-[#FFFFFF1A] [&_.ant-select-selection-item]:!bg-[#1A183A] [&_.ant-select-selection-item]:!text-white [&_.ant-select-selection-item]:!border-none [&_.ant-select-arrow]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
-                      border: "1px solid #2a2a3e",
+                      // border: "1px solid #FFFFFF1A",
+                      borderRadius: "12px",
+                      color: "white !important",
                     }}
+                    dropdownRender={(menu) => (
+                      <div
+                        className="bg-[#0B0926] text-white"
+                      >
+                        {/* Override each dropdown item */}
+                        <div className="[&_.ant-select-item]:!bg-[#0B0926] [&_.ant-select-item]:!text-white [&_.ant-select-item-option-active]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!text-white">
+                          {menu}
+                        </div>
+                      </div>
+                    )}
+                    style={{ color: "white !important" }}
                     options={[
                       { value: "DeFi", label: "DeFi" },
                       { value: "NFTs", label: "NFTs" },
@@ -617,6 +1051,7 @@ export default function ProfilePage() {
                   />
                 </Form.Item>
 
+
                 <Form.Item
                   label={<span className="text-white text-sm">Your Bio</span>}
                   name="bio"
@@ -625,7 +1060,7 @@ export default function ProfilePage() {
                   <Input.TextArea
                     rows={6}
                     placeholder="Bio"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 placeholder:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 [&_.ant-input]:!placeholder-[#6B7280] [&_.ant-input]:!text-white [&_.ant-input::placeholder]:!text-[#6B7280]"
                     maxLength={325}
                     showCount={{
                       formatter: ({ count }) => (

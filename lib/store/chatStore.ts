@@ -101,7 +101,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ isLoading: true })
         try {
           const response = await apiCaller('GET', authRoutes.getChats)
-          console.log('getChats response', response)
           if (response.success) {
             // Transform API response to match Chat interface
             const chats = (response.data.chats || []).map((chat: any) => {
@@ -129,7 +128,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 createdAt: chat.createdAt,
               } as Chat
               
-              console.log('Transformed chat:', transformedChat)
               return transformedChat
             })
             set({ 
@@ -148,7 +146,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ isLoading: true })
         try {
           const response = await apiCaller('POST', authRoutes.createChat, { userId })
-          console.log('createOrGetChat response', response)
           if (response.success) {
             // Transform API response to match Chat interface
             const apiChat = response.data.chat
@@ -197,31 +194,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   searchUsers: async (query: string) => {
     if (!query.trim()) {
-      console.log('🔍 [API] Empty query, clearing results')
       set({ searchedUsers: [] })
       return
     }
     
-    console.log('🔍 [API] Starting user search with query:', query)
-    console.log('🔍 [API] Full API endpoint:', `${authRoutes.searchUsers}?q=${encodeURIComponent(query.trim())}`)
     set({ isSearchingUsers: true })
     
     try {
       // Try 'q' parameter first
       const url = `${authRoutes.searchUsers}?q=${encodeURIComponent(query.trim())}`
-      console.log('🔍 [API] Making GET request to:', url)
-      console.log('🔍 [API] Base URL from interceptor: http://localhost:8080/api/')
-      console.log('🔍 [API] Full URL will be: http://localhost:8080/api/chat/search-users?q=' + encodeURIComponent(query.trim()))
       
       let response
       try {
-        console.log('🔍 [API] Calling apiCaller...')
         response = await apiCaller('GET', url)
-        console.log('🔍 [API] ✅ Search response received (q param):', response)
-        console.log('🔍 [API] Response type:', typeof response)
-        console.log('🔍 [API] Response keys:', response ? Object.keys(response) : 'null')
       } catch (error: any) {
-        console.log('⚠️ [API] Search with q failed, trying query parameter')
         console.error('🔍 [API] Error details:', {
           message: error.message,
           response: error.response?.data,
@@ -231,36 +217,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
         
         // If 'q' fails, try 'query' parameter
         const url2 = `${authRoutes.searchUsers}?query=${encodeURIComponent(query.trim())}`
-        console.log('🔍 [API] Trying alternative URL:', url2)
-        console.log('🔍 [API] Full URL will be: http://localhost:8080/api/chat/search-users?query=' + encodeURIComponent(query.trim()))
         response = await apiCaller('GET', url2)
-        console.log('🔍 [API] ✅ Search response received (query param):', response)
       }
       
       // Handle different response formats
       let users = []
       if (response) {
-        console.log('🔍 [API] Processing response...')
         if (response.success) {
           users = response.data?.users || response.data?.data?.users || response.data || []
-          console.log('🔍 [API] Users from response.success path:', users)
         } else if (Array.isArray(response.data)) {
           users = response.data
-          console.log('🔍 [API] Users from response.data array:', users)
         } else if (Array.isArray(response)) {
           users = response
-          console.log('🔍 [API] Users from direct array response:', users)
         } else if (response.users) {
           users = response.users
-          console.log('🔍 [API] Users from response.users:', users)
         } else {
-          console.log('🔍 [API] ⚠️ Unknown response format:', response)
         }
       } else {
-        console.log('🔍 [API] ⚠️ No response received')
       }
       
-      console.log('✅ [API] Found users:', users.length, users)
       set({ 
         searchedUsers: Array.isArray(users) ? users : [],
         isSearchingUsers: false 
@@ -279,7 +254,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isLoading: true })
     try {
       const response = await apiCaller('DELETE', `${authRoutes.deleteChat}/${chatId}`)
-      console.log('deleteChat response', response)
       if (response.success) {
         // Remove chat from list
         const chats = get().chats.filter(chat => chat._id !== chatId)
@@ -304,7 +278,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isLoading: true })
     try {
       const response = await apiCaller('GET', `${authRoutes.getMessages}/${chatId}/messages`)
-      console.log('getMessages response', response)
       if (response.success) {
         // Transform API response to match Message interface
         const apiMessages = response.data.messages || []
@@ -357,7 +330,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messageData.images = images
       }
       
-      console.log('📤 [WEBSOCKET] Sending message via socket:', messageData)
       socket.emit('send_message', messageData)
       
       // Reset sending state immediately (message will be added via socket event)
@@ -429,7 +401,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   deleteMessage: async (messageId: string) => {
     try {
       const response = await apiCaller('DELETE', `${authRoutes.deleteMessage}/${messageId}`)
-      console.log('deleteMessage response', response)
       if (response.success) {
         // Remove message from local state
         const messages = { ...get().messages }
@@ -454,10 +425,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setSelectedChat: (chat: Chat | null) => {
     set({ selectedChat: chat })
     if (chat) {
-      // Load messages for selected chat
-      get().getMessages(chat._id)
-      // Mark messages as read
-      get().markAsRead(chat._id)
+      const state = get()
+      const existingMessages = state.messages[chat._id]
+      if (!existingMessages || existingMessages.length === 0) {
+        state.getMessages(chat._id)
+      }
+      state.markAsRead(chat._id)
     }
   },
 
@@ -485,7 +458,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Listen for new messages (when someone else sends you a message)
     socket.on('new_message', (message: any) => {
-      console.log('🔵 [REAL-TIME] Received new_message event:', message)
       const transformedMessage: Message = {
         _id: message._id,
         chatId: message.chat || message.chatId || message.chatId,
@@ -497,7 +469,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         editedAt: message.editedAt,
         createdAt: message.createdAt || message.timestamp || new Date().toISOString(),
       }
-      console.log('🔵 [REAL-TIME] Adding message to UI:', transformedMessage)
       get().addMessage(transformedMessage)
       
       // Update chat list to show latest message
@@ -506,7 +477,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Listen for message_sent (confirmation when you send a message)
     socket.on('message_sent', (message: any) => {
-      console.log('✅ [REAL-TIME] Received message_sent event (your message):', message)
       const transformedMessage: Message = {
         _id: message._id,
         chatId: message.chat || message.chatId || message.chatId,
@@ -518,7 +488,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         editedAt: message.editedAt,
         createdAt: message.createdAt || message.timestamp || new Date().toISOString(),
       }
-      console.log('✅ [REAL-TIME] Adding your sent message to UI:', transformedMessage)
       get().addMessage(transformedMessage)
     })
 
@@ -582,7 +551,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Listen for typing indicators (real-time typing status)
     socket.on('user_typing', (data: { chatId: string; userId: string; isTyping: boolean }) => {
-      console.log('⌨️ [REAL-TIME] Received user_typing event:', data)
       const { chatId, userId, isTyping } = data
       const typingUsers = { ...get().typingUsers }
       
@@ -593,15 +561,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (isTyping) {
         if (!typingUsers[chatId].includes(userId)) {
           typingUsers[chatId] = [...typingUsers[chatId], userId]
-          console.log('⌨️ [REAL-TIME] Added user to typing list. Chat:', chatId, 'User:', userId, 'Total typing:', typingUsers[chatId].length)
         }
       } else {
         typingUsers[chatId] = typingUsers[chatId].filter(id => id !== userId)
-        console.log('⌨️ [REAL-TIME] Removed user from typing list. Chat:', chatId, 'User:', userId, 'Remaining:', typingUsers[chatId].length)
       }
       
       set({ typingUsers })
-      console.log('⌨️ [REAL-TIME] Updated typingUsers state:', typingUsers)
     })
 
     // Listen for errors
@@ -613,7 +578,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendTypingIndicator: (chatId: string, isTyping: boolean) => {
     const socket = get().socket
     if (socket && socket.connected) {
-      console.log('⌨️ [SOCKET] Emitting typing event:', { chatId, isTyping })
       socket.emit('typing', { chatId, isTyping })
     } else {
       console.warn('⌨️ [SOCKET] Socket not connected, cannot send typing indicator')
@@ -629,7 +593,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Helper methods for WebSocket updates - Add message in real-time
   addMessage: (message: Message) => {
-    console.log('📨 [REAL-TIME] addMessage called with:', message)
     const messages = { ...get().messages }
     if (!messages[message.chatId]) {
       messages[message.chatId] = []
@@ -645,7 +608,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       })
       messages[message.chatId] = updatedMessages
       set({ messages })
-      console.log('✅ [REAL-TIME] Message added to UI! Total messages for chat:', updatedMessages.length)
       
       // Update chat's lastMessage in real-time
       set(state => ({
@@ -666,7 +628,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         )
       }))
     } else {
-      console.log('⚠️ [REAL-TIME] Message already exists, skipping duplicate')
     }
   },
 

@@ -16,7 +16,7 @@ export default function PhoneOTPVerification() {
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
   const [error, setError] = useState('')
-  const [timer, setTimer] = useState(132) // 2:12 in seconds
+  const [timer, setTimer] = useState(120) // 2:00 in seconds
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
 
   const codeValue = useMemo(() => code.join(''), [code])
@@ -66,7 +66,7 @@ export default function PhoneOTPVerification() {
     try {
       // TODO: call API to resend OTP
       // await sendOtpToPhone(phone)
-      setTimer(132) // Reset to 2:12
+      setTimer(120) // Reset to 2:00
       setCode(['', '', '', ''])
       inputsRef.current[0]?.focus()
     } catch (e) {

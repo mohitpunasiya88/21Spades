@@ -10,8 +10,8 @@ export default function LogoAnimation() {
   )
 
   return (
-    <div className="w-[100%] md:w-[97%] mx-auto m-4">
-      <div className="mx-auto w-full h-[72px] rounded-[20px] border border-white/30 overflow-hidden">
+    <div className="w-[100%] md:w-[100%] mx-auto">
+      <div className="mx-auto w-full h-[72px] rounded-[20px] overflow-hidden">
         <div className="logo-marquee relative h-full">
           {/* Track duplicated for seamless loop */}
           <div className="marquee-track h-full flex items-center">

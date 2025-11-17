@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, Grid3x3 } from 'lucide-react'
+import { ArrowUp, Heart, Check, LayoutGrid, LayoutList } from 'lucide-react'
 import { Dropdown, Space, Avatar, Spin } from 'antd'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -148,7 +148,7 @@ export default function CollectionProfile({
 }: CollectionProfileProps) {
   const [activeTab, setActiveTab] = useState('Items')
   const [selectedSort, setSelectedSort] = useState('Price High to Low')
-  const [layoutView, setLayoutView] = useState<'grid' | 'list' | 'large-grid'>('large-grid')
+  const [layoutView, setLayoutView] = useState<'grid' | 'list'>('grid')
   
   // State for collection data
   const [collectionData, setCollectionData] = useState<any>(null)
@@ -163,15 +163,12 @@ export default function CollectionProfile({
     try {
       setIsLoading(true)
       const url = `${authRoutes.getCollectionById}/${collectionId}`
-      console.log("📡 Fetching collection from:", url)
       
       const response = await apiCaller('GET', url, null, true)
-      console.log("📦 Collection response:", response)
       
       if (response.success && response.data) {
         const collection = response.data.collection || response.data
         setCollectionData(collection)
-        console.log("✅ Collection loaded:", collection)
       } else {
         console.warn("⚠️ Collection not found")
       }
@@ -195,10 +192,8 @@ export default function CollectionProfile({
       queryParams.append('blocked', 'false')
       
       const url = `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`
-      console.log("📡 Fetching NFTs from:", url)
       
       const response = await apiCaller('GET', url, null, true)
-      console.log("📦 NFTs response:", response)
       
       if (response.success && response.data) {
         const nftsData = Array.isArray(response.data) 
@@ -218,7 +213,6 @@ export default function CollectionProfile({
         }))
         
         setNfts(mappedNFTs)
-        console.log("✅ NFTs loaded:", mappedNFTs.length)
       } else {
         console.warn("⚠️ No NFTs found")
         setNfts([])
@@ -393,7 +387,7 @@ export default function CollectionProfile({
                 onClick={() => setActiveTab(tab)}
                 className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${
                   activeTab === tab
-                    ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
+                    ? 'text-[#7E6BEF] border-b-2 border-[#7E6BEF] pb-2'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -417,30 +411,22 @@ export default function CollectionProfile({
             </Dropdown>
 
             {/* Layout Toggles */}
-            <div className="flex items-center gap-2 border border-white/10 rounded-full pr-3 pl-3 p-1 bg-[#1A1A2E]">
+            <div className="flex items-center gap-0 border border-white/10 rounded-full bg-[#1A1A2E]">
               <button
                 onClick={() => setLayoutView('list')}
-                className={`p-2 rounded transition-colors ${
-                  layoutView === 'list' ? 'bg-[#4A02D8] text-white' : 'text-gray-400 hover:text-white'
+                className={`p-2 rounded-l-full transition-colors ${
+                  layoutView === 'list' ? 'bg-[#7E6BEF] text-white' : 'bg-transparent text-gray-400 hover:text-white'
                 }`}
               >
                 <LayoutList className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setLayoutView('grid')}
-                className={`p-2 rounded transition-colors ${
-                  layoutView === 'grid' ? 'bg-[#4A02D8] text-white' : 'text-gray-400 hover:text-white'
+                className={`p-2 rounded-r-full transition-colors ${
+                  layoutView === 'grid' ? 'bg-[#7E6BEF] text-white' : 'bg-transparent text-gray-400 hover:text-white'
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setLayoutView('large-grid')}
-                className={`p-2 rounded transition-colors ${
-                  layoutView === 'large-grid' ? 'bg-[#4A02D8] text-white' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Grid3x3 className="w-4 h-4" />
               </button>
             </div>
           </div>

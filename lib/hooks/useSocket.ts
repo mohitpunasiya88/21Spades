@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 
 // const SOCKET_URL = 'http://localhost:8080'
-const SOCKET_URL = 'http://44.200.78.158:8080'
+// const SOCKET_URL = 'http://18.215.86.203:8080'
+const SOCKET_URL = 'https://two1spades-backend.onrender.com'
+
 
 export function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null)
@@ -16,7 +18,6 @@ export function useSocket() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
     if (!token) {
-      console.log('No token found, skipping socket connection')
       return
     }
 
@@ -34,12 +35,10 @@ export function useSocket() {
     })
 
     const handleConnect = () => {
-      console.log('Socket connected:', newSocket.id)
       setIsConnected(true)
     }
 
     const handleDisconnect = () => {
-      console.log('Socket disconnected')
       setIsConnected(false)
     }
 

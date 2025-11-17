@@ -152,8 +152,6 @@ export function useMarketplace() {
         ]
       );
     const recoveredAddress = ethers.verifyMessage(ethers.getBytes(message), sign as string);
-    console.log("recoveredAddress", recoveredAddress);
-    console.log("signer.getAddress()", await signer.getAddress());
     if (
       auction.erc20Token === ethers.ZeroAddress &&
       (overrides as any).value === undefined

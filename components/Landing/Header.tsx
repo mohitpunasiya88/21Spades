@@ -157,8 +157,6 @@ export default function Header() {
                 onClick={() => router.push('/login')}
                 className="px-4 md:px-8 py-2 md:py-3 rounded-full text-white font-semibold text-xs md:text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
                 style={{
-                  // background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.8) 0%, rgba(168, 85, 247, 1) 100%)',
-                  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4), 0 0 20px rgba(139, 92, 246, 0.2)',
                   fontFamily: 'var(--font-exo2)',
                 }}
               >

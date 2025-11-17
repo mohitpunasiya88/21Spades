@@ -249,7 +249,6 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('POST', authRoutes.login, data )
-          console.log('response99999999', response)
           if (response.success) {
             // Save token to localStorage
             if (response.data.token) {
@@ -281,12 +280,9 @@ export const useAuthStore = create<AuthState>()(
             twitter: mappedUser.twitter,
             isVerified: mappedUser.isVerified,
           }
-
-          console.log(' ====== Sending Privy login payload to backend:', payload)
           
           // Call backend API - MANDATORY: User will only be logged in if backend responds successfully
           const response = await apiCaller('POST', authRoutes.loginWithPrivy, payload, true)
-          console.log(' ======= Backend response for Privy login:', response)
 
           // ONLY login if backend returns success response
           if (response.success && response.data) {
@@ -332,7 +328,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signup: async (data: SignUpData & { countryCode?: string }) => {
-        console.log('signup', data)
         set({ isLoading: true })
         try {
           // Transform frontend data to match backend API expectations
@@ -346,7 +341,6 @@ export const useAuthStore = create<AuthState>()(
           }
           
           const response = await apiCaller('POST', authRoutes.signup, payload)
-          console.log('Signup222', response)
           if (response.success) {
             // Save token to localStorage
             if (response.data.token) {
@@ -406,9 +400,7 @@ export const useAuthStore = create<AuthState>()(
             }
           }
           
-          console.log('verifyOTP payload:', payload)
           const response = await apiCaller('POST', authRoutes.verifyOtp, payload)
-          console.log('response44444', response)
           if (response.success) {
             // Save token to localStorage
             if (response.data.token) {
@@ -435,7 +427,6 @@ export const useAuthStore = create<AuthState>()(
             : { phoneNumber: data.phone, countryCode: '+91' } // Default country code if not provided
           
           const response = await apiCaller('POST', authRoutes.sendOtp, payload )
-          console.log('response333333', response)
           if (response.success) {
             // OTP send response doesn't include user data
             // User will be authenticated after OTP verification
@@ -468,7 +459,6 @@ export const useAuthStore = create<AuthState>()(
       getUser: async () => {
         try {
           const response = await apiCaller('GET', authRoutes.getUser )
-          console.log('response7777777', response)
           if (response.success) {
             set({ user: response.data.user })
           }
@@ -492,12 +482,8 @@ export const useAuthStore = create<AuthState>()(
             // Also preserve id to ensure we're updating the correct user
             id: data.id || currentUser?.id,
           }
-
-          console.log(' ====== Updating user profile:', payload)
-          console.log(' ====== Current user privyId:', currentUser?.privyId)
           
           const response = await apiCaller('PUT', authRoutes.updateUser, payload)
-          console.log(' ====== Backend response for user update:', response)
           
           if (response.success) {
             // Ensure privyId is preserved in the updated user
@@ -521,7 +507,6 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await apiCaller('DELETE', authRoutes.deleteUser, data )
-          console.log('response9999999', response)
           if (response.success) {
             set({ user: response.data.user })
           }
@@ -547,7 +532,6 @@ export const useAuthStore = create<AuthState>()(
       getProfile: async () => {
         try {
           const response = await apiCaller('GET', authRoutes.getProfile)
-          console.log('getProfile response', response)
           if (response.success && response.data) {
             return response.data
           }
@@ -562,7 +546,6 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('PUT', authRoutes.profileUpdate, data)
-          console.log('updateProfile response', response)
           if (response.success) {
             // Update user in store if user data is returned
             if (response.data?.user) {
@@ -619,7 +602,6 @@ export const useFeedStore = create<FeedState>()(
             : authRoutes.getPosts
 
           const response = await apiCaller('GET', url)
-          console.log('getPosts response', response)
           if (response.success) {
             set({ 
               posts: response.data.posts || [],
@@ -637,7 +619,6 @@ export const useFeedStore = create<FeedState>()(
       getPost: async (id: string) => {
         try {
           const response = await apiCaller('GET', `${authRoutes.getPost}/${id}`)
-          console.log('getPost response', response)
           if (response.success) {
             return response.data.post
           }
@@ -652,7 +633,6 @@ export const useFeedStore = create<FeedState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('POST', authRoutes.createPost, data)
-          console.log('createPost response', response)
           if (response.success) {
             // Refresh posts after creating
             await get().getPosts()
@@ -668,7 +648,6 @@ export const useFeedStore = create<FeedState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('PUT', `${authRoutes.updatePost}/${id}`, data)
-          console.log('updatePost response', response)
           if (response.success) {
             // Update the post in the list
             const posts = get().posts
@@ -688,7 +667,6 @@ export const useFeedStore = create<FeedState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('DELETE', `${authRoutes.deletePost}/${id}`)
-          console.log('deletePost response', response)
           if (response.success) {
             // Remove post from list
             const posts = get().posts
@@ -704,7 +682,6 @@ export const useFeedStore = create<FeedState>()(
       likePost: async (id: string) => {
         try {
           const response = await apiCaller('POST', `${authRoutes.likePost}/${id}/like`)
-          console.log('likePost response', response)
           if (response.success) {
             // Update the post in the list
             const posts = get().posts
@@ -728,7 +705,6 @@ export const useFeedStore = create<FeedState>()(
       likeComment: async (id: string) => {
         try {
           const response = await apiCaller('POST', `${authRoutes.likeComment}/${id}/like`)
-          console.log('likeComment response', response)
           if (response.success) {
             return {
               isLiked: response.data.isLiked as boolean,
@@ -751,7 +727,6 @@ export const useFeedStore = create<FeedState>()(
             ? `${authRoutes.postLikes}/${id}/likes?${query.toString()}`
             : `${authRoutes.postLikes}/${id}/likes`
           const response = await apiCaller('GET', url)
-          console.log('postLikes response', response)
           if (response.success) {
             return {
               users: response.data.users || [],
@@ -768,7 +743,6 @@ export const useFeedStore = create<FeedState>()(
       commentPost: async (id: string, data: CommentData) => {
         try {
           const response = await apiCaller('POST', `${authRoutes.commentPost}/${id}/comment`, data)
-          console.log('commentPost response', response)
           if (response.success) {
             // Update the post in the list
             const posts = get().posts
@@ -797,7 +771,6 @@ export const useFeedStore = create<FeedState>()(
             : `${authRoutes.getComments}/${postId}/comments`
 
           const response = await apiCaller('GET', url)
-          console.log('getComments response', response)
           if (response.success) {
             return {
               comments: response.data.comments || [],
@@ -816,7 +789,6 @@ export const useFeedStore = create<FeedState>()(
           // Send data if text is provided, otherwise send empty object for valid JSON
           const requestData = data?.text ? { text: data.text } : {}
           const response = await apiCaller('POST', `${authRoutes.repostPost}/${id}/repost`, requestData)
-          console.log('repostPost response', response)
           if (response.success) {
             // Update the post in the list with new repost count
             const posts = get().posts
@@ -840,7 +812,6 @@ export const useFeedStore = create<FeedState>()(
       sharePost: async (id: string) => {
         try {
           const response = await apiCaller('POST', `${authRoutes.sharePost}/${id}/share`)
-          console.log('sharePost response', response)
           if (response.success) {
             // Update the post in the list
             const posts = get().posts
@@ -860,7 +831,6 @@ export const useFeedStore = create<FeedState>()(
       savePost: async (id: string) => {
         try {
           const response = await apiCaller('POST', `${authRoutes.savePost}/${id}/save`)
-          console.log('savePost response', response)
           if (response.success) {
             // Update the post in the list
             const posts = get().posts
@@ -885,7 +855,6 @@ export const useFeedStore = create<FeedState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('GET', authRoutes.getSavedPosts)
-          console.log('getSavedPosts response', response)
           if (response.success) {
             set({ 
               posts: response.data.posts || [],
@@ -910,7 +879,6 @@ export const useCategoriesStore = create<CategoriesState>()(
         set({ isLoading: true })
         try {
           const response = await apiCaller('GET', authRoutes.categories)
-          console.log('getCategories response', response)
           if (response.success) {
             set({ 
               categories: response.data.categories || response.data || [],

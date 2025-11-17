@@ -56,7 +56,6 @@ const countryCodes = [
 export default function SendPhoneVerification() {
   const router = useRouter()
   const { sendOtp, isLoading,user } = useAuthStore()
-  console.log('sendphoneverificationuser', user)
   const [phone, setPhone] = useState('')
   const [countryCode, setCountryCode] = useState('+1')
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)

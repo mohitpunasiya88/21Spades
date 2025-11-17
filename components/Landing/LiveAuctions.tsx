@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { PiArrowBendUpRightBold } from 'react-icons/pi';
+import { RiArrowDropDownLine } from 'react-icons/ri';
+import { BsSuitSpade } from 'react-icons/bs';
 
 export default function LiveAuctions() {
   const auctions = [
@@ -17,7 +20,7 @@ export default function LiveAuctions() {
   const [direction, setDirection] = useState<1 | -1>(1);
 
   // Duplicate auctions for seamless infinite scroll effect
-  const duplicatedAuctions = [...auctions, ...auctions, ...auctions];
+  const duplicatedAuctions = [...auctions, ...auctions, ...auctions, ...auctions, ...auctions];
 
   useEffect(() => {
     let animationFrameId: number;
@@ -58,72 +61,71 @@ export default function LiveAuctions() {
   }, [isPaused, direction]);
 
   return (
-    <section className="py-5 mb-5 relative overflow-hidden">
-      <div className="container mx-auto px-4">
-        {/* Header area with centered content and responsive action buttons */}
-        <div className="relative mb-12">
-          {/* Centered content section */}
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex flex-col items-center gap-4 w-full max-w-[670px]" style={{ minHeight: '175px', gap: '16px' }}>
-              {/* Icon with glow effect */}
-              <div className="flex items-center justify-center" style={{ width: '115px', height: '101px', gap: '12px' }}>
-                <div className="relative">
-                  <div className="relative flex items-center justify-center w-[115px] h-[101px]">
-                    <span className="text-white text-6xl font-bold">♠</span>
-                  </div>
-                </div>
-              </div>
+    <section className="mb-5 mt-5 overflow-hidden">
+      <div className="flex flex-col justify-center items-center w-[100%]">
+        <div className="flex flex-col md:relative justify-center items-center mb-8 md:mb-12 mt-10 w-full px-4">
+          <div className="flex flex-col items-center gap-4 w-full max-w-[670px]">
 
-              {/* Live text with gradient */}
-              <h2 className="gold-gradient-text font-audiowide font-bold text-5xl md:text-6xl text-center">
-                Live
-              </h2>
-
-              {/* Description text */}
-              <p className="font-exo2 font-semibold text-lg text-[#B8BAE5] text-center">
-                Where Culture Moves.See what's capturing attention across art, gaming, fashion, and culture  all rising on-chain
-              </p>
+            <div className="flex justify-center items-center">
+              <BsSuitSpade className="text-white w-6 h-6" />
             </div>
-          </div>
 
-          {/* Action buttons: centered on mobile, absolute on md+ */}
-          <div className="flex items-center justify-center gap-4 mt-6 md:mt-0 md:absolute md:bottom-0 md:right-0">
-            <div className="relative">
-              {/* <div className="pointer-events-none absolute -inset-3 rounded-full bg-gradient-to-r from-purple-700 via-indigo-500 to-purple-600 blur-2xl opacity-70" /> */}
-              <button className="relative px-6 py-3 text-white rounded-full font-exo2 inline-flex items-center gap-2" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
-                Avalanche
-                <span className="text-white">▼</span>
-              </button>
-            </div>
-            <button className="inline-flex items-center font-exo2 gap-2 px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-gray-100 transition-all border border-black/10">
-              <span>View All</span>
-              <ArrowRight className="w-5 h-5" />
+            {/* Live text with gradient */}
+            <h2 className="gold-gradient-text font-audiowide font-[400] text-[36px] md:text-[48px] text-center">
+              Live
+            </h2>
+
+            {/* Description text */}
+            <p className="font-exo2 font-semibold text-base md:text-lg text-[#A3AED0] text-center px-4">
+              Where Culture Moves.See what's capturing attention across art, gaming, fashion, and culture  all rising on-chain
+            </p>
+          </div> 
+          
+          <div className="w-full flex justify-center md:absolute md:justify-end md:right-10 md:bottom-2 mt-6 md:mt-0">
+            <button
+              className="
+      relative px-8 py-2
+      rounded-full font-exo2 text-white
+      inline-flex items-center gap-2
+
+      bg-[#111327] 
+      border border-white/10
+
+      shadow-[0px_0px_8px_rgba(255,255,255,0.05)_inset,0px_0px_12px_rgba(0,0,0,0.35)]
+
+      backdrop-blur-md
+      transition-all duration-200
+
+      hover:shadow-[0px_0px_12px_rgba(255,255,255,0.08)_inset,0px_0px_14px_rgba(0,0,0,0.45)]
+    "
+            >
+              Avalanche
+              <RiArrowDropDownLine className="w-5 h-5 text-white" />
             </button>
           </div>
+
+
         </div>
 
-        <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none" />
-
+        <div className="relative w-full overflow-hidden">
           {/* Cards scroller with auto back-and-forth motion on X axis */}
           <div
             ref={scrollerRef}
-            className="flex gap-10 overflow-x-auto scrollbar-hide pb-4 mx-auto"
+            className="flex gap-10 overflow-x-scroll scrollbar-hide py-4"
             style={{ scrollbarWidth: 'none', scrollBehavior: 'auto' }}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
             {duplicatedAuctions.map((auction, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="flex-shrink-0 overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer relative mx-auto w-[220px] h-[330px] sm:w-[240px] sm:h-[360px] md:w-[260px] md:h-[380px] rounded-[25px] bg-white"
                 style={{
                   border: '1.1px solid rgba(242, 242, 242, 0.5)'
                 }}
               >
                 {/* NFT Image Area with Radial Gradient */}
-                <div 
+                <div
                   className="relative flex items-center justify-center w-[200px] h-[180px] sm:w-[220px] sm:h-[200px] md:w-[240px] md:h-[216px] rounded-[25px]"
                   style={{
                     background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
@@ -132,20 +134,20 @@ export default function LiveAuctions() {
                     left: '8px'
                   }}
                 >
-                  <img 
-                    src="/assets/nft-card-icon.png" 
-                    alt="Live Auctions" 
-                    width={150} 
+                  <img
+                    src="/assets/nft-card-icon.png"
+                    alt="Live Auctions"
+                    width={150}
                     height={180}
                     className="object-contain"
                   />
-                  
+
                   {/* Live Bid Badge */}
                   <div className="absolute top-3 left-3 px-2 py-1 bg-purple-900/80 backdrop-blur-sm rounded-full text-white text-xs flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
                     Live Bid
                   </div>
-                  
+
                   {/* Timer Badge */}
                   <div className="absolute top-3 right-3 text-white text-xs bg-purple-900/80 backdrop-blur-sm px-2 py-1 rounded-full">
                     {auction.timeLeft}
@@ -175,6 +177,12 @@ export default function LiveAuctions() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="flex justify-center items-center mt-6 ">
+            <button className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center gap-4" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+              View All
+              <PiArrowBendUpRightBold className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>

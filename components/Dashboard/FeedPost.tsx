@@ -8,6 +8,7 @@ import EmojiPicker from 'emoji-picker-react'
 import { useChatStore } from '@/lib/store/chatStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
+import RepostModal from '@/components/Common/RepostModal'
 
 interface FeedPostProps {
   post: {
@@ -28,6 +29,23 @@ interface FeedPostProps {
     isLiked?: boolean
     isSaved?: boolean
     isReposted?: boolean
+    // For reposts - original post data
+    repostCaption?: string // Caption added when reposting
+    originalPost?: {
+      id: string
+      username: string
+      verified: boolean
+      timeAgo: string
+      walletAddress: string
+      profilePicture?: string
+      content: string
+      image: string
+      likes: number
+      comments: number
+      shares: number
+      reposts?: number
+      saves: number
+    }
   }
 }
 
@@ -84,12 +102,16 @@ export default function FeedPost({ post }: FeedPostProps) {
   const [likersTotal, setLikersTotal] = useState<number>(0)
   const [isSharing, setIsSharing] = useState(false)
   const [isReposting, setIsReposting] = useState(false)
+  const [showRepostModal, setShowRepostModal] = useState(false)
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
   const emojiPickerRef = useRef<HTMLDivElement | null>(null)
   const [mentionQuery, setMentionQuery] = useState('')
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
   const [mentionStartPos, setMentionStartPos] = useState<number | null>(null)
   const mentionDropdownRef = useRef<HTMLDivElement | null>(null)
+  
+  // Check if this is a repost
+  const isRepost = !!post.originalPost
 
   const handleLike = async () => {
     if (!isAuthenticated) {
@@ -159,7 +181,7 @@ export default function FeedPost({ post }: FeedPostProps) {
     }
   }
 
-  const handleRepost = async () => {
+  const handleRepost = () => {
     if (!isAuthenticated) {
       setShowLoginModal(true)
       return
@@ -168,9 +190,15 @@ export default function FeedPost({ post }: FeedPostProps) {
     // Prevent if already reposted or currently reposting
     if (reposted || isReposting) return
 
+    // Open repost modal
+    setShowRepostModal(true)
+  }
+
+  const handleRepostSubmit = async (caption: string) => {
     setIsReposting(true)
     try {
-      await repostPost(post.id)
+      // Call repostPost with caption (empty string if no caption)
+      await repostPost(post.id, { text: caption || undefined })
       setReposted(true)
       // Update repost count from API response
       const updatedPost = useFeedStore.getState().posts.find(p => p._id === post.id)
@@ -180,9 +208,11 @@ export default function FeedPost({ post }: FeedPostProps) {
       } else {
         setLocalReposts(localReposts + 1)
       }
+      // Refresh posts to show the new repost
+      await useFeedStore.getState().getPosts()
     } catch (error) {
       console.error('Error reposting:', error)
-      // Don't set reposted on error
+      throw error // Re-throw so modal can handle it
     } finally {
       setIsReposting(false)
     }
@@ -270,6 +300,11 @@ export default function FeedPost({ post }: FeedPostProps) {
     if (isOpen) {
       setActiveKey([])
     } else {
+      // Check authentication before loading comments
+      if (!isAuthenticated) {
+        setShowLoginModal(true)
+        return
+      }
       setActiveKey(['comments'])
       // Load first page when accordion opens
       setLoadingComments(true)
@@ -320,7 +355,6 @@ export default function FeedPost({ post }: FeedPostProps) {
 
       // Update comment count from store
       const updatedPost = useFeedStore.getState().posts.find(p => p._id === post.id)
-      console.log('updatedPost', updatedPost)
       if (updatedPost) {
         setLocalComments(updatedPost.commentsCount || localComments + 1)
       } else {
@@ -360,6 +394,13 @@ export default function FeedPost({ post }: FeedPostProps) {
   // Load more comments (next page)
   const loadMoreComments = async () => {
     if (isLoadingMore || !hasMoreComments) return
+    
+    // Check authentication before loading more comments
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+    
     setIsLoadingMore(true)
     try {
       const nextPage = commentsPage + 1
@@ -543,7 +584,7 @@ export default function FeedPost({ post }: FeedPostProps) {
   return (
     <div className="rounded-xl sm:rounded-2xl border border-[#FFFFFF33] bg-[#090721] p-4 sm:p-6 md:p-8 font-exo2">
 
-      {/* Top Header */}
+      {/* Top Header - Show repost author if it's a repost */}
       <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div
           className="flex items-center justify-center w-[40px] h-[40px] sm:w-[48px] sm:h-[48px] rounded-full overflow-hidden p-1.5 sm:p-2 flex-shrink-0"
@@ -573,19 +614,76 @@ export default function FeedPost({ post }: FeedPostProps) {
         </div>
       </div>
 
-      {/* Text */}
-      {post.content && <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">{post.content}</p>}
+      {/* Repost Caption - Only show if it's a repost and has caption */}
+      {isRepost && post.repostCaption && (
+        <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">{post.repostCaption}</p>
+      )}
 
-      {/* Media */}
-      {post.image && (
-        <div className="overflow-hidden rounded-lg sm:rounded-xl w-full mb-3 sm:mb-4">
-          <img
-            src={post.image}
-            alt="Post Image"
-            className="w-full h-auto object-fill max-h-[500px]"
-            style={{ display: 'block' }}
-          />
+      {/* Embedded Original Post - Show if it's a repost */}
+      {isRepost && post.originalPost ? (
+        <div className="rounded-lg sm:rounded-xl border border-[#4F01E6] bg-[#090721] p-3 sm:p-4 mb-3 sm:mb-4">
+          {/* Original Post Header */}
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <div
+              className="flex items-center justify-center w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden p-1 sm:p-1.5 flex-shrink-0"
+              style={{
+                background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)'
+              }}
+            >
+              {post.originalPost.profilePicture ? (
+                <img
+                  src={post.originalPost.profilePicture}
+                  alt={post.originalPost.username}
+                  className="w-[24px] h-[24px] sm:w-[32px] sm:h-[32px] rounded-full object-cover"
+                />
+              ) : (
+                <img src="/post/card-21.png" alt="Avatar" className="w-[24px] h-[24px] sm:w-[32px] sm:h-[32px] object-contain" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <span className="text-white font-semibold truncate text-xs sm:text-sm">{post.originalPost.username}</span>
+                <img src="/post/verify-white.png" alt="" className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="text-gray-500 text-xs whitespace-nowrap">{post.originalPost.timeAgo}</span>
+              </div>
+              <p className="text-gray-500 text-[10px] truncate">{post.originalPost.walletAddress}</p>
+            </div>
+          </div>
+
+          {/* Original Post Content */}
+          {post.originalPost.content && (
+            <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm leading-relaxed break-words">{post.originalPost.content}</p>
+          )}
+
+          {/* Original Post Media */}
+          {post.originalPost.image && (
+            <div className="overflow-hidden rounded-lg w-full">
+              <img
+                src={post.originalPost.image}
+                alt="Original Post Image"
+                className="w-full h-auto object-fill max-h-[400px]"
+                style={{ display: 'block' }}
+              />
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          {/* Regular Post Text - Only show if not a repost */}
+          {post.content && <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">{post.content}</p>}
+
+          {/* Regular Post Media - Only show if not a repost */}
+          {post.image && (
+            <div className="overflow-hidden rounded-lg sm:rounded-xl w-full mb-3 sm:mb-4">
+              <img
+                src={post.image}
+                alt="Post Image"
+                className="w-full h-auto object-fill max-h-[500px]"
+                style={{ display: 'block' }}
+              />
+            </div>
+          )}
+        </>
       )}
       <div className="border-b border-[#6B757E4D] mb-2 sm:mb-3" />
       {/* Actions */}
@@ -971,6 +1069,21 @@ export default function FeedPost({ post }: FeedPostProps) {
         onClose={() => setShowLoginModal(false)}
         title="Login Required"
         message="You need to be logged in to perform this action. Please login to continue."
+      />
+
+      {/* Repost Modal */}
+      <RepostModal
+        isOpen={showRepostModal}
+        onClose={() => setShowRepostModal(false)}
+        onRepost={handleRepostSubmit}
+        isReposting={isReposting}
+        post={{
+          username: post.username,
+          timeAgo: post.timeAgo,
+          profilePicture: post.profilePicture,
+          content: post.content,
+          image: post.image,
+        }}
       />
     </div>
   )

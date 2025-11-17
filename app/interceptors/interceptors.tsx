@@ -4,7 +4,8 @@ import authRoutes from '@/lib/routes';
 
  export const apiClient = axios.create({
     // baseURL: "http://localhost:8080/api/",
-    baseURL: "http://18.215.86.203:8080/api/",
+    // baseURL: "http://18.215.86.203:8080/api/",
+    baseURL: "https://two1spades-backend.onrender.com/api/",
 });
 
 const routes = authRoutes;
@@ -13,23 +14,11 @@ apiClient.interceptors.request.use(
     (config:any) => {
         const requiresAuth = config.requiresAuth ?? true;
 
-        // Log API request for debugging
-        const fullUrl = `${config.baseURL || ''}${config.url || ''}`
-        console.log('🌐 [NETWORK] API Request:', {
-            method: config.method?.toUpperCase(),
-            url: fullUrl,
-            requiresAuth,
-            hasToken: !!localStorage.getItem('token')
-        })
-
         // Add Authorization header if required
         if (requiresAuth) {
             const token = localStorage.getItem('token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
-                console.log('🌐 [NETWORK] Authorization header added')
-            } else {
-                console.log("🌐 [NETWORK] No token found, proceeding without authorization header.");
             }
         }
 
@@ -48,12 +37,6 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
     (response) => {
-        // Log successful API response
-        console.log('🌐 [NETWORK] API Response Success:', {
-            url: response.config.url,
-            status: response.status,
-            data: response.data
-        })
         return response;
     },
     (error) => {
@@ -68,7 +51,6 @@ apiClient.interceptors.response.use(
         if (error.response) {
             const { status, data } = error.response;
             let errorMessage = 'An error occurred';
-            console.log(status, data?.message)
 
             if (status === 401 || status === 403) {
                 errorMessage = data?.message || 'Unauthorized access. Please log in again.';

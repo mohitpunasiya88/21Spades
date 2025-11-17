@@ -1,110 +1,136 @@
 import { ArrowRight } from 'lucide-react';
+import { BsSuitSpade } from 'react-icons/bs';
+import { CiHeart } from 'react-icons/ci';
+import { PiArrowBendUpRightBold } from 'react-icons/pi';
+import { RiArrowDropDownLine } from 'react-icons/ri';
 
 export default function DiscoverCollections() {
   return (
-    <section 
-      className="py-20 relative overflow-hidden min-h-screen"
+    <section
+      className="py-20 flex flex-col justify-center items-center overflow-hidden"
       style={{
-        // background: '#000000',
         backgroundImage: 'url("/assets/card-bg.png")',
         backgroundSize: 'cover',
-        backgroundPosition: 'center center',
+        backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        // backgroundAttachment: 'fixed'
       }}
     >
-      {/* Purple glowing spade icon at top */}
-      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="relative">
-          <div className="relative flex items-center justify-center w-16 h-16">
-            <span className="text-white text-5xl font-bold">♠</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 relative z-20">
+      {/* Top glowing spade icon */}
+      <div className="flex justify-center items-center mb-8">
+          <BsSuitSpade className="text-white w-6 h-6" />
+        </div>
+
+      <div className="mx-auto px-4 relative z-20">
+
         {/* Title Section */}
-        <div className="text-center mb-12 mt-10">
-          <h2 className="gold-gradient-text font-audiowide font-bold text-4xl md:text-5xl mb-6 text-center">
-            DISCOVER COLLECTIONS
+        <div className="text-center mb-10">
+          <h2 className="gold-gradient-text font-audiowide font-[400] text-[32px] sm:text-[40px] md:text-[48px] mb-4">
+            Discover Collection
           </h2>
-          <p className="text-[#B8BAE5] text-lg font-exo2 font-medium max-w-2xl mx-auto text-center leading-relaxed">
+
+          <p className="text-[#B8BAE5] text-base sm:text-lg font-exo2 font-medium max-w-2xl mx-auto leading-relaxed">
             Curate your world, Explore curated collections and rare finds<br />
             that define your digital identity.
           </p>
         </div>
 
-        {/* NFT Card */}
-        <div className="flex justify-center mb-12">
-          <img src="/assets/card-bg.png" alt="Background" className="absolute z-0" />
-          <div 
-            className="relative overflow-hidden transition-all hover:transform hover:scale-105 cursor-pointer"
-            style={{
-              width: '260px',
-              height: '380px',
-              borderRadius: '25px',
-              border: '1.1px solid rgba(242, 242, 242, 0.5)',
-              background: '#FFFFFF'
-            }}
+        {/* Chain Selector Dropdown */}
+        <div className="flex justify-center md:justify-end mb-6 pr-2 sm:pr-4">
+          <button
+            className="
+          relative px-8 py-2 rounded-full font-exo2 text-white inline-flex items-center gap-2
+          bg-[#111327] border border-white/10
+          shadow-[0px_0px_8px_rgba(255,255,255,0.05)_inset,0px_0px_12px_rgba(0,0,0,0.35)]
+          backdrop-blur-md transition-all duration-200
+          hover:shadow-[0px_0px_12px_rgba(255,255,255,0.08)_inset,0px_0px_14px_rgba(0,0,0,0.45)]
+        "
           >
-            {/* NFT Image Area with Radial Gradient */}
-            <div 
-              className="relative flex items-center justify-center"
-              style={{
-                width: '240px',
-                height: '216px',
-                borderRadius: '25px',
-                background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
-                position: 'absolute',
-                top: '7px',
-                left: '8px'
-              }}
+            Avalanche
+            <RiArrowDropDownLine className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        {/* NFT CARDS GRID with Background */}
+        <div className="relative w-full">
+          {/* Background Image */}
+          <div className="absolute inset-0 flex items-center justify-start pointer-events-none opacity-20 z-0 left-[-20%]">
+            <img src="/assets/card-icon.png" alt="Background" className="left-0 translate-x-[-50%] rotate-[90deg] object-contain w-[75%] h-[75%]" />
+          </div>
+          
+          {/* Cards Grid */}
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center gap-6 sm:gap-8">
+          
+          {/* Card Component Loop */}
+          {[1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px] transition-all hover:scale-[1.03] cursor-pointer"
             >
-              {/* Golden Spade with "21" */}
-              <img src="/assets/card-icon.png" alt="Discover Collections" width={150} height={180} className="object-contain" />
-            </div>
+              {/* NFT Image Area */}
+              <div
+                className="w-full h-[200px] sm:h-[240px] md:h-[280px] rounded-t-[10px] flex items-center justify-center relative"
+                style={{
+                  background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
+                }}
+              >
+                <img
+                  src="/assets/card-icon.png"
+                  alt="NFT"
+                  className="object-contain w-[120px] sm:w-[140px] md:w-[150px]"
+                />
 
-            {/* Card Details Section */}
-            <div className="absolute left-0 right-0 px-4 pt-3 pb-4" style={{ top: '223px' }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <img src="/assets/verify-tick-icon.png" alt="Verified" width={16} height={16} />
-                </div>
-                <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
+                {/* Heart Icon */}
+                <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
+                  <CiHeart className="w-5 h-5 text-white" />
+                </button>
               </div>
 
-              <h3 className="text-gray-900 text-base font-bold mb-3">Aether Guardian</h3>
-              <hr className="w-full border-gray-200 my-3" />
-
-              {/* Floor Price Section */}
-              <div className="flex items-center justify-between">
-                <div className="px-2.5 py-1" >
-                  <span className="text-purple-700 text-xs font-semibold">Floor Price</span>
+              {/* Content */}
+              <div className="px-3 py-3 sm:px-4 sm:py-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <img src="/assets/verify-tick-icon.png" className="w-4 h-4" />
+                  <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-red-500 text-base">▲</span>
-                  <span className="text-gray-900 text-base font-bold">0.01 AVAX</span>
+
+                <h3 className="text-gray-900 font-bold text-base sm:text-lg mb-2 sm:mb-3">Aether Guardian</h3>
+
+                <hr className="border-gray-300 mb-2 sm:mb-3" />
+
+                {/* Floor Price */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[#4A01D9] text-xs sm:text-sm font-semibold">Floor Price</span>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500 text-base sm:text-lg">▲</span>
+                    <span className="text-[#000000] font-semibold text-xs sm:text-sm">0.01 AVAX</span>
+                  </div>
                 </div>
               </div>
             </div>
+          ))}
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-end pointer-events-none opacity-20 z-0 right-[-20%]">
+            <img src="/assets/card-icon.png" alt="Background" className="right-0 translate-x-[50%] rotate-[-90deg] object-contain w-[75%] h-[75%]" />
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-center gap-4">
-          <button 
-            className="px-6 py-3 text-white rounded-full font-exo2 inline-flex items-center gap-2 transition-all" 
-            style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
+        {/* View All Button */}
+        <div className="flex justify-center mt-14">
+          <button
+            className="relative px-12 py-2 w-[220px] text-white rounded-full font-exo2 inline-flex items-center justify-center gap-3 text-lg"
+            style={{
+              background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
+            }}
           >
-            Avalanche
-            <span className="text-white">▼</span>
-          </button>
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-gray-100 transition-all border border-black/10">
-            <span>View All</span>
-            <ArrowRight className="w-5 h-5" />
+            View All
+            <PiArrowBendUpRightBold className="w-5 h-5" />
           </button>
         </div>
+
       </div>
     </section>
+
   );
 }

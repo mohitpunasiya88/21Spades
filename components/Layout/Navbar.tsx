@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Badge } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const { logout, user } = useAuthStore()
-  console.log('login98989898', user)
 
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -64,12 +64,22 @@ export default function Navbar() {
       // Small delay to ensure state is cleared before redirect
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Use replace to prevent going back to feed page
-      window.location.href = '/landing'
+      // If already on feed page, stay there. Otherwise redirect to feed
+      if (pathname === '/feed') {
+        // Already on feed page, just refresh to clear any cached data
+        router.refresh()
+      } else {
+        // Redirect to feed page
+        router.replace('/feed')
+      }
     } catch (error) {
       console.error('Logout error:', error)
-      // Even if logout fails, force redirect
-      window.location.href = '/landing'
+      // Even if logout fails, redirect to feed
+      if (pathname === '/feed') {
+        router.refresh()
+      } else {
+        router.replace('/feed')
+      }
     }
   }
 
@@ -191,7 +201,7 @@ export default function Navbar() {
         {/* Language Selector */}
         {/* Language Dropdown */}
         <div className="relative hidden sm:block" ref={languageRef}>
-          <button
+          {/* <button
             onClick={() => {
               setIsLanguageOpen(!isLanguageOpen)
               setIsProfileOpen(false)
@@ -200,22 +210,22 @@ export default function Navbar() {
             style={{
               background: isLanguageOpen ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
             }}
-          >
-            <Languages className="w-4 h-4" />
+          > */}
+            {/* <Languages className="w-4 h-4" />
             <span
               className="font-semibold text-sm sm:text-base md:text-[18px] leading-none"
               style={{ fontFamily: 'var(--font-exo2)' }}
             >
               {selectedLanguage}
-            </span>
+            </span> */}
             {/* Custom small caret (7.58 x 4.33) */}
-            <svg
+            {/* <svg
               className={`ml-1 ${isLanguageOpen ? 'rotate-180' : ''}`}
               width="7.58" height="4.33" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg"
             >
               <path d="M1 1.5L8 7.5L15 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            </svg> */}
+          {/* </button> */}
 
           {/* Language Dropdown Menu */}
           {isLanguageOpen && (
@@ -407,7 +417,7 @@ export default function Navbar() {
         {/* Create Token Button - Mobile - HIDDEN, now in menu */}
 
         {/* User Profile with Spades Text and Hover Dropdown */}
-        {user && (
+        {user ? (
           <div className="flex items-center gap-1 sm:gap-3">
             {/* Desktop Profile with Hover Dropdown */}
             <div className="relative hidden sm:block" ref={profileRef}>
@@ -610,6 +620,16 @@ export default function Navbar() {
               )}
             </div>
 
+          </div>
+        ) : (
+          // Login Button - Show when user is logged out
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/login')}
+              className="px-4 py-2 sm:px-6 sm:py-2 bg-gradient-to-b from-[#4F01E6] to-[#25016E] hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-full transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl"
+            >
+              Login
+            </button>
           </div>
         )}
       </div>

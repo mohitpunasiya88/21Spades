@@ -1,5 +1,7 @@
 "use client";
 
+import { BsSuitSpade } from "react-icons/bs";
+
 export default function HowToTokenize() {
   const steps = [
     {
@@ -25,19 +27,19 @@ export default function HowToTokenize() {
   ];
 
   return (
-    <section className="py-16 md:py-20 relative overflow-hidden min-h-screen rounded-[24px]">
+    <section className="py-10 md:py-20 relative overflow-hidden min-h-screen rounded-[24px]">
 
       <img src="/assets/star-animation.jpg" alt="How to Tokenize" className="absolute top-0 left-0 w-full h-full object-cover opacity-50" />
 
       {/* White spade icon at top center */}
-      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
-        <span className="text-white text-5xl font-bold">♠</span>
+      <div className="flex justify-center items-center">
+          <BsSuitSpade className="text-white w-6 h-6" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Title Section */}
         <div className="text-center mt-4 md:mt-5 px-4">
-          <h2 className="gold-gradient-text font-audiowide font-[400] text-[16px] sm:text-[36px] md:text-[48px] mb-6 md:mb-6 text-center" style={{ letterSpacing: '0.06em' }}>
+          <h2 className="gold-gradient-text font-audiowide font-[400] text-[16px] sm:text-[28px] md:text-[36px] mb-6 md:mb-6 text-center" style={{ letterSpacing: '0.06em' }}>
             HOW TO TOKENIZE AN ASSET
           </h2>
         </div>
@@ -49,7 +51,7 @@ export default function HowToTokenize() {
             {/* Step Number */}
             <div
               className={`hidden md:block absolute top-0 z-0 font-audiowide text-[120px] font-normal opacity-20 select-none ${
-                index === 0 || index === 2 ? 'left-0 text-left translate-y-1/4 translate-x-1/3' : 'right-0 text-right translate-y-1/4 -translate-x-1/3'
+                index === 0 || index === 2 ? 'left-0 text-left translate-y-1 translate-x-1/3' : 'right-0 text-right translate-y-1/4 -translate-x-1/3'
               }`}
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 22.25%, #FFB600 82.42%)',
@@ -63,7 +65,7 @@ export default function HowToTokenize() {
           
             {/* Step Content */}
             <div
-              className={`relative z-10 flex flex-col items-center text-center md:text-inherit ${
+              className={`relative z-10 flex flex-col items-center text-center bottom-0 md:text-inherit ${
                 index === 0 || index === 2 ? 'md:items-start md:text-left' : 'md:items-end md:text-right'
               } md:max-w-[460px] w-full md:mt:[60px] ${index === 0 || index === 2 ? 'md:ml-20' : ''} ${index === 1 || index === 3 ? 'md:mr-20' : ''}`}
             >
