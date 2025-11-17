@@ -2,7 +2,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker, message } from "antd"
+import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker } from "antd"
+import { useMessage } from "@/lib/hooks/useMessage"
 import dayjs, { Dayjs } from "dayjs"
 import { Upload as UploadIcon, X, Plus, CloudUpload, Calendar } from "lucide-react"
 import Image from "next/image"
@@ -26,6 +27,7 @@ const { TextArea } = Input
 export default function CreateNFTPage() {
   const { user } = useAuthStore()
   const {address } = useWallet();
+  const { message } = useMessage()
   const { ready, authenticated, createWallet, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { getCoinPrice, coinAmount } = useMarketDataStore()
