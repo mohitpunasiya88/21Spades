@@ -15,7 +15,7 @@ interface NFTCardProps {
 function NFTCard({ title, creator, price, edition, verified = true }: NFTCardProps) {
   return (
     <div
-      className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px]   transition-all hover:scale-[1.03] cursor-pointer z-10"
+      className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full transition-all hover:scale-[1.03] cursor-pointer z-10"
     >
       {/* NFT Image Area */}
       <div

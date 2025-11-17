@@ -52,8 +52,8 @@ export default function Trending() {
           </p>
         </div>
 
-        <div className="mb-8 md:mb-12 w-full flex justify-center font-exo2">
-          <div className="flex items-center gap-0 overflow-x-auto rounded-full px-2 py-2 bg-[#0E0E1F]/90 backdrop-blur-sm border border-white/10 w-full max-w-[1092px]">
+        <div className="mb-8 md:mb-12 w-full max-w-6xl mx-auto font-exo2">
+          <div className="flex items-center justify-center gap-0 overflow-x-auto rounded-full px-2 py-2 bg-[#0E0E1F]/90 backdrop-blur-sm border border-white/10 w-full">
             {categories.map((category, index) => (
               <div key={index} className="flex items-center">
                 <button
@@ -75,17 +75,19 @@ export default function Trending() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-12 mx-auto w-full z-10 justify-center items-center ">
+        <div className="w-full max-w-6xl mx-auto mb-12 relative z-10">
           <img src="/assets/bg-ball.png" alt="Background" className="absolute top-0 left-0 opacity-70 blur-md z-0 w-170 h-170 -translate-x-1/2 translate-y-1/3" />
-          {filteredNfts.length > 0 ? (
-            filteredNfts.slice(0, 6).map((nft, index) => (
-              <NFTCard key={index} {...nft} />
-            ))
-          ) : (
-            <div className="col-span-full text-center text-gray-400 py-12">
-              No NFTs found in this category
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+            {filteredNfts.length > 0 ? (
+              filteredNfts.slice(0, 6).map((nft, index) => (
+                <NFTCard key={index} {...nft} />
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-400 py-12">
+                No NFTs found in this category
+              </div>
+            )}
+          </div>
           <img src="/assets/bg-ball.png" alt="Background" className="absolute z-0 bottom-0 right-0 opacity-50 blur-md z-0 w-300 h-300 translate-x-1/2 translate-y-1/6" />
         </div>
 
