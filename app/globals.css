@@ -58,7 +58,8 @@ body {
   letter-spacing: 2%;
   text-align: center;
   color: transparent;
-  background: linear-gradient(180deg, #FFFFFF 22.25%, #FFB600 82.42%);
+   background: linear-gradient(180deg, #FFFFFF 49.52%, #FFB600 71.15%);
+
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-transform: none;
