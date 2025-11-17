@@ -34,7 +34,7 @@ export default function HowToTokenize() {
       {/* White spade icon at top center */}
 
 
-      <div className="mx-auto mt-10 relative z-10">
+      <div className="mx-auto flex flex-col relative justify-center items-center mt-10 relative z-10">
 
         <div className="flex justify-center items-center">
           <BsSuitSpade className="text-white w-6 h-6" />
@@ -47,7 +47,7 @@ export default function HowToTokenize() {
         </div>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 mt-5 gap-5 md:gap-5 md:max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 my-5 gap-5 md:gap-5 md:max-w-6xl mx-auto">
           {steps.map((step, index) => (
             <div key={index} className="relative min-h-[200px] md:min-h-[250px] flex flex-col md:flex-row items-center md:items-start justify-between">
               {/* Step Number */}
@@ -90,7 +90,12 @@ export default function HowToTokenize() {
 
           ))}
         </div>
+
+        <div className=" absolute flex justify-center items-center mt-20 bottom-0 ">
+          <img src="/assets/card-icon.png" alt="" className="w-[40%] h-[40%] object-contain translate-y-3/5" />
+        </div>
       </div>
+
     </section>
   );
 }
