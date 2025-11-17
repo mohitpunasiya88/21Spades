@@ -7,7 +7,7 @@ import { RiArrowDropDownLine } from 'react-icons/ri';
 export default function DiscoverCollections() {
   return (
     <section
-      className="py-20 flex flex-col justify-center items-center overflow-hidden"
+      className="mt-10 flex flex-col justify-center items-center overflow-hidden"
       style={{
         backgroundImage: 'url("/assets/card-bg.png")',
         backgroundSize: 'cover',

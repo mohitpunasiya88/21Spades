@@ -27,7 +27,7 @@ export default function HowToTokenize() {
   ];
 
   return (
-    <section className="py-10 md:py-20 relative overflow-hidden min-h-screen rounded-[24px]">
+    <section className="mt-10 relative overflow-hidden">
 
       <img src="/assets/star-animation.jpg" alt="How to Tokenize" className="absolute top-0 left-0 w-full h-full object-cover opacity-50" />
 

@@ -38,7 +38,7 @@ export default function Trending() {
     : allNfts.filter(nft => nft.category === activeCategory);
 
   return (
-    <section className="relative w-[100%] mx-auto my-2 md:my-5 min-h-screen">
+    <section className="relative w-[100%] mx-auto mt-10">
       <div className="flex flex-col justify-center items-center mx-auto px-4 w-[100%] md:w-[85%]">
         <div className="flex justify-center items-center">
           <BsSuitSpade className="text-white w-6 h-6" />

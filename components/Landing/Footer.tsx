@@ -3,7 +3,7 @@ import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-t w-[100%] md:w-[97%] mx-auto from-indigo-950 via-purple-950 to-black relative overflow-hidden mb-10 mt-10 mx-3 sm:mx-5 rounded-[24px] sm:rounded-[46px]">
+    <footer className="bg-gradient-to-t w-[100%] md:w-[97%] mx-auto from-indigo-950 via-purple-950 to-black relative overflow-hidden mb-5 mt-5 mx-3 sm:mx-5 md:rounded-xl">
 
       {/* Background pattern overlay */}
       <div className="absolute inset-0 opacity-20" style={{
@@ -17,11 +17,11 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
 
         {/* CTA Section */}
-        <div className="mx-auto text-center mb-10 sm:mb-20 px-2 order-2 md:order-1">
+        <div className="mx-auto text-center mb-10 sm:mb-20 mt-10 order-2 md:order-1">
           <h2 className="text-[#FFB600] font-audiowide text-2xl sm:text-[42px] md:text-[48px] mb-4 sm:mb-8 relative">
             JOIN THE WORLD OF WEB3 TODAY
           </h2>
-          <button className="px-6 sm:px-8 py-2.5 sm:py-3 mb-6 sm:mb-8 bg-white text-black rounded-full font-semibold transition-all relative font-exo2">
+          <button className="px-6 sm:px-8 py-2.5 sm:py-3 mb-6 sm:mb-8 bg-white cursor-pointer text-black rounded-full font-semibold transition-all relative font-exo2">
             Get Started Now
           </button>
         </div>
