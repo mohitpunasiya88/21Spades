@@ -6,12 +6,22 @@ import { useAuthStore } from '@/lib/store/authStore'
 import { Badge } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet } from 'lucide-react'
 import { usePrivy } from '@privy-io/react-auth'
+import { useNotificationStore } from '@/lib/store/notificationStore'
+import NotificationDropdown from '@/components/Notifications/NotificationDropdown'
 
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { logout, user, getUser, isAuthenticated, checkAuth } = useAuthStore()
   const { logout: privyLogout } = usePrivy()
+  const {
+    items: notifItems,
+    unreadCount,
+    hasMore: notifHasMore,
+    loading: notifLoading,
+    fetchInitial: fetchNotifInitial,
+    fetchMore: fetchNotifMore,
+  } = useNotificationStore()
 
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -29,6 +39,8 @@ export default function Navbar() {
   const mobileWalletRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const mobileProfileRef = useRef<HTMLDivElement>(null)
+  const notificationsRef = useRef<HTMLDivElement>(null)
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(event.target as Node)) {
@@ -49,6 +61,9 @@ export default function Navbar() {
       if (mobileProfileRef.current && !mobileProfileRef.current.contains(event.target as Node)) {
         setIsMobileProfileOpen(false)
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -61,7 +76,7 @@ export default function Navbar() {
       setIsMobileProfileOpen(false)
 
       // First, log out of Privy session if available
-      try { await privyLogout?.() } catch {}
+      try { await privyLogout?.() } catch { }
 
       // Then clear app auth state
       await logout()
@@ -84,6 +99,25 @@ export default function Navbar() {
 
   const handleclick = () => {
     router.push('/profile')
+  }
+
+  const timeAgo = (dateStr?: string) => {
+    if (!dateStr) return ''
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const s = Math.floor(diff / 1000)
+    if (s < 60) return `${s}s`
+    const m = Math.floor(s / 60)
+    if (m < 60) return `${m}m`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h}h`
+    const d = Math.floor(h / 24)
+    if (d < 7) return `${d}d`
+    const w = Math.floor(d / 7)
+    if (w < 4) return `${w}w`
+    const mo = Math.floor(d / 30)
+    if (mo < 12) return `${mo}mo`
+    const y = Math.floor(d / 365)
+    return `${y}y`
   }
 
   return (
@@ -189,7 +223,7 @@ export default function Navbar() {
 
 
           {/* Search Bar - Hidden on Mobile, Visible on Desktop */}
-          <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 md:gap-2 bg-[#F5F5F50A] border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 w-40 md:w-48 lg:w-64 xl:w-80">
+          <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 md:gap-2  border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 w-40 md:w-48 lg:w-64 xl:w-80">
             <Search className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 flex-shrink-0" />
             {/* vertical line */}
             <div className="w-px h-3.5 md:h-4 lg:h-[19px] bg-[#787486]" />
@@ -268,12 +302,37 @@ export default function Navbar() {
           </div>
 
           {/* Notifications - Desktop */}
-          <div className="relative hidden sm:block">
-            <Badge count={8} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
-              <button className="relative text-white w-9 h-9 rounded-full border border-white/30 bg-transparent flex items-center justify-center hover:opacity-80 transition-all">
+          <div className="relative hidden sm:block" ref={notificationsRef}>
+            <Badge count={unreadCount} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white  [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
+              <button
+                onClick={async () => {
+                  const nextOpen = !isNotificationsOpen
+                  setIsNotificationsOpen(nextOpen)
+                  if (nextOpen && (!Array.isArray(notifItems) || notifItems.length === 0)) {
+                    await fetchNotifInitial(5)
+                  }
+                }}
+                className="relative text-white w-12 h-12 rounded-full border border-white/30 bg-[#A3AED033] flex items-center justify-center hover:opacity-80 transition-all"
+              >
                 <Bell className="w-5 h-5" />
               </button>
             </Badge>
+            {isNotificationsOpen && (
+              <div
+                className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                style={{
+                  background: 'rgba(17, 24, 39, 0.98)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                  minWidth: '360px',
+                  maxWidth: '420px',
+                  zIndex: 1000,
+                }}
+              >
+                <NotificationDropdown open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+              </div>
+            )}
           </div>
 
           {/* Notifications - Mobile - HIDDEN, now in menu */}
@@ -292,8 +351,8 @@ export default function Navbar() {
               className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${isWalletHovered ? 'px-3 py-2' : 'p-2'
                 }`}
             >
-              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                <Wallet className="w-4 h-4 text-gray-800" />
+              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 ">
+                <Wallet className="w-4 h-4 text-gray-800 " />
               </div>
               {isWalletHovered && (
                 <>
@@ -582,40 +641,40 @@ export default function Navbar() {
                       zIndex: 1000,
                     }}
                   >
-                  {/* User Info */}
-                  <div className="p-4 border-b border-[#2A2F4A]">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center p-1.5 flex-shrink-0"
-                        style={
-                          user?.profilePicture
-                            ? undefined
-                            : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-                        }
-                      >
-                        {user?.profilePicture ? (
-                          <img
-                            src={user?.profilePicture}
-                            alt={user?.name || 'User'}
-                            className="w-full h-full rounded-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/post/card-21.png'
-                              e.currentTarget.className = 'w-full h-full object-contain'
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src="/post/card-21.png"
-                            alt="Avatar"
-                            className="w-full h-full object-contain"
-                          />
-                        )}
+                    {/* User Info */}
+                    <div className="p-4 border-b border-[#2A2F4A]">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center p-1.5 flex-shrink-0"
+                          style={
+                            user?.profilePicture
+                              ? undefined
+                              : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                          }
+                        >
+                          {user?.profilePicture ? (
+                            <img
+                              src={user?.profilePicture}
+                              alt={user?.name || 'User'}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = '/post/card-21.png'
+                                e.currentTarget.className = 'w-full h-full object-contain'
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src="/post/card-21.png"
+                              alt="Avatar"
+                              className="w-full h-full object-contain"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-semibold text-sm">{user?.name || 'User'}</p>
+                          <p className="text-gray-400 text-xs truncate">{user?.email || ''}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">{user?.name || 'User'}</p>
-                        <p className="text-gray-400 text-xs truncate">{user?.email || ''}</p>
-                      </div>
-                    </div>
                       <button
                         onClick={handleclick}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 rounded-lg transition-colors"
@@ -633,8 +692,8 @@ export default function Navbar() {
                       <span>Logout</span>
                     </button>
                   </div>
-              )}
-            </div>
+                )}
+              </div>
             </div>
           ) : (
             // Login Button - Show when user is logged out
