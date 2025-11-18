@@ -478,7 +478,11 @@ export default function FeedPage() {
                       style={{
                         minWidth: '100px',
                       }}
-                      popupClassName="categories-select-dropdown"
+                      classNames={{
+                        popup: {
+                          root: "categories-select-dropdown",
+                        },
+                      }}
                       optionLabelProp="label"
                       optionRender={(option) => (
                         <div className="flex items-center justify-between w-full">
