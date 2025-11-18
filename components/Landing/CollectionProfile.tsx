@@ -65,10 +65,10 @@ function NFTCard({ name, price, floorPrice, image, imageUrl, id, _id, itemName }
               e.stopPropagation()
               setIsFavorite(!isFavorite)
             }}
-            className="absolute top-7.5 right-7.5 z-10 p-2 rounded-full transition-colors ring-1 ring-white/25"
-            style={{
-              background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
-            }}
+            className="absolute glass top-7.5 right-7.5 z-10 p-2 rounded-full transition-colors"
+            // style={{
+            //   background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
+            // }}
           >
             
             <Heart 
@@ -124,7 +124,7 @@ function NFTCard({ name, price, floorPrice, image, imageUrl, id, _id, itemName }
               <ArrowUp className="w-3.5 h-3.5 text-red-500 fill-red-500" />
               <span className="text-white text-sm font-semibold font-exo2">A. {price}</span>
             </div>
-            <button className="px-3 py-1.5 text-xs font-medium text-gray-300 border border-gray-600 rounded-lg hover:border-gray-500 transition-colors flex items-center gap-1.5">
+            <button className="px-3 py-1.5 text-xs font-medium text-gray-300 border border-gray-600 rounded-full hover:border-gray-500 transition-colors flex items-center gap-1.5">
               <span className="font-exo2">Details</span>
             </button>
           </div>
@@ -380,7 +380,7 @@ export default function CollectionProfile({
       <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 ">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           {/* Tabs */}
-          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 w-full sm:w-auto overflow-x-auto">
+          <div className="flex justify-center items-center gap-8 sm:gap-6 md:gap-8 w-full sm:w-auto overflow-x-auto">
             {['Items', 'Live', 'Activity'].map((tab) => (
               <button
                 key={tab}

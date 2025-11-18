@@ -622,7 +622,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Picture - Far Left, Overlapping Banner */}
-        <div className="relative px-1 md:px-2-mt-24 md:-mt-28">
+        <div className="relative px-1 md:px-2 -mt-24 md:-mt-28">
           <div className="relative flex-shrink-0 w-[120px] h-[120px] md:w-[160px] md:h-[160px]">
             <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] bg-gradient-to-br from-[#8D5AFE] to-[#B98CFF] shadow-xl">
               {(() => {
@@ -701,7 +701,7 @@ export default function ProfilePage() {
                     className="!text-white !border-white !bg-[#FFFFFF1A] hover:!bg-[#FFFFFF1A] !rounded-full !px-4 !h-10 flex items-center gap-2  "
                     onClick={handleEditClick}
                   >
-                    <span className="hidden md:inline">Edit Profile</span>
+                    <span className="md:inline">Edit Profile</span>
                   </Button>
                   {/* <Button
                     className="!w-10 !h-10 !rounded-full !bg-[#0F0F23] !text-white hover:!bg-[#1a1938]"
@@ -823,7 +823,7 @@ export default function ProfilePage() {
           </div> */}
         </div>
       ) : (
-        <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6 font-exo2 pb-6">
+        <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-12 font-exo2 pb-6">
           <div className="px-5 pt-4 text-[24px] text-white font-semibold pb-4">
             Your Profile
           </div>
@@ -848,7 +848,7 @@ export default function ProfilePage() {
                 bio: profile.bio || user?.bio || "",
               }}
             >
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-x-6 gap-y-4">
                 <Form.Item
                   label={<span className="text-white text-sm">Display Name</span>}
                   name="name"
@@ -909,7 +909,7 @@ export default function ProfilePage() {
 
                 <Form.Item
                   label={<span className="text-white text-sm">Phone No.</span>}
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                 >
                   <div className="flex items-center gap-2">
                     {/* Country Code Dropdown */}
@@ -1016,7 +1016,7 @@ export default function ProfilePage() {
                 <Form.Item
                   label={<span className="text-white text-sm">Interest</span>}
                   name="interests"
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                 >
                   <Select
                     mode="multiple"
@@ -1057,7 +1057,7 @@ export default function ProfilePage() {
                 <Form.Item
                   label={<span className="text-white text-sm">Your Bio</span>}
                   name="bio"
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                 >
                   <Input.TextArea
                     rows={6}

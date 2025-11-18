@@ -333,7 +333,11 @@ export default function FeedPage() {
       {/* Mobile Floating Button for Right Sidebar */}
       <button
         onClick={() => setIsMobileRightSidebarOpen(true)}
-        className="lg:hidden fixed top-16 right-6 text-white position-fixed p-2 rounded-full  transition-all duration-300  border-2 border-purple-400/30 fixed"
+        className="lg:hidden z-100 fixed top-16 sm:top-20 md:top-24 right-6 text-white position-fixed p-2 rounded-full transition-all duration-300  border-1 border-[#FFFFFF36] fixed"
+        style={{
+                 background: 'radial-gradient(155.24% 166.13% at 50% 100%, #4E00E5 0%, #020019 100%)'
+
+                }}
         aria-label="Open sidebar"
       >
         {/* <SidebarIcon className="w-6 h-6" /> */}
