@@ -5,7 +5,7 @@ export default function LogoAnimation() {
 
   const Logo = () => (
     <div className="flex items-center gap-2 mx-10">
-      <img src="/assets/logo.png" alt="Logo" className="w-full h-full" />
+      <img src="/assets/logo.png" alt="Logo" className="w-full h-full object-contain" />
     </div>
   )
 

@@ -81,7 +81,7 @@ export default function Hero() {
             {isAuthenticated && (
               <button 
                 onClick={handleChatClick}
-                className="text-white cursor-pointer font-[700] bg-[#FFFFFF1A] backdrop-blur-[20px] border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px] md:min-w-[160px] transition-all duration-300 ease-in-out hover:bg-[#FFFFFF2A] hover:border-[#CBD5E180] hover:scale-105 hover:shadow-lg hover:shadow-white/10 active:scale-95"
+                className="text-white cursor-pointer font-[700] bg-transparent backdrop-blur-[20px] border border-[#CBD5E14D] rounded-full px-6 py-2 md:text-[20px] text-[14px] md:min-w-[160px] transition-all duration-300 ease-in-out hover:bg-[#FFFFFF2A] hover:border-[#CBD5E180] hover:scale-105 hover:shadow-lg hover:shadow-white/10 active:scale-95"
               >
                 Chat
               </button>
