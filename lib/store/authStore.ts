@@ -249,8 +249,15 @@ const mapPrivyUserToUser = (privyUser: unknown): User => {
 
 export const useAuthStore = create<AuthState>()(
   (set, get) => ({
-      user: null,
-      isAuthenticated: false,
+      user: (typeof window !== 'undefined' ? (() => {
+        try {
+          const raw = localStorage.getItem('user')
+          return raw ? JSON.parse(raw) : null
+        } catch {
+          return null
+        }
+      })() : null),
+      isAuthenticated: (typeof window !== 'undefined' ? localStorage.getItem('token') !== null : false),
       isLoading: false,
 
       login: async (data: LoginData) => {
@@ -261,6 +268,10 @@ export const useAuthStore = create<AuthState>()(
             // Save token to localStorage
             if (response.data.token) {
               localStorage.setItem('token', response.data.token)
+            }
+            // Persist user to localStorage
+            if (response.data.user) {
+              localStorage.setItem('user', JSON.stringify(response.data.user))
             }
             set({
               user: response.data.user,
@@ -302,6 +313,9 @@ export const useAuthStore = create<AuthState>()(
 
             if (typeof window !== 'undefined') {
               localStorage.setItem('token', token)
+              if (response.data?.user) {
+                localStorage.setItem('user', JSON.stringify(response.data.user))
+              }
             }
 
             // Use backend user data (required)
@@ -353,6 +367,10 @@ export const useAuthStore = create<AuthState>()(
             // Save token to localStorage
             if (response.data.token) {
               localStorage.setItem('token', response.data.token)
+            }
+            // Persist user to localStorage
+            if (response.data.user) {
+              localStorage.setItem('user', JSON.stringify(response.data.user))
             }
             set({
               user: response.data.user,
@@ -414,6 +432,10 @@ export const useAuthStore = create<AuthState>()(
             if (response.data.token) {
               localStorage.setItem('token', response.data.token)
             }
+            // Persist user to localStorage
+            if (response.data.user) {
+              localStorage.setItem('user', JSON.stringify(response.data.user))
+            }
             set({
               user: response.data.user,
               isAuthenticated: true,
@@ -451,14 +473,10 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           if (typeof window !== 'undefined') {
-            // Clear all localStorage
+            // Clear all localStorage to remove any residual state
             localStorage.clear()
-            // Clear persisted auth-storage if it exists
-            try {
-              localStorage.removeItem('auth-storage')
-            } catch (e) {
-              // Ignore if storage doesn't exist
-            }
+            // Best-effort: remove any persisted auth storage key if present
+            try { localStorage.removeItem('auth-storage') } catch {}
             // Set a flag to prevent auto-login
             sessionStorage.setItem('explicit-logout', 'true')
           }
@@ -477,6 +495,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await apiCaller('GET', authRoutes.getUser )
           if (response.success) {
+            // Persist user to localStorage
+            if (typeof window !== 'undefined' && response.data?.user) {
+              localStorage.setItem('user', JSON.stringify(response.data.user))
+            }
             set({ user: response.data.user })
           }
         }
@@ -508,6 +530,10 @@ export const useAuthStore = create<AuthState>()(
               ...response.data.user,
               privyId: response.data.user?.privyId || currentUser?.privyId,
             }
+            // Persist updated user
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('user', JSON.stringify(updatedUser))
+            }
             set({ user: updatedUser, isLoading: false })
           } else {
             set({ isLoading: false })
@@ -535,10 +561,21 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: () => {
-        // Check if user exists and token is present
-        const hasUser = get().user !== null
         const hasToken = typeof window !== 'undefined' && localStorage.getItem('token') !== null
-        const authenticated = hasUser && hasToken
+        const authenticated = hasToken
+        // Hydrate user from localStorage if token exists but user is null
+        if (hasToken && !get().user && typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem('user')
+            if (raw) {
+              const parsed = JSON.parse(raw)
+              set({ user: parsed })
+            }
+          } catch {}
+        }
+        if (!hasToken && get().user) {
+          set({ user: null })
+        }
         if (authenticated !== get().isAuthenticated) {
           set({ isAuthenticated: authenticated })
         }

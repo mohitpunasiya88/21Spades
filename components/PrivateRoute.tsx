@@ -29,20 +29,11 @@ export default function PrivateRoute({ children }: { children: React.ReactNode }
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
         
         if (token) {
-          // Verify auth status
+          // Verify auth status (based on token presence)
           const isAuth = checkAuth()
-          if (isAuth) {
-            // Try to get user data if not already loaded
-            if (!useAuthStore.getState().user) {
-              await getUser()
-            }
-          } else {
-            // Token exists but user not authenticated, clear and redirect
-            if (typeof window !== 'undefined') {
-              localStorage.clear()
-            }
-            router.replace('/login')
-            return
+          // Try to get user data if not already loaded
+          if (!useAuthStore.getState().user) {
+            await getUser()
           }
         } else {
           // No token, redirect to login
