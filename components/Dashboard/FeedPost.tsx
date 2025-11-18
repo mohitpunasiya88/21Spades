@@ -801,7 +801,7 @@ export default function FeedPost({ post }: FeedPostProps) {
       </div>
 
       {/* Comments Accordion */}
-      <div className="mt-3 sm:mt-4">
+      <div className="mt-3 sm:mt-4 w-full">
         <Collapse
           bordered={false}
           activeKey={activeKey}
@@ -881,7 +881,7 @@ export default function FeedPost({ post }: FeedPostProps) {
                   {/* )} */}
 
                   {/* --- Comments Section --- */}
-                  <div className="flex items-start gap-3 ml-10">
+                  <div className="flex items-start gap-3 ml-0 sm:ml-10 md:ml-10">
                     {/* Comment Icon */}
                     <div className="w-7 h-7 flex-shrink-0 mt-1">
                       <svg width="18" height="18" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
