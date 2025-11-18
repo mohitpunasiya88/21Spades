@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -23,7 +22,6 @@ import { useContract } from "@/app/hooks/contracts/useContract"
 import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
 import { useMessage } from "@/lib/hooks/useMessage"
 import { ethers } from "ethers"
-import { IoCloudUploadSharp } from "react-icons/io5";
 
 const { TextArea } = Input
 
@@ -34,24 +32,24 @@ export default function CreateNFTPage() {
   const { ready, authenticated, createWallet, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { getCoinPrice, coinAmount } = useMarketDataStore()
-  const [selectedMethod, setSelectedMethod] = useState("Fixed Rate")
-  const [title, setTitle] = useState("test")
-  const [description, setDescription] = useState("test")
+  const [selectedMethod, setSelectedMethod] = useState("")
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [fixedPrice, setFixedPrice] = useState<number | null>(0.002 )
+  const [fixedPrice, setFixedPrice] = useState<number | null>(null)
   const [size, setSize] = useState<string>("")
   const [category, setCategory] = useState<string>("")
-  const [royalties, setRoyalties] = useState<number | null>(50)
+  const [royalties, setRoyalties] = useState<number | null>(null)
   const [redeemCode, setRedeemCode] = useState<string>("")
   const [selectedCollection, setSelectedCollection] = useState<string>("")
   const [selectedCollectionAddress, setSelectedCollectionAddress] = useState<string>("") // I need this to pass the collection address to the mint function you can addujset thise by manage in backend
-
+  const [isCreatingNFT, setIsCreatingNFT] = useState<boolean>(false)
 
   const [postToFeed, setPostToFeed] = useState<boolean>(true)
-  const [freeMinting, setFreeMinting] = useState<boolean>(true)
+  const [freeMinting, setFreeMinting] = useState<boolean>(false)
   const [putOnMarketplace, setPutOnMarketplace] = useState<boolean>(true)
-  const [unlockOncePurchased, setUnlockOncePurchased] = useState<boolean>(true)
+  const [unlockOncePurchased, setUnlockOncePurchased] = useState<boolean>(false)
   // Time Auction date fields
   const [startingDate, setStartingDate] = useState<Dayjs | null>(null)
   const [expirationDate, setExpirationDate] = useState<Dayjs | null>(null)
@@ -200,8 +198,6 @@ export default function CreateNFTPage() {
   const {mint} = useNFTCollection();
   const {createPutOnSaleSignature, auctionNonceStatus} = useMarketplace();
   const handleCreateItem = async () => {
-    message.error("Please upload a file")
-    console.log("Please upload a file")
     // Validation
     if (!uploadedFile) {
       message.error("Please upload a file")
@@ -219,7 +215,7 @@ export default function CreateNFTPage() {
       message.error("Please select or create a collection")
       return
     }
-    if ((fixedPrice === null || fixedPrice === undefined) && selectedMethod !== "Open For Bids") {
+    if ((fixedPrice === null || fixedPrice === undefined) && selectedMethod === "Fixed Rate") {
       message.error("Please enter a fixed price")
       return
     }
@@ -235,9 +231,10 @@ export default function CreateNFTPage() {
     //   return
     // }
 
-
+    setIsCreatingNFT(true)
     let loadingMessage: any = null
     try {
+      // loadingMessage = message.loading("Creating NFT...", 0)
 
       // Convert file to base64 data URL
       const fileToDataURL = (file: File): Promise<string> => {
@@ -264,11 +261,11 @@ export default function CreateNFTPage() {
       const animationUrl = mediaType === "video" ? imageUrl : undefined
       const ipfsAnimationUrl = mediaType === "video" ? "" : undefined
 
-      // Map auction type
-      let auctionType = 1 // Default: Fixed Rate
-      if (selectedMethod === "Time Auction") {
+      // Map auction type based on selected method
+      let auctionType = 0 // Default: None/Not Selected
+      if (selectedMethod === "Fixed Rate") {
         auctionType = 1
-      } else if (selectedMethod === "Open For Bids") {
+      } else if (selectedMethod === "Time Auction") {
         auctionType = 2
       }
 
@@ -341,7 +338,6 @@ export default function CreateNFTPage() {
         }
       })
 
-      loadingMessage = message.loading("Creating NFT...", 0)
       try {
         /// fix the token URL we need url of pinata i
         const response = await mint({
@@ -433,12 +429,14 @@ debugger
 
       const response = await apiCaller('POST', apiUrl, payload, true)
 
-      message.destroy(loadingMessage as any)
+      if (loadingMessage) {
+        message.destroy(loadingMessage as any)
+      }
 
       if (response.success) {
         message.success(response.message || "NFT created successfully!")
 
-        // Reset form
+        // Reset form completely
         setUploadedFile(null)
         if (previewUrl) {
           URL.revokeObjectURL(previewUrl)
@@ -450,10 +448,18 @@ debugger
         setSize("")
         setCategory("")
         setRoyalties(null)
+        setRedeemCode("")
         setSelectedCollection("")
-        setExpirationDate(null)
+        setSelectedCollectionAddress("")
+        setPostToFeed(true)
+        setFreeMinting(false)
+        setPutOnMarketplace(true)
+        setUnlockOncePurchased(false)
         setStartingDate(null)
+        setExpirationDate(null)
+        setSelectedMethod("")
 
+        // Clear file input
         if (fileInputRef.current) {
           fileInputRef.current.value = ""
         }
@@ -475,6 +481,8 @@ debugger
       }
       const errorMessage = error?.response?.data?.message || error?.message || "An error occurred"
       message.error(errorMessage)
+    } finally {
+      setIsCreatingNFT(false)
     }
   }
 
@@ -890,47 +898,68 @@ debugger
         {/* Upload File */}
         <div className="p-4 sm:p-6">
           <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Upload File</h2>
-          <p className="text-[#9BA3AF] text-xs sm:text-sm mb-3 sm:mb-4">File type supported PNG, GIF,WEBP,MP3,MP4 ; (MAX500MB)</p>
+          <p className="text-[#9BA3AF] text-xs sm:text-sm mb-3 sm:mb-4">File type supported PNG, GIF, WEBP, MP3, MP4 ; (MAX 500MB)</p>
 
           <div
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className="border-2 w-full sm:w-[60%] md:w-[40%] border-dashed border-[#2A2F4A] rounded-xl p-6 sm:p-8 md:p-12 bg-[#0B0926] text-center cursor-pointer hover:border-[#5A21FF] transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 w-[70%] sm:w-[80%] md:w-[50%] border-dashed rounded-xl p-4 sm:p-8 md:p-12 bg-[#0B0926] text-center transition-colors ${
+              previewUrl 
+                ? 'border-[#2A2F4A] cursor-default' 
+                : 'border-[#2A2F4A] cursor-pointer hover:border-[#5A21FF]'
+            }`}
+            onClick={!previewUrl ? () => fileInputRef.current?.click() : undefined}
           >
-            {previewUrl && uploadedFile?.type.startsWith("image/") ? (
-              <div className="relative">
-                <div className="relative aspect-video w-full max-w-md mx-auto rounded-lg overflow-hidden mb-4">
-                 <Image
-                    src={previewUrl}
-                    alt="Uploaded file"
-                    fill
-                    className="object-cover"
-                  
-                  /> 
-                  
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleRemoveFile()
-                  }}
-                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+            {previewUrl && uploadedFile ? (
+              <div className="relative w-full">
+                {uploadedFile.type.startsWith("image/") ? (
+                  <div className="relative w-full rounded-lg overflow-hidden">
+                    <Image
+                      src={previewUrl}
+                      alt="Uploaded file"
+                      width={800}
+                      height={600}
+                      className="w-full h-auto rounded-lg object-contain max-h-[500px]"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveFile()
+                      }}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative w-full">
+                    <div className="bg-[#1A1A2E] rounded-lg p-8 text-center">
+                      <p className="text-white text-lg mb-2">{uploadedFile.name}</p>
+                      <p className="text-gray-400 text-sm">{uploadedFile.type}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveFile()
+                      }}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <>
-                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-xl  flex items-center justify-center">
-                  <IoCloudUploadSharp className="w-8 h-8 sm:w-10 sm:h-10 text-[#5A21FF]" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-xl bg-[#5A21FF]/20 flex items-center justify-center">
+                  <CloudUpload className="w-8 h-8 sm:w-10 sm:h-10 text-[#5A21FF]" />
                 </div>
-                <p className="text-[#9BA3AF]">
-                  PNG, GIF, WEBP, MP3, MP4; MAX 500MB
+                <p className="text-[#9BA3AF] text-sm mb-2">
+                  Drag and drop your file here or browse
                 </p>
                 <Button
                   type="primary"
-                  className="!bg-[#FFFFFF1A] !p-4 !rounded-full  !mt-4 !text-white !font-exo2 !text-xs"
+                  className="!bg-[#FFFFFF1A] !border-none !p-4 !rounded-full !mt-4 !text-white hover:!bg-[#FFFFFF2A]"
                   onClick={(e) => {
                     e.stopPropagation()
                     fileInputRef.current?.click()
@@ -953,8 +982,8 @@ debugger
 
         {/* Title */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
-            Title
+          <h2 className="text-white text-sm font-medium mb-2">
+            Title <span className="text-[#884DFF] text-2xl">*</span>
           </h2>
           <Input
             placeholder="e.g: Crypto Hunks"
@@ -966,8 +995,8 @@ debugger
 
         {/* Description */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
-            Description
+          <h2 className="text-white text-sm font-medium mb-2">
+            Description <span className="text-[#884DFF] text-2xl">*</span>
           </h2>
           <TextArea
             placeholder="e.g: This is very limited item"
@@ -980,8 +1009,8 @@ debugger
 
         {/* Size (Instead) */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
-            Size (Instead)
+          <h2 className="text-white text-sm font-medium mb-2">
+            Size (Optional)
           </h2>
           <Input
             placeholder="e.g: Width x height"
@@ -993,7 +1022,7 @@ debugger
 
         {/* Category */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">Category</h2>
+          <h2 className="text-white text-sm font-medium mb-2">Category</h2>
           <Select
             placeholder="Select Category"
             value={category || undefined}
@@ -1012,13 +1041,13 @@ debugger
 
         {/* Royalties */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">Royalties</h2>
+          <h2 className="text-white text-sm font-medium mb-2">Royalties</h2>
           <div className="relative">
             <InputNumber
               value={royalties as number | null}
               onChange={(v) => setRoyalties(typeof v === "number" ? v : null)}
-              placeholder="Maximum is 50%"
-              className="!w-full !h-12 !bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg [&_.ant-input-number-input]:!text-white [&_.ant-input-number-input]:!placeholder:text-[#6B7280] [&_.ant-input-number-input]:!pr-8"
+              placeholder="Enter Royalties"
+              className="!w-full !h-12 !bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg [&_.ant-input-number-input]:!text-white [&_.ant-input-number-input::placeholder]:!text-[#6B7280] [&_.ant-input-number-input]:!pr-8"
               min={0}
               max={50}
             />
@@ -1028,7 +1057,7 @@ debugger
 
         {/* Redeem Code */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
+          <h2 className="text-white text-sm font-medium mb-2">
             Redeem Code
           </h2>
           <Input
@@ -1041,15 +1070,25 @@ debugger
 
         {/* Select Method */}
         <div className="p-4 sm:p-6 font-exo2 w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-3">
-            Select Method
+          <h2 className="text-white text-sm font-medium mb-3">
+            Select Method <span className="text-[#884DFF] text-2xl">*</span>
           </h2>
           <div className="flex gap-3 sm:gap-5">
             <button
+              onClick={() => setSelectedMethod("")}
+              className={`flex-1 px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                selectedMethod === ""
+                  ? "bg-white text-black"
+                  : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
+              }`}
+            >
+              None
+            </button>
+            <button
               onClick={() => setSelectedMethod("Fixed Rate")}
-              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-exo2 transition-all ${
+              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
                 selectedMethod === "Fixed Rate"
-                  ? "bg-white text-[#090721]"
+                  ? "bg-white text-black"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
               }`}
             >
@@ -1057,9 +1096,9 @@ debugger
             </button>
             <button
               onClick={() => setSelectedMethod("Time Auction")}
-              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-exo2 transition-all ${
+              className={`flex-1 px-4 sm:px-6 py-4 rounded-full text-xs sm:text-sm font-bold transition-all ${
                 selectedMethod === "Time Auction"
-                  ? "bg-white text-[#090721]"
+                  ? "bg-white text-black"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
               }`}
             >
@@ -1068,10 +1107,10 @@ debugger
           </div>
         </div>
 
-        {/* Price (Avax) */}
+        {/* Price (AVAX) */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
-            Price (Avax)
+          <h2 className="text-white text-sm font-medium mb-2">
+            Price (AVAX)
           </h2>
           <div className="relative">
             <InputNumber
@@ -1097,7 +1136,7 @@ debugger
               precision={2}
               controls={false}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm">USDC</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm">AVAX</span>
           </div>
         </div>
 
@@ -1218,29 +1257,29 @@ debugger
 
        {/* Choose/Create Collection */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-xm font-exo2 mb-2">Collection</h2>
-          <p  className="text-[#A3AED0] text-xs sm:text-sm mb-4">Choose an existing collection or create a new one.</p>
+          <h2 className="text-white text-sm font-medium mb-2">Collection <span className="text-[#884DFF] text-2xl">*</span></h2>
+          <p className="text-[#A3AED0] text-xs mb-4">Choose an existing collection or create a new one.</p>
 
           <div
-            className={collections.length > 2 ? "collections-scroll pr-2" : ""}
+            className={collections.length > 4 ? "collections-scroll pr-2" : ""}
             style={{
-              height: collections.length > 2 ? '200px' : 'auto',
-              maxHeight: collections.length > 2 ? '250px' : 'none',
-              overflowY: collections.length > 2 ? 'auto' : 'visible',
+              height: collections.length > 4 ? '400px' : 'auto',
+              maxHeight: collections.length > 4 ? '500px' : 'none',
+              overflowY: collections.length > 4 ? 'auto' : 'visible',
               overflowX: 'hidden',
-              scrollbarWidth: collections.length > 2 ? 'thin' : 'none',
-              scrollbarColor: collections.length > 2 ? '#5A21FF #0B0926' : 'transparent transparent',
+              scrollbarWidth: collections.length > 4 ? 'thin' : 'none',
+              scrollbarColor: collections.length > 4 ? '#5A21FF #0B0926' : 'transparent transparent',
             }}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4 w-[50%]">
-             
-              {/* Collections List */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full">
+              {/* Collections List - First 4 */}
               {isLoadingCollections ? (
-                <div className="col-span-2 text-center py-8">
+                <div className="col-span-5 text-center py-8">
                   <p className="text-[#A3AED0]">Loading collections...</p>
                 </div>
               ) : collections.length > 0 ? (
-                collections.map((collection) => {
+                <>
+                  {collections.slice(0, 4).map((collection) => {
                   const collectionId = collection._id || collection.collectionId || collection.id
                   const collectionAddress = collection.collectionAddress 
                   const isSelected = selectedCollection === collectionId
@@ -1276,13 +1315,13 @@ debugger
                           : "border-transparent hover:border-[#6C4DFF]/60"
                         }`}
                     >
-                      <div className="relative h-[120px] sm:h-[160px] w-full rounded-xl sm:rounded-2xl">
+                      <div className="relative h-[180px] sm:h-[200px] w-full rounded-xl sm:rounded-2xl">
                         <Image
                           src={collectionImage}
                           alt={collectionName}
                           fill
-                          className="object-cover"
-                          sizes="(max-width: 800px) 100vw, 33vw"
+                          className="object-cover rounded-xl sm:rounded-2xl"
+                          sizes="(max-width: 800px) 100vw, 20vw"
                           onError={(e) => {
                             // Fallback to default image if API image fails to load
                             e.currentTarget.src = collectionOneImage.src
@@ -1309,26 +1348,113 @@ debugger
                       </div>
                     </button>
                   )
-                })
+                  })}
+
+                  {/* Create Collection Button - 5th in first row */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateCollectionModalOpen(true)}
+                    className={`group flex h-[180px] sm:h-[200px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
+                      ? "border-[#6C4DFF] text-white bg-[#120D39]"
+                      : "border-[#2A2F4A] text-[#A3AED0] hover:border-[#6C4DFF] hover:text-white"
+                      }`}
+                  >
+                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#6C4DFF]/10 text-[#6C4DFF] mb-2 sm:mb-3 group-hover:bg-[#6C4DFF]/20">
+                      <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold">Create Collection</span>
+                  </button>
+
+                  {/* Remaining Collections - 5 per row */}
+                  {collections.slice(4).map((collection) => {
+                    const collectionId = collection._id || collection.collectionId || collection.id
+                    const collectionAddress = collection.collectionAddress 
+                    const isSelected = selectedCollection === collectionId
+                    const collectionImage = collection.imageUrl || collection.coverPhoto || collectionOneImage
+                    const collectionName = collection.collectionName || collection.name || "Unnamed Collection"
+                   
+                    const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
+                   
+                    const handleCollectionClick = () => {
+                      if (isSelected) {
+                        setSelectedCollection("")
+                        setSelectedCollectionAddress("")
+                      } else {
+                        setSelectedCollection(collectionId)
+                        setSelectedCollectionAddress(collectionAddress)
+                      }
+                    }
+
+                    const handleDeselectClick = (e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      setSelectedCollection("")
+                    }
+
+                    return (
+                      <button
+                        key={collectionId}
+                        type="button"
+                        onClick={handleCollectionClick}
+                        className={`group relative flex h-full overflow-hidden rounded-2xl duration-300 border-2 ${
+                          isSelected
+                            ? "border-[#6C4DFF] shadow-[0_12px_30px_rgba(108,77,255,0.35)]"
+                            : "border-transparent hover:border-[#6C4DFF]/60"
+                        }`}
+                      >
+                        <div className="relative h-[180px] sm:h-[200px] w-full rounded-xl sm:rounded-2xl">
+                          <Image
+                            src={collectionImage}
+                            alt={collectionName}
+                            fill
+                            className="object-cover rounded-xl sm:rounded-2xl"
+                            sizes="(max-width: 800px) 100vw, 20vw"
+                            onError={(e) => {
+                              e.currentTarget.src = collectionOneImage.src
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B0729]/20 to-[#0B0729]/90 opacity-90 group-hover:opacity-100 transition-opacity" />
+
+                          {isSelected && (
+                            <button
+                              type="button"
+                              onClick={handleDeselectClick}
+                              className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#6C4DFF] text-white shadow-lg transition-all duration-200 hover:bg-[#5A21FF] hover:scale-110 active:scale-95"
+                              aria-label="Deselect collection"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+
+                          <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                            <p className="text-white text-sm sm:text-base font-semibold truncate">{collectionName}</p>
+                            <p className="text-[10px] sm:text-xs text-[#C5C9FF]/80">{itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </>
               ) : (
-                <div className="col-span-2 text-center py-8">
-                  <p className="text-[#9BA3AF]">No collections found. Create your first collection!</p>
-                </div>
+                <>
+                  <div className="col-span-4 text-center py-8 flex items-center justify-center">
+                    <p className="text-[#9BA3AF]">No collections found. Create your first collection!</p>
+                  </div>
+                  {/* Create Collection Button - When no collections */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateCollectionModalOpen(true)}
+                    className={`group flex h-[180px] sm:h-[200px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
+                      ? "border-[#6C4DFF] text-white bg-[#120D39]"
+                      : "border-[#2A2F4A] text-[#A3AED0] hover:border-[#6C4DFF] hover:text-white"
+                      }`}
+                  >
+                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#6C4DFF]/10 text-[#6C4DFF] mb-2 sm:mb-3 group-hover:bg-[#6C4DFF]/20">
+                      <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold">Create Collection</span>
+                  </button>
+                </>
               )}
-               {/* Create Collection Button - Always First */}
-              <button
-                type="button"
-                onClick={() => setIsCreateCollectionModalOpen(true)}
-                className={`group flex h-[120px] sm:h-[150px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
-                  ? "border-[#6C4DFF] text-white bg-[#120D39]"
-                  : "border-[#2A2F4A] text-[#A3AED0] hover:border-[#6C4DFF] hover:text-white"
-                  }`}
-              >
-                <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl  text-[#6C4DFF] mb-2 sm:mb-3 group-hover:bg-[#6C4DFF]/20">
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                </span>
-                <span className="text-xs sm:text-sm font-semibold">Create Collection</span>
-              </button>
             </div>
           </div>
         </div>
@@ -1337,9 +1463,11 @@ debugger
       <div className="p-4 sm:p-6 font-exo2">
         <Button
           onClick={handleCreateItem}
-          className="!w-full !h-12 font-exo2 !bg-gradient-to-b !from-[#4F01E6] !to-[#25016E] !border-none !text-white !rounded-full !text-base !font-semibold hover:!opacity-90 transition-opacity"
+          disabled={isCreatingNFT}
+          loading={isCreatingNFT}
+          className="!w-full !h-12 font-exo2 !bg-gradient-to-b !from-[#4F01E6] !to-[#25016E] !border-none !text-white !rounded-full !text-base !font-semibold hover:!opacity-90 transition-opacity disabled:!opacity-50"
         >
-          Create Item
+          {isCreatingNFT ? "Creating NFT..." : "Create Item"}
         </Button>
       </div>
 
