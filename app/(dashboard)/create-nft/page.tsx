@@ -23,6 +23,7 @@ import { useContract } from "@/app/hooks/contracts/useContract"
 import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
 import { useMessage } from "@/lib/hooks/useMessage"
 import { ethers } from "ethers"
+import { IoCloudUploadSharp } from "react-icons/io5";
 
 const { TextArea } = Input
 
@@ -894,18 +895,20 @@ debugger
           <div
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className="border-2 w-full sm:w-[70%] md:w-[50%] border-dashed border-[#2A2F4A] rounded-xl p-6 sm:p-8 md:p-12 bg-[#0B0926] text-center cursor-pointer hover:border-[#5A21FF] transition-colors"
+            className="border-2 w-full sm:w-[60%] md:w-[40%] border-dashed border-[#2A2F4A] rounded-xl p-6 sm:p-8 md:p-12 bg-[#0B0926] text-center cursor-pointer hover:border-[#5A21FF] transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             {previewUrl && uploadedFile?.type.startsWith("image/") ? (
               <div className="relative">
                 <div className="relative aspect-video w-full max-w-md mx-auto rounded-lg overflow-hidden mb-4">
-                  <Image
+                 <Image
                     src={previewUrl}
                     alt="Uploaded file"
                     fill
                     className="object-cover"
-                  />
+                  
+                  /> 
+                  
                 </div>
                 <button
                   onClick={(e) => {
@@ -919,15 +922,15 @@ debugger
               </div>
             ) : (
               <>
-                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-xl bg-[#5A21FF]/20 flex items-center justify-center">
-                  <UploadIcon className="w-8 h-8 sm:w-10 sm:h-10 text-[#5A21FF]" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-xl  flex items-center justify-center">
+                  <IoCloudUploadSharp className="w-8 h-8 sm:w-10 sm:h-10 text-[#5A21FF]" />
                 </div>
-                <p className="text-[#9BA3AF] text-sm mb-2">
+                <p className="text-[#9BA3AF]">
                   PNG, GIF, WEBP, MP3, MP4; MAX 500MB
                 </p>
                 <Button
                   type="primary"
-                  className="!bg-[#FFFFFF1A] !p-4 !rounded-full  !mt-4"
+                  className="!bg-[#FFFFFF1A] !p-4 !rounded-full  !mt-4 !text-white !font-exo2 !text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
                     fileInputRef.current?.click()
@@ -950,7 +953,7 @@ debugger
 
         {/* Title */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
             Title
           </h2>
           <Input
@@ -963,7 +966,7 @@ debugger
 
         {/* Description */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
             Description
           </h2>
           <TextArea
@@ -977,7 +980,7 @@ debugger
 
         {/* Size (Instead) */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
             Size (Instead)
           </h2>
           <Input
@@ -990,7 +993,7 @@ debugger
 
         {/* Category */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">Category</h2>
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">Category</h2>
           <Select
             placeholder="Select Category"
             value={category || undefined}
@@ -1009,7 +1012,7 @@ debugger
 
         {/* Royalties */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">Royalties</h2>
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">Royalties</h2>
           <div className="relative">
             <InputNumber
               value={royalties as number | null}
@@ -1025,7 +1028,7 @@ debugger
 
         {/* Redeem Code */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
             Redeem Code
           </h2>
           <Input
@@ -1038,13 +1041,13 @@ debugger
 
         {/* Select Method */}
         <div className="p-4 sm:p-6 font-exo2 w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
-          <h2 className="text-white text-sm font-medium mb-3">
+          <h2 className="text-white text-bold text-xm font-exo2 mb-3">
             Select Method
           </h2>
           <div className="flex gap-3 sm:gap-5">
             <button
               onClick={() => setSelectedMethod("Fixed Rate")}
-              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-exo2 transition-all ${
                 selectedMethod === "Fixed Rate"
                   ? "bg-white text-[#090721]"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
@@ -1054,7 +1057,7 @@ debugger
             </button>
             <button
               onClick={() => setSelectedMethod("Time Auction")}
-              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-exo2 transition-all ${
                 selectedMethod === "Time Auction"
                   ? "bg-white text-[#090721]"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
@@ -1067,7 +1070,7 @@ debugger
 
         {/* Price (Avax) */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">
+          <h2 className="text-white text-bold text-xm font-exo2 mb-2">
             Price (Avax)
           </h2>
           <div className="relative">
@@ -1215,8 +1218,8 @@ debugger
 
        {/* Choose/Create Collection */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">Collection</h2>
-          <p className="text-[#A3AED0] text-xs mb-4">Choose an existing collection or create a new one.</p>
+          <h2 className="text-white text-xm font-exo2 mb-2">Collection</h2>
+          <p  className="text-[#A3AED0] text-xs sm:text-sm mb-4">Choose an existing collection or create a new one.</p>
 
           <div
             className={collections.length > 2 ? "collections-scroll pr-2" : ""}
@@ -1229,22 +1232,8 @@ debugger
               scrollbarColor: collections.length > 2 ? '#5A21FF #0B0926' : 'transparent transparent',
             }}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
-              {/* Create Collection Button - Always First */}
-              <button
-                type="button"
-                onClick={() => setIsCreateCollectionModalOpen(true)}
-                className={`group flex h-[120px] sm:h-[150px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
-                  ? "border-[#6C4DFF] text-white bg-[#120D39]"
-                  : "border-[#2A2F4A] text-[#A3AED0] hover:border-[#6C4DFF] hover:text-white"
-                  }`}
-              >
-                <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#6C4DFF]/10 text-[#6C4DFF] mb-2 sm:mb-3 group-hover:bg-[#6C4DFF]/20">
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                </span>
-                <span className="text-xs sm:text-sm font-semibold">Create Collection</span>
-              </button>
-
+            <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4 w-[50%]">
+             
               {/* Collections List */}
               {isLoadingCollections ? (
                 <div className="col-span-2 text-center py-8">
@@ -1326,6 +1315,20 @@ debugger
                   <p className="text-[#9BA3AF]">No collections found. Create your first collection!</p>
                 </div>
               )}
+               {/* Create Collection Button - Always First */}
+              <button
+                type="button"
+                onClick={() => setIsCreateCollectionModalOpen(true)}
+                className={`group flex h-[120px] sm:h-[150px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
+                  ? "border-[#6C4DFF] text-white bg-[#120D39]"
+                  : "border-[#2A2F4A] text-[#A3AED0] hover:border-[#6C4DFF] hover:text-white"
+                  }`}
+              >
+                <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl  text-[#6C4DFF] mb-2 sm:mb-3 group-hover:bg-[#6C4DFF]/20">
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                </span>
+                <span className="text-xs sm:text-sm font-semibold">Create Collection</span>
+              </button>
             </div>
           </div>
         </div>
