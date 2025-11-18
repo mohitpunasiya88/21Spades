@@ -5,11 +5,13 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Badge } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet } from 'lucide-react'
+import { usePrivy } from '@privy-io/react-auth'
 
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
-  const { logout, user } = useAuthStore()
+  const { logout, user, getUser, isAuthenticated, checkAuth } = useAuthStore()
+  const { logout: privyLogout } = usePrivy()
 
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -58,20 +60,17 @@ export default function Navbar() {
     try {
       setIsMobileProfileOpen(false)
 
-      // Clear state first
+      // First, log out of Privy session if available
+      try { await privyLogout?.() } catch {}
+
+      // Then clear app auth state
       await logout()
 
       // Small delay to ensure state is cleared before redirect
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // If already on feed page, stay there. Otherwise redirect to feed
-      if (pathname === '/feed') {
-        // Already on feed page, just refresh to clear any cached data
-        router.refresh()
-      } else {
-        // Redirect to feed page
-        router.replace('/feed')
-      }
+      // Redirect to login to avoid accidental auto-login flows
+      router.replace('/feed')
     } catch (error) {
       console.error('Logout error:', error)
       // Even if logout fails, redirect to feed
@@ -421,7 +420,7 @@ export default function Navbar() {
           {/* Create Token Button - Mobile - HIDDEN, now in menu */}
 
           {/* User Profile with Spades Text and Hover Dropdown */}
-          {user ? (
+          {isAuthenticated ? (
             <div className="flex items-center gap-1 sm:gap-3">
               {/* Desktop Profile with Hover Dropdown */}
               <div className="relative hidden sm:block" ref={profileRef}>
@@ -438,10 +437,10 @@ export default function Navbar() {
                     }`}
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {user.profilePicture ? (
+                    {user?.profilePicture ? (
                       <img
-                        src={user.profilePicture}
-                        alt={user.name || 'User'}
+                        src={user?.profilePicture}
+                        alt={user?.name || 'User'}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.currentTarget.src = '/assets/avatar.jpg'
@@ -457,7 +456,7 @@ export default function Navbar() {
                   </div>
                   {isProfileHovered && (
                     <>
-                      <span className="text-white font-semibold text-sm whitespace-nowrap">{user.name || 'User'}</span>
+                      <span className="text-white font-semibold text-sm whitespace-nowrap">{user?.name || 'User'}</span>
                       <ChevronDown className={`w-4 h-4 text-white transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                     </>
                   )}
@@ -498,10 +497,10 @@ export default function Navbar() {
                       <div className="p-4 border-b border-[#2A2F4A]">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-600 bg-purple-600">
-                            {user.profilePicture ? (
+                            {user?.profilePicture ? (
                               <img
-                                src={user.profilePicture}
-                                alt={user.name || 'User'}
+                                src={user?.profilePicture}
+                                alt={user?.name || 'User'}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   e.currentTarget.src = '/assets/avatar.jpg'
@@ -516,8 +515,8 @@ export default function Navbar() {
                             )}
                           </div>
                           <div className="flex-1">
-                            <p className="text-white font-semibold text-sm">{user.name || 'User'}</p>
-                            <p className="text-gray-400 text-xs truncate">{user.email || ''}</p>
+                            <p className="text-white font-semibold text-sm">{user?.name || 'User'}</p>
+                            <p className="text-gray-400 text-xs truncate">{user?.email || ''}</p>
                           </div>
                         </div>
                         <button
@@ -547,15 +546,15 @@ export default function Navbar() {
                   onClick={() => setIsMobileProfileOpen(!isMobileProfileOpen)}
                   className="w-8 h-8 rounded-full overflow-hidden shadow-md flex items-center justify-center flex-shrink-0 p-1"
                   style={
-                    user.profilePicture
+                    user?.profilePicture
                       ? undefined
                       : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
                   }
                 >
-                  {user.profilePicture ? (
+                  {user?.profilePicture ? (
                     <img
-                      src={user.profilePicture}
-                      alt={user.name || 'User'}
+                      src={user?.profilePicture}
+                      alt={user?.name || 'User'}
                       className="w-full h-full rounded-full object-cover"
                       onError={(e) => {
                         e.currentTarget.src = '/post/card-21.png'
@@ -589,15 +588,15 @@ export default function Navbar() {
                       <div
                         className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center p-1.5 flex-shrink-0"
                         style={
-                          user.profilePicture
+                          user?.profilePicture
                             ? undefined
                             : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
                         }
                       >
-                        {user.profilePicture ? (
+                        {user?.profilePicture ? (
                           <img
-                            src={user.profilePicture}
-                            alt={user.name || 'User'}
+                            src={user?.profilePicture}
+                            alt={user?.name || 'User'}
                             className="w-full h-full rounded-full object-cover"
                             onError={(e) => {
                               e.currentTarget.src = '/post/card-21.png'
@@ -613,8 +612,8 @@ export default function Navbar() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">{user.name || 'User'}</p>
-                        <p className="text-gray-400 text-xs truncate">{user.email || ''}</p>
+                        <p className="text-white font-semibold text-sm">{user?.name || 'User'}</p>
+                        <p className="text-gray-400 text-xs truncate">{user?.email || ''}</p>
                       </div>
                     </div>
                       <button
