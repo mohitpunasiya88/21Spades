@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker, message } from "antd"
+import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker } from "antd"
 import dayjs, { Dayjs } from "dayjs"
 import { Upload as UploadIcon, X, Plus, CloudUpload, Calendar } from "lucide-react"
 import Image from "next/image"
@@ -21,6 +21,7 @@ import { useNFTCollection } from "@/app/hooks/contracts/useNFTCollection"
 import { usePrivy, useWallets } from "@privy-io/react-auth"
 import { useContract } from "@/app/hooks/contracts/useContract"
 import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
+import { useMessage } from "@/lib/hooks/useMessage"
 import { ethers } from "ethers"
 
 const { TextArea } = Input
@@ -28,6 +29,7 @@ const { TextArea } = Input
 export default function CreateNFTPage() {
   const { user } = useAuthStore()
   const {address } = useWallet();
+  const { message } = useMessage()
   const { ready, authenticated, createWallet, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { getCoinPrice, coinAmount } = useMarketDataStore()
@@ -197,6 +199,8 @@ export default function CreateNFTPage() {
   const {mint} = useNFTCollection();
   const {createPutOnSaleSignature, auctionNonceStatus} = useMarketplace();
   const handleCreateItem = async () => {
+    message.error("Please upload a file")
+    console.log("Please upload a file")
     // Validation
     if (!uploadedFile) {
       message.error("Please upload a file")
@@ -390,7 +394,7 @@ debugger
        const signature = await createPutOnSaleSignature(
       BigInt(salePayload.tokenId),
       salePayload.erc721,
-      ethers.parseEther(salePayload.priceEth),
+      ethers.utils.parseEther(salePayload.priceEth),
       BigInt(nonceData.nonce),
       salePayload.erc20Token,
       payload.auctionType,
@@ -403,7 +407,7 @@ debugger
       const signature = await createPutOnSaleSignature(
       BigInt(salePayload.tokenId),
       salePayload.erc721,
-      ethers.parseEther(salePayload.priceEth),
+      ethers.utils.parseEther(salePayload.priceEth),
       BigInt(nonceData.nonce),
       salePayload.erc20Token,
       payload.auctionType,
@@ -845,6 +849,9 @@ debugger
               src={spadesImageRight}
               alt="Left spade accent"
               fill
+              sizes="(max-width: 640px) 180px, (max-width: 768px) 220px, (max-width: 1024px) 280px, 320px"
+              priority
+              loading="eager"
               className="object-contain"
               style={{
                 filter: 'blur(3px) brightness(1.5) contrast(1.3)',
@@ -859,6 +866,9 @@ debugger
               src={spadesImageRight}
               alt="Right spade accent"
               fill
+              sizes="(max-width: 640px) 180px, (max-width: 768px) 220px, (max-width: 1024px) 280px, 320px"
+              priority
+              loading="eager"
               className="object-contain"
               style={{
                 filter: 'blur(3px) brightness(1.5) contrast(1.3)',
@@ -986,7 +996,11 @@ debugger
             value={category || undefined}
             onChange={(v) => setCategory(v)}
             className="!w-full category-select [&_.ant-select-selector]:!bg-[#090721] [&_.ant-select-selector]:!border-[#A3AED033] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selection-item]:!text-white [&_.ant-select-arrow]:!text-white"
-            popupClassName="category-select-dropdown"
+            classNames={{
+              popup: {
+                root: "category-select-dropdown",
+              },
+            }}
             suffixIcon={<span className="text-white">▼</span>}
             options={categories.map((c) => ({ label: c, value: c }))}
             getPopupContainer={(trigger) => trigger.parentElement || document.body}

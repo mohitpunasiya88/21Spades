@@ -1,23 +1,25 @@
 'use client'
 
-import { Modal, message as antdMessage } from 'antd'
+import { Modal } from 'antd'
 import { useRouter } from 'next/navigation'
 import { FaLink } from "react-icons/fa6";
 import { useState } from 'react'
+import { useMessage } from '@/lib/hooks/useMessage'
 
 interface LoginRequiredModalProps {
   open: boolean
   onClose: () => void
   title?: string
-  message?: string
+  description?: string
 }
 
 export default function SharefeedModal({
   open,
   onClose,
   title = 'Share this Feed',
-  message = 'You need to be logged in to perform this action. Please login to continue.',
+  description = 'You need to be logged in to perform this action. Please login to continue.',
 }: LoginRequiredModalProps) {
+  const { message } = useMessage()
   const router = useRouter()
   const [copied, setCopied] = useState(false)
 
@@ -29,11 +31,11 @@ export default function SharefeedModal({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)
-      antdMessage.success('Link copied to clipboard')
+      message.success('Link copied to clipboard')
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch (e) {
-      antdMessage.error('Failed to copy link')
+      message.error('Failed to copy link')
     }
   }
 

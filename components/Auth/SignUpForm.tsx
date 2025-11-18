@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { SignUpData } from '@/types/auth'
 import { Eye, ChevronDown } from 'lucide-react'
-import { message } from 'antd'
+import { useMessage } from '@/lib/hooks/useMessage'
 import AuthLeftPanel from './AuthLeftPanel'
 
 // Phone validation rules for each country
@@ -58,6 +58,7 @@ const countryCodes = [
 
 export default function SignUpForm() {
   const router = useRouter()
+  const { message } = useMessage()
   const { signup, isLoading ,user} = useAuthStore()
   const [formData, setFormData] = useState<SignUpData>({
     name: '',

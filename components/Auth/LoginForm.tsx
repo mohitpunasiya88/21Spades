@@ -7,13 +7,14 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
 import { Eye, XIcon } from 'lucide-react'
-import { message } from 'antd'
+import { useMessage } from '@/lib/hooks/useMessage'
 import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
 import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
 
 export default function LoginForm() {
   const router = useRouter()
   const { login, loginWithPrivy, isLoading, user, isAuthenticated } = useAuthStore()
+  const { message } = useMessage()
   const { initOAuth, state: oauthState } = useLoginWithOAuth()
   const { ready: privyReady, authenticated: privyAuthenticated, user: privyUser, getAccessToken } = usePrivy()
   const hasCompletedPrivyLoginRef = useRef(false)
