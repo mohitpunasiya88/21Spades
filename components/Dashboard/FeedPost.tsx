@@ -9,7 +9,6 @@ import { useChatStore } from '@/lib/store/chatStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
 import RepostModal from '@/components/Common/RepostModal'
-import SharefeedModal from '@/app/(dashboard)/feed/Sharefeed'
 
 interface FeedPostProps {
   post: {
@@ -118,7 +117,6 @@ export default function FeedPost({ post }: FeedPostProps) {
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
   const [mentionStartPos, setMentionStartPos] = useState<number | null>(null)
   const mentionDropdownRef = useRef<HTMLDivElement | null>(null)
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   
   // Check if this is a repost
   const isRepost = !!post.originalPost
@@ -268,9 +266,31 @@ export default function FeedPost({ post }: FeedPostProps) {
     }
   }
 
-  const handleShare = () => {
-    // Only open the Share modal; no API call here
-    setIsShareModalOpen(true)
+  const handleShare = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
+    // Prevent multiple rapid clicks
+    if (isSharing) return
+
+    setIsSharing(true)
+    try {
+      await sharePost(post.id)
+      // Update share count from API response
+      const updatedPost = useFeedStore.getState().posts.find(p => p._id === post.id)
+      if (updatedPost) {
+        setLocalShares(updatedPost.sharesCount || 0)
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error)
+    } finally {
+      // Add small delay to prevent rapid clicking
+      setTimeout(() => {
+        setIsSharing(false)
+      }, 1000)
+    }
   }
 
   const handleSave = async () => {
@@ -1145,11 +1165,7 @@ export default function FeedPost({ post }: FeedPostProps) {
           image: post.image,
         }}
       />
-
-      {/* Share Modal */}
-      <SharefeedModal open={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
     </div>
-    
   )
 }
 
