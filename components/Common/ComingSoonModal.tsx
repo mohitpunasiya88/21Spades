@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { X } from 'lucide-react'
-import comingSoonImage from '@/components/assets/Coming soon.png'
+import comingSoonImage from '@/components/assets/ComingSoonBanner.svg'
 
 interface ComingSoonModalProps {
   isOpen: boolean
@@ -14,40 +14,85 @@ interface ComingSoonModalProps {
 
 export default function ComingSoonModal({ isOpen, onClose, title }: ComingSoonModalProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
-  // Add CSS for twinkling animation
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true)
+    }
+  }, [isOpen])
+
+  // Add CSS for animations
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const style = document.createElement('style')
-      style.setAttribute('data-twinkle', 'true')
+      style.setAttribute('data-coming-soon', 'true')
       style.textContent = `
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 1; }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `
-      if (!document.head.querySelector('style[data-twinkle]')) {
+      if (!document.head.querySelector('style[data-coming-soon]')) {
         document.head.appendChild(style)
       }
     }
   }, [])
 
-
   if (!isOpen) return null
 
   return (
-    <div className="w-full min-h-[40vh] h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh] xl:h-[70vh] flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 bg-[#020019]">
-      {/* Coming Soon Image Container */}
-      <div className="relative w-full max-w-[95%] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl h-full max-h-full  overflow-hidden">
-        {/* Coming Soon Image */}
-        <div className="relative w-full h-full">
+    <div 
+      className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-[#020019] z-10"
+      style={{
+        animation: 'fadeIn 0.5s ease-in-out'
+      }}
+    >
+      {/* Page Title Indicator - Top */}
+      {title && (
+        <div 
+          className="absolute top-6 sm:top-8 md:top-12 left-0 right-0 z-10 px-4 sm:px-6 md:px-8"
+          style={{
+            animation: 'slideDown 0.6s ease-out'
+          }}
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="h-[1px] bg-gradient-to-r from-transparent via-[#4F01E6]/60 to-[#4F01E6] flex-1"></div>
+              <h1 className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-exo2 px-4 sm:px-6 md:px-8 tracking-wide whitespace-nowrap">
+                {title}
+              </h1>
+              <div className="h-[1px] bg-gradient-to-l from-transparent via-[#4F01E6]/60 to-[#4F01E6] flex-1"></div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Coming Soon Banner - Full Height */}
+      <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
+        <div className="relative w-full h-full max-w-full max-h-full">
           <Image
             src={comingSoonImage}
             alt="Coming Soon"
             fill
             className="object-contain"
             priority
-            sizes="(max-width: 640px) 95vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, (max-width: 1280px) 70vw, 60vw"
+            quality={90}
+            sizes="100vw"
           />
         </div>
       </div>

@@ -545,22 +545,28 @@ export default function Navbar() {
               <div className="sm:hidden relative" ref={mobileProfileRef}>
                 <button
                   onClick={() => setIsMobileProfileOpen(!isMobileProfileOpen)}
-                  className="w-8 h-8 rounded-full overflow-hidden border border-gray-600 bg-purple-600 shadow-md flex items-center justify-center"
+                  className="w-8 h-8 rounded-full overflow-hidden shadow-md flex items-center justify-center flex-shrink-0 p-1"
+                  style={
+                    user.profilePicture
+                      ? undefined
+                      : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                  }
                 >
                   {user.profilePicture ? (
                     <img
                       src={user.profilePicture}
                       alt={user.name || 'User'}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full rounded-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = '/assets/avatar.jpg'
+                        e.currentTarget.src = '/post/card-21.png'
+                        e.currentTarget.className = 'w-full h-full object-contain'
                       }}
                     />
                   ) : (
                     <img
-                      src="/assets/avatar.jpg"
+                      src="/post/card-21.png"
                       alt="Avatar"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   )}
                 </button>
@@ -577,32 +583,40 @@ export default function Navbar() {
                       zIndex: 1000,
                     }}
                   >
-                    {/* User Info */}
-                    <div className="p-4 border-b border-[#2A2F4A]">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-600 bg-purple-600">
-                          {user.profilePicture ? (
-                            <img
-                              src={user.profilePicture}
-                              alt={user.name || 'User'}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = '/assets/avatar.jpg'
-                              }}
-                            />
-                          ) : (
-                            <img
-                              src="/assets/avatar.jpg"
-                              alt="Avatar"
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white font-semibold text-sm">{user.name || 'User'}</p>
-                          <p className="text-gray-400 text-xs truncate">{user.email || ''}</p>
-                        </div>
+                  {/* User Info */}
+                  <div className="p-4 border-b border-[#2A2F4A]">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center p-1.5 flex-shrink-0"
+                        style={
+                          user.profilePicture
+                            ? undefined
+                            : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                        }
+                      >
+                        {user.profilePicture ? (
+                          <img
+                            src={user.profilePicture}
+                            alt={user.name || 'User'}
+                            className="w-full h-full rounded-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/post/card-21.png'
+                              e.currentTarget.className = 'w-full h-full object-contain'
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src="/post/card-21.png"
+                            alt="Avatar"
+                            className="w-full h-full object-contain"
+                          />
+                        )}
                       </div>
+                      <div className="flex-1">
+                        <p className="text-white font-semibold text-sm">{user.name || 'User'}</p>
+                        <p className="text-gray-400 text-xs truncate">{user.email || ''}</p>
+                      </div>
+                    </div>
                       <button
                         onClick={handleclick}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 rounded-lg transition-colors"
@@ -620,9 +634,8 @@ export default function Navbar() {
                       <span>Logout</span>
                     </button>
                   </div>
-                )}
-              </div>
-
+              )}
+            </div>
             </div>
           ) : (
             // Login Button - Show when user is logged out

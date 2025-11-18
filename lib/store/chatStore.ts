@@ -106,9 +106,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const chats = (response.data.chats || []).map((chat: any) => {
               // API returns otherUser, but we need participants array
               // The API only returns the other user, not the current user
-              const participants = chat.otherUser 
+              let participants = chat.otherUser 
                 ? [chat.otherUser] 
                 : (chat.participants || [])
+              
+              // Transform otherUser to participant format
+              // lastSeen is calculated on frontend from lastMessage.timestamp in ChatWindow
+              if (chat.otherUser) {
+                participants = [{
+                  _id: chat.otherUser._id || chat.otherUser.id,
+                  name: chat.otherUser.name,
+                  username: chat.otherUser.username,
+                  profilePicture: chat.otherUser.profilePicture || chat.otherUser.avatar,
+                  isOnline: chat.otherUser.isOnline !== undefined ? chat.otherUser.isOnline : false,
+                }]
+              }
               
               // Transform lastMessage if it exists
               const lastMessage = chat.lastMessage ? {
@@ -130,6 +142,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
               
               return transformedChat
             })
+            // Update selectedChat if it exists and is still in the chats list
+            // This ensures selectedChat has latest data including online status without changing the selection
+            const currentSelectedChat = get().selectedChat
+            if (currentSelectedChat) {
+              const updatedSelectedChat = chats.find((c: Chat) => c._id === currentSelectedChat._id)
+              if (updatedSelectedChat) {
+                set({ 
+                  chats,
+                  selectedChat: updatedSelectedChat,
+                  isLoading: false 
+                })
+                return
+              }
+            }
+            
             set({ 
               chats,
               isLoading: false 
@@ -149,9 +176,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
           if (response.success) {
             // Transform API response to match Chat interface
             const apiChat = response.data.chat
-            const participants = apiChat.otherUser 
+            let participants = apiChat.otherUser 
               ? [apiChat.otherUser] 
               : (apiChat.participants || [])
+            
+            // Transform otherUser to participant format
+            // lastSeen is calculated on frontend from lastMessage.timestamp in ChatWindow
+            if (apiChat.otherUser) {
+              participants = [{
+                _id: apiChat.otherUser._id || apiChat.otherUser.id,
+                name: apiChat.otherUser.name,
+                username: apiChat.otherUser.username,
+                profilePicture: apiChat.otherUser.profilePicture || apiChat.otherUser.avatar,
+                isOnline: apiChat.otherUser.isOnline !== undefined ? apiChat.otherUser.isOnline : false,
+              }]
+            }
             
             const lastMessage = apiChat.lastMessage ? {
               _id: apiChat.lastMessage._id || '',
@@ -208,13 +247,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       try {
         response = await apiCaller('GET', url)
       } catch (error: any) {
-        console.error('🔍 [API] Error details:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-          url: error.config?.url
-        })
-        
         // If 'q' fails, try 'query' parameter
         const url2 = `${authRoutes.searchUsers}?query=${encodeURIComponent(query.trim())}`
         response = await apiCaller('GET', url2)
@@ -231,9 +263,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           users = response
         } else if (response.users) {
           users = response.users
-        } else {
         }
-      } else {
       }
       
       set({ 
@@ -241,11 +271,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         isSearchingUsers: false 
       })
     } catch (error: any) {
-      console.error('❌ [API] Error searching users:', error)
-      console.error('❌ [API] Error response:', error.response?.data)
-      console.error('❌ [API] Error status:', error.response?.status)
-      console.error('❌ [API] Error message:', error.message)
-      console.error('❌ [API] Full error object:', error)
       set({ isSearchingUsers: false, searchedUsers: [] })
     }
   },
@@ -310,7 +335,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendMessage: async (chatId: string, message: string, images?: string[]) => {
     const socket = get().socket
     if (!socket || !socket.connected) {
-      console.error('Socket not connected, cannot send message')
       set({ isSendingMessage: false })
       throw new Error('Socket not connected')
     }
@@ -438,7 +462,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setSocket: (socket: Socket | null) => {
     set({ socket })
     if (socket) {
-      get().initializeSocketListeners()
+      if (socket.connected) {
+        get().initializeSocketListeners()
+      } else {
+        socket.once('connect', () => {
+          get().initializeSocketListeners()
+        })
+      }
     }
   },
 
@@ -454,6 +484,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     socket.removeAllListeners('chat_updated')
     socket.removeAllListeners('chat_deleted')
     socket.removeAllListeners('user_typing')
+    socket.removeAllListeners('user_online_status')
+    socket.removeAllListeners('user_status_update')
     socket.removeAllListeners('error')
 
     // Listen for new messages (when someone else sends you a message)
@@ -471,8 +503,50 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
       get().addMessage(transformedMessage)
       
-      // Update chat list to show latest message
-      get().getChats()
+      // Update online status of sender if available in message
+      const senderId = transformedMessage.senderId
+      const senderIsOnline = message.sender?.isOnline !== undefined ? message.sender.isOnline : true // Assume online if sending message
+      
+      // Update online status in chats and selectedChat
+      set(state => {
+        const updatedChats = state.chats.map(chat => {
+          if (chat._id === transformedMessage.chatId) {
+            return {
+              ...chat,
+              participants: chat.participants.map(participant =>
+                participant._id === senderId
+                  ? { ...participant, isOnline: senderIsOnline }
+                  : participant
+              )
+            }
+          }
+          return chat
+        })
+        
+        const updatedSelectedChat = state.selectedChat && state.selectedChat._id === transformedMessage.chatId
+          ? {
+              ...state.selectedChat,
+              participants: state.selectedChat.participants.map(participant =>
+                participant._id === senderId
+                  ? { ...participant, isOnline: senderIsOnline }
+                  : participant
+              ),
+              lastMessage: {
+                _id: transformedMessage._id,
+                message: transformedMessage.message,
+                senderId: transformedMessage.senderId,
+                timestamp: transformedMessage.timestamp,
+                isRead: transformedMessage.isRead,
+              },
+              updatedAt: transformedMessage.timestamp,
+            }
+          : state.selectedChat
+          
+        return {
+          chats: updatedChats,
+          selectedChat: updatedSelectedChat
+        }
+      })
     })
 
     // Listen for message_sent (confirmation when you send a message)
@@ -516,11 +590,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     })
 
-    // Listen for chat updates
+    // Listen for chat updates (includes online status, lastMessage, etc.)
     socket.on('chat_updated', (chat: any) => {
-      const participants = chat.otherUser 
+      let participants = chat.otherUser 
         ? [chat.otherUser] 
         : (chat.participants || [])
+      
+      // Transform otherUser to participant format
+      // lastSeen is calculated on frontend from lastMessage.timestamp in ChatWindow
+      if (chat.otherUser) {
+        participants = [{
+          _id: chat.otherUser._id || chat.otherUser.id,
+          name: chat.otherUser.name,
+          username: chat.otherUser.username,
+          profilePicture: chat.otherUser.profilePicture || chat.otherUser.avatar,
+          isOnline: chat.otherUser.isOnline !== undefined ? chat.otherUser.isOnline : false,
+        }]
+      }
       
       const lastMessage = chat.lastMessage ? {
         _id: chat.lastMessage._id || '',
@@ -539,6 +625,70 @@ export const useChatStore = create<ChatState>((set, get) => ({
         createdAt: chat.createdAt,
       }
       get().updateChat(transformedChat)
+    })
+    
+    // Listen for user online/offline status updates
+    socket.on('user_online_status', (data: { userId: string; isOnline: boolean }) => {
+      const { userId, isOnline } = data
+      
+      set(state => {
+        const updatedChats = state.chats.map(chat => ({
+          ...chat,
+          participants: chat.participants.map(participant =>
+            participant._id === userId
+              ? { ...participant, isOnline }
+              : participant
+          )
+        }))
+        
+        const updatedSelectedChat = state.selectedChat && state.selectedChat.participants.some(p => p._id === userId)
+          ? {
+              ...state.selectedChat,
+              participants: state.selectedChat.participants.map(participant =>
+                participant._id === userId
+                  ? { ...participant, isOnline }
+                  : participant
+              )
+            }
+          : state.selectedChat
+          
+        return {
+          chats: updatedChats,
+          selectedChat: updatedSelectedChat
+        }
+      })
+    })
+    
+    // Also listen for alternative event names that backend might use
+    socket.on('user_status_update', (data: { userId: string; isOnline: boolean }) => {
+      const { userId, isOnline } = data
+      
+      set(state => {
+        const updatedChats = state.chats.map(chat => ({
+          ...chat,
+          participants: chat.participants.map(participant =>
+            participant._id === userId
+              ? { ...participant, isOnline }
+              : participant
+          )
+        }))
+        
+        const updatedSelectedChat = state.selectedChat && state.selectedChat.participants.some(p => p._id === userId)
+          ? {
+              ...state.selectedChat,
+              participants: state.selectedChat.participants.map(participant =>
+                participant._id === userId
+                  ? { ...participant, isOnline }
+                  : participant
+              )
+            }
+          : state.selectedChat
+          
+        return {
+          chats: updatedChats,
+          selectedChat: updatedSelectedChat
+        }
+      })
     })
 
     // Listen for chat deletions
@@ -579,8 +729,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const socket = get().socket
     if (socket && socket.connected) {
       socket.emit('typing', { chatId, isTyping })
-    } else {
-      console.warn('⌨️ [SOCKET] Socket not connected, cannot send typing indicator')
     }
   },
 
@@ -607,27 +755,45 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return timeA - timeB
       })
       messages[message.chatId] = updatedMessages
-      set({ messages })
       
       // Update chat's lastMessage in real-time
-      set(state => ({
-        chats: state.chats.map(chat => 
-          chat._id === message.chatId 
-            ? { 
-                ...chat, 
-                lastMessage: {
-                  _id: message._id,
-                  message: message.message,
-                  senderId: message.senderId,
-                  timestamp: message.timestamp,
-                  isRead: message.isRead,
-                },
-                updatedAt: message.timestamp,
-              }
-            : chat
-        )
-      }))
-    } else {
+      const updatedChats = get().chats.map(chat => 
+        chat._id === message.chatId 
+          ? { 
+              ...chat, 
+              lastMessage: {
+                _id: message._id,
+                message: message.message,
+                senderId: message.senderId,
+                timestamp: message.timestamp,
+                isRead: message.isRead,
+              },
+              updatedAt: message.timestamp,
+            }
+          : chat
+      )
+      
+      // Update selectedChat if this message is for the currently selected chat
+      const currentSelectedChat = get().selectedChat
+      const updatedSelectedChat = currentSelectedChat && currentSelectedChat._id === message.chatId
+        ? {
+            ...currentSelectedChat,
+            lastMessage: {
+              _id: message._id,
+              message: message.message,
+              senderId: message.senderId,
+              timestamp: message.timestamp,
+              isRead: message.isRead,
+            },
+            updatedAt: message.timestamp,
+          }
+        : currentSelectedChat
+      
+      set({ 
+        messages,
+        chats: updatedChats,
+        selectedChat: updatedSelectedChat
+      })
     }
   },
 
@@ -675,7 +841,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } else {
       chats.unshift(chat)
     }
-    set({ chats })
+    
+    // Update selectedChat if this is the currently selected chat
+    const currentSelectedChat = get().selectedChat
+    const updatedSelectedChat = currentSelectedChat && currentSelectedChat._id === chat._id
+      ? chat
+      : currentSelectedChat
+    
+    set({ 
+      chats,
+      selectedChat: updatedSelectedChat
+    })
   },
 
   removeChat: (chatId: string) => {

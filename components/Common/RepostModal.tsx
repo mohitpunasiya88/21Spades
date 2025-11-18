@@ -86,9 +86,11 @@ export default function RepostModal({
               <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                 <div
                   className="flex items-center justify-center w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden p-1 sm:p-1.5 flex-shrink-0"
-                  style={{
-                    background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)'
-                  }}
+                  style={
+                    post.profilePicture
+                      ? undefined
+                      : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                  }
                 >
                   {post.profilePicture ? (
                     <img
