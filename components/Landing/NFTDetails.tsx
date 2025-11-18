@@ -1,12 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Check, Heart, ShoppingCart, Share2, ChevronDown, X, ChevronUp, Coins } from 'lucide-react'
+import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins } from 'lucide-react'
 import spadesImage from '../assets/21spades.png'
-import { Avatar } from 'antd'
+import { Avatar, Spin } from 'antd'
 import { MessageSquareText, Share } from "lucide-react";
-import AuthFooter from '../Auth/AuthFooter'
+import { useCollectionStore, mapApiNftToCollectionNft, type CollectionNFT } from '@/lib/store/collectionStore'
+import { apiCaller } from '@/app/interceptors/apicall/apicall'
+import authRoutes from '@/lib/routes'
+import { useMessage } from '@/lib/hooks/useMessage'
+import { useRouter } from 'next/navigation'
 
 interface NFTDetailsProps {
   id: string
@@ -18,35 +22,33 @@ interface NFTDetailsProps {
   method?: 'fixed-rate' | 'auction' // New prop for method type
 }
 
-function MiniCard({ title }: { title: string }) {
+function MiniCard({ nft, onClick }: { nft: CollectionNFT; onClick: () => void }) {
+  const imageSource = nft.imageUrl || nft.image || spadesImage
   return (
-    <div className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 ring-1 ring-white/5 hover:ring-white/10 transition w-full">
-      {/* Image Area */}
-      <div className="relative h-[180px] sm:h-[220px] w-full rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#050616]">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }} />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Image src={spadesImage} alt="21" width={120} height={120} className="sm:w-[140px] sm:h-[140px] object-contain pointer-events-none select-none" />
+    <button
+      onClick={onClick}
+      className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 ring-1 ring-white/5 hover:ring-white/10 transition w-full text-left"
+    >
+      <div className="relative h-[280px] sm:h-[250px] w-full rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#050616]">
+        <div className="absolute" style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }} />
+        <div className="absolute  ">
+          <Image src={imageSource} alt={nft.name} width={240} height={340} className="sm:w-[100%] h-[291px] sm:h-[250px] object-contain pointer-events-none select-none" />
         </div>
-        <button className="absolute glass top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/5 hover:bg-white/10 transition">
+        <span className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/10 ring-1 ring-white/20 hover:bg-white/20 transition">
           <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-        </button>
+        </span>
       </div>
-      
-      {/* Content Area */}
       <div className="mt-3 sm:mt-4">
-        {/* Title */}
-        <p className="text-white text-xs sm:text-sm font-exo2 mb-2 sm:mb-3">{title}</p>
-        
-        {/* Price and Details Button */}
+        <p className="text-white text-xs sm:text-sm font-exo2 mb-2 sm:mb-3">{nft.name}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 fill-red-500" />
-            <span className="text-white text-xs sm:text-sm font-exo2 font-semibold">A. 8.56</span>
+            <span className="text-white text-xs sm:text-sm font-exo2 font-semibold">A. {nft.price}</span>
           </div>
-          <button className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-full hover:border-gray-500 transition-colors font-exo2">Details</button>
+          <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-lg font-exo2">Details</span>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -545,8 +547,14 @@ export default function NFTDetails({
   currentPrice = '8.41',
   currentUsd = '$ 22.93',
   timeLeft = '19d 6h',
-  method = 'auction', // Default to auction, can be 'fixed-rate' or 'auction'
+  method = 'auction',
 }: NFTDetailsProps) {
+  const router = useRouter()
+  const { message } = useMessage()
+  const { nfts: cachedNfts, setCollectionData } = useCollectionStore()
+  const [currentNft, setCurrentNft] = useState<CollectionNFT | null>(null)
+  const [relatedNfts, setRelatedNfts] = useState<CollectionNFT[]>([])
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true)
   const [isPlaceBidOpen, setIsPlaceBidOpen] = useState(false)
   const [isMakeOfferOpen, setIsMakeOfferOpen] = useState(false)
   const [isBidPlacedOpen, setIsBidPlacedOpen] = useState(false)
@@ -556,6 +564,69 @@ export default function NFTDetails({
   // Independent state for each accordion
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
+
+  const loadFromCache = useCallback(
+    (list: CollectionNFT[]) => {
+      const match = list.find((nft) => (nft._id || nft.id) === id)
+      if (match) {
+        setCurrentNft(match)
+        setRelatedNfts(list.filter((nft) => (nft._id || nft.id) !== id))
+        setIsLoadingDetails(false)
+        return true
+      }
+      return false
+    },
+    [id],
+  )
+
+  const fetchNftDetails = useCallback(async () => {
+    setIsLoadingDetails(true)
+    try {
+      const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
+      if (response.success && response.data) {
+        const rawNft = response.data.nft || response.data
+        const mappedNft = mapApiNftToCollectionNft(rawNft)
+        setCurrentNft(mappedNft)
+
+        const associatedCollectionId = mappedNft.collectionId
+        if (associatedCollectionId && typeof associatedCollectionId === 'string') {
+          const listResponse = await apiCaller(
+            'GET',
+            `${authRoutes.getNFTsByCollection}?collectionId=${associatedCollectionId}&page=1&limit=100&blocked=false`,
+            null,
+            true,
+          )
+          if (listResponse.success && listResponse.data) {
+            const listData = Array.isArray(listResponse.data)
+              ? listResponse.data
+              : (listResponse.data.items || listResponse.data.nfts || listResponse.data.data || [])
+            const mappedList = listData.map(mapApiNftToCollectionNft)
+            setRelatedNfts(mappedList.filter((nft: CollectionNFT) => (nft._id || nft.id) !== id))
+            setCollectionData({
+              collectionId: associatedCollectionId,
+              collectionData: listResponse.data.collection || listResponse.data.collectionData,
+              nfts: mappedList,
+            })
+          }
+        } else if (!associatedCollectionId) {
+          setRelatedNfts([])
+        }
+      } else {
+        message.error('NFT not found')
+      }
+    } catch (error) {
+      console.error('Failed to fetch NFT details', error)
+      message.error('Failed to fetch NFT details')
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  }, [id, message, setCollectionData])
+
+  useEffect(() => {
+    if (id && !loadFromCache(cachedNfts)) {
+      void fetchNftDetails()
+    }
+  }, [id, cachedNfts, loadFromCache, fetchNftDetails])
 
   const handleBidConfirm = (bidAmount: string) => {
     setPlacedBidAmount(bidAmount)
@@ -568,51 +639,91 @@ export default function NFTDetails({
     setIsOfferSubmittedOpen(true)
   }
 
+  const displayName = currentNft?.name ?? name
+  const displayOwner = currentNft?.ownerName ?? owner
+  const displayPrice = currentNft?.price ?? currentPrice
+  const displayUsd = currentUsd
+  const displayDescription =
+    currentNft?.description && currentNft.description.trim().length > 0
+      ? currentNft.description
+      : 'Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.'
+  const currentImage = currentNft?.imageUrl || currentNft?.image || null
+  
+  // Get auctionType from API data, fallback to method prop for backward compatibility
+  const auctionType = currentNft?.auctionType !== undefined 
+    ? currentNft.auctionType 
+    : (method === 'auction' ? 2 : method === 'fixed-rate' ? 1 : undefined)
+  
+  // Determine button visibility based on auctionType
+  // 0 = None (only Make an Offer), 1 = Fixed Rate (only Buy Now), 2 = Auction (Bid Now + Make an Offer)
+  const isAuction = auctionType === 2
+  const isFixedRate = auctionType === 1
+  const isNone = auctionType === 0 || auctionType === undefined
+
+  if (!currentNft && isLoadingDetails) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!currentNft && !isLoadingDetails) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center text-white">
+        NFT details not available.
+      </div>
+    )
+  }
+
   return (
-    <div className="w-full min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+    <div className="w-full min-h-screen font-exo2 mt-2 sm:mt-4 md:mt-6">
+      <div className="w-full mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Top section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           {/* Media */}
           <div className="relative rounded-xl sm:rounded-2xl">
-            <div className="relative h-[280px] sm:h-[350px] lg:h-[420px] rounded-xl overflow-visible">
-              <div className="absolute inset-0 rounded-xl overflow-hidden bg-gradient-to-b from-[#4F01E6] to-[#25016E]"/>
-              
-              {/* Three Overlapping Spade Images */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                {/* Left Spade - Smaller, Behind */}
-                <div className="absolute left-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
-                  <Image 
-                    src={spadesImage} 
-                    alt="21" 
-                    width={140} 
-                    height={140} 
-                    className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
-                  />
+            <div className={`relative h-[280px] sm:h-[350px] lg:h-[385px] rounded-xl overflow-hidden flex items-center justify-center ${currentImage ? 'bg-[#0A0D1F]' : 'bg-gradient-to-b from-[#4F01E6] to-[#25016E]'}`}>
+              {currentImage ? (
+                <Image
+                  src={currentImage}
+                  alt={displayName}
+                  fill
+                  className="object-contain rounded-xl"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute left-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
+                    <Image 
+                      src={spadesImage} 
+                      alt="21" 
+                      width={140} 
+                      height={140} 
+                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                    />
+                  </div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                    <Image 
+                      src={spadesImage} 
+                      alt="21" 
+                      width={180} 
+                      height={180} 
+                      className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                    />
+                  </div>
+                  <div className="absolute right-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
+                    <Image 
+                      src={spadesImage} 
+                      alt="21" 
+                      width={140} 
+                      height={140} 
+                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                    />
+                  </div>
                 </div>
-                
-                {/* Center Spade - Largest, Most Prominent */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                  <Image 
-                    src={spadesImage} 
-                    alt="21" 
-                    width={180} 
-                    height={180} 
-                    className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl" 
-                  />
-                </div>
-                
-                {/* Right Spade - Smaller, Behind */}
-                <div className="absolute right-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
-                  <Image 
-                    src={spadesImage} 
-                    alt="21" 
-                    width={140} 
-                    height={140} 
-                    className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
-                  />
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -632,7 +743,7 @@ export default function NFTDetails({
                 </Avatar>
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-xs sm:text-sm font-exo2">Owner</span>
-                  <span className="text-[#884DFF] text-xs sm:text-sm font-exo2 cursor-pointer">{owner}</span>
+                  <span className="text-[#884DFF] text-xs sm:text-sm font-exo2 cursor-pointer">{displayOwner}</span>
                 </div>
                 <MessageSquareText className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-1 sm:ml-2" />
               </div>
@@ -642,34 +753,30 @@ export default function NFTDetails({
               </button>
             </div>
             
-            <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{name}</h1>
+            <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{displayName}</h1>
             
             <p className="text-[#A3AED0] max-w-full sm:max-w-[400px] text-xs sm:text-sm font-exo2 leading-relaxed mb-6 sm:mb-10">
-              Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.
+              {displayDescription}
             </p>
 
             {/* Price and CTA */}
             <div className="mt-6 sm:mt-12 lg:mt-24">
               <p className="text-white font-exo2 text-xs sm:text-sm">
-                {method === 'auction' ? `Current Bid • Live` : 'Current Price'}
+                {isAuction ? 'Current Bid • Live' : 'Current Price'}
               </p>
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
                 <div className="flex items-center gap-1 sm:gap-1.5">
                   <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500 fill-red-500" />
-                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">A. {currentPrice}</span>
+                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">A. {displayPrice}</span>
                 </div>
-                <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{currentUsd}</span>
+                <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{displayUsd}</span>
               </div>
               
-              {/* Conditional Buttons based on method */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2  sm:gap-3 mb-3 sm:mb-2">
-                {method === 'fixed-rate' ? (
-                  // Fixed Rate: Only Buy Now button
-                  <button className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
-                    Buy Now
-                  </button>
-                ) : (
-                  // Auction: Bid Now and Make an Offer buttons
+              {/* Conditional Buttons based on auctionType */}
+              {/* 0 = None (only Make an Offer), 1 = Fixed Rate (only Buy Now), 2 = Auction (Bid Now + Make an Offer) */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
+                {isAuction ? (
+                  // Auction (auctionType = 2): Bid Now + Make an Offer
                   <>
                     <button 
                       onClick={() => setIsPlaceBidOpen(true)}
@@ -685,10 +792,24 @@ export default function NFTDetails({
                       Make an Offer
                     </button>
                   </>
+                ) : isFixedRate ? (
+                  // Fixed Rate (auctionType = 1): Only Buy Now button
+                  <button className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                    Buy Now
+                  </button>
+                ) : (
+                  // None (auctionType = 0 or undefined): Only Make an Offer button
+                  <button 
+                    onClick={() => setIsMakeOfferOpen(true)}
+                    className="px-5 py-2.5 justify-center items-center rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Make an Offer
+                  </button>
                 )}
               </div>
               
-              {method === 'auction' && (
+              {isAuction && (
                 <p className="text-gray-400 text-xs font-exo2">
                   Auction Ends In <span className="text-white font-mono font-exo2">{timeLeft}</span>
                 </p>
@@ -697,8 +818,8 @@ export default function NFTDetails({
           </div>
         </div>
 
-        {/* Conditional Accordions based on method */}
-        <div className={`grid grid-cols-1 ${method === 'auction' ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mt-4 sm:mt-6`}>
+        {/* Conditional Accordions based on auctionType */}
+        <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
           <Accordion 
             key="token-detail" 
             id="token-detail" 
@@ -709,7 +830,7 @@ export default function NFTDetails({
             <div className="space-y-3">
               <div className="flex items-center justify-between py-2">
                 <span className="text-gray-400 text-sm font-exo2">Creator</span>
-                <span className="text-white text-sm font-exo2">{owner}</span>
+                <span className="text-white text-sm font-exo2">{displayOwner}</span>
               </div>
               <div className="flex items-center justify-between ">
                 <span className="text-gray-400 text-sm font-exo2">Token Standard</span>
@@ -734,8 +855,8 @@ export default function NFTDetails({
             </div>
           </Accordion>
 
-          {/* Bids Accordion - Only for Auction */}
-          {method === 'auction' && (
+          {/* Bids Accordion - Only for Auction (auctionType = 2) */}
+          {isAuction && (
             <Accordion 
               key="bids" 
               id="bids" 
@@ -775,18 +896,26 @@ export default function NFTDetails({
         </div>
 
         {/* More from this collection */}
-        <div className="mt-6 sm:mt-10">
+        <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <h2 className="text-white font-exo2 text-base sm:text-lg">More from this collection</h2>
             <button className="px-6 sm:px-10 py-2 w-full sm:w-auto sm:max-w-[300px] text-xs sm:text-sm text-white border border-white/10 rounded-full hover:bg-[#252540] transition">
               Explore all
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {['sleeper_tyu.avax','qetchr.avax','buiquat.avax','dashmond.avax'].map((t) => (
-              <MiniCard key={t} title={t} />
-            ))}
-          </div>
+          {relatedNfts.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {relatedNfts.slice(0, 8).map((nft: CollectionNFT) => (
+                <MiniCard
+                  key={nft._id || nft.id}
+                  nft={nft}
+                  onClick={() => router.push(`/marketplace/nft/${nft._id || nft.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400 text-sm font-exo2">No other NFTs found in this collection.</div>
+          )}
         </div>
       </div>
 
@@ -795,26 +924,27 @@ export default function NFTDetails({
         isOpen={isPlaceBidOpen} 
         onClose={() => setIsPlaceBidOpen(false)} 
         onConfirm={handleBidConfirm}
-        nftName={name}
+        nftName={displayName}
+        nftImage={currentImage || undefined}
       />
       <MakeOfferModal 
         isOpen={isMakeOfferOpen} 
         onClose={() => setIsMakeOfferOpen(false)} 
         onConfirm={handleOfferConfirm}
-        nftName={name}
+        nftName={displayName}
       />
       <BidPlacedSuccessModal 
         isOpen={isBidPlacedOpen} 
         onClose={() => setIsBidPlacedOpen(false)}
         bidAmount={placedBidAmount}
-        nftName={name}
-        nftImage="/assets/image6.jpeg"
+        nftName={displayName}
+        nftImage={currentImage || undefined}
       />
       <OfferSubmittedModal 
         isOpen={isOfferSubmittedOpen} 
         onClose={() => setIsOfferSubmittedOpen(false)}
         offerAmount="77.9"
-        nftName={name}
+        nftName={displayName}
       />
     </div>
   )

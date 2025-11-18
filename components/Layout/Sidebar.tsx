@@ -63,16 +63,23 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({})
   const chatsFetchedRef = useRef(false)
+  const prevPathnameRef = useRef<string>(pathname)
 
   const isFeedPage = pathname === '/feed'
-  const isMarketplacePage = pathname === '/marketplace'
   const shouldForceFullSidebar = isFeedPage
 
+  // Force sidebar open on feed page, collapse on other pages by default when navigating
   useEffect(() => {
+    const pathnameChanged = prevPathnameRef.current !== pathname
+    prevPathnameRef.current = pathname
+
     if (shouldForceFullSidebar && !sidebarOpen) {
       setSidebarOpen(true)
+    } else if (!shouldForceFullSidebar && pathnameChanged) {
+      // Collapse sidebar when navigating to non-feed pages
+      setSidebarOpen(false)
     }
-  }, [shouldForceFullSidebar, sidebarOpen, setSidebarOpen])
+  }, [pathname, shouldForceFullSidebar, sidebarOpen, setSidebarOpen])
 
   const handleToggleSidebar = () => {
     if (shouldForceFullSidebar) return
@@ -145,7 +152,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Combined Container */}
       <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4 ${!sidebarOpen ? 'overflow-visible' : ''}`}>
         <div className={`rounded-lg bg-[#090721] border border-[#2A2F4A] ${!sidebarOpen ? 'overflow-visible' : ''}`}>
-          {isMarketplacePage && (
+          {!isFeedPage && (
             <div className="flex justify-center border-b border-[#2A2F4A]">
               <button
                 onClick={handleToggleSidebar}
@@ -403,4 +410,3 @@ export default function Sidebar({ onClose }: SidebarProps) {
     </aside>
   )
 }
-

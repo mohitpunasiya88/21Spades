@@ -185,7 +185,7 @@ export default function Navbar() {
 
               {/* Wallet */}
               <button
-                className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#2A2F4A]"
+                className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#A3AED033]"
               >
                 <Wallet className="w-5 h-5" />
                 <span>Wallet</span>

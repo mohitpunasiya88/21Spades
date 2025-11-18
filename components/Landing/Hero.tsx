@@ -25,6 +25,10 @@ export default function Hero() {
     router.push('/feed')
   }
 
+  const handleExploreMore = () => {
+    router.push('/marketplace')
+  }
+
   return (
     <div className=" bg-[#000000] relative md:w-[97%] w-[100%] mx-auto flex flex-col items-center justify-center mt-5 p-8 rounded-lg ">
 
@@ -70,6 +74,7 @@ export default function Hero() {
           </div>
           <div className="flex gap-2 md:gap-5 font-exo2 mt-5 md:mt-10">
             <button
+              onClick={handleExploreMore}
               className="text-black glass cursor-pointer font-[700] bg-white rounded-full px-6 py-2 md:text-[20px] text-[14px] md:min-w-[160px] transition-all duration-300 ease-in-out hover:text-white hover:bg-[#FFFFFF2A] hover:scale-105 active:scale-95">Explore
               more
             </button>
