@@ -394,7 +394,7 @@ debugger
        const signature = await createPutOnSaleSignature(
       BigInt(salePayload.tokenId),
       salePayload.erc721,
-      ethers.utils.parseEther(salePayload.priceEth),
+      ethers.parseEther(salePayload.priceEth),
       BigInt(nonceData.nonce),
       salePayload.erc20Token,
       payload.auctionType,
@@ -407,7 +407,7 @@ debugger
       const signature = await createPutOnSaleSignature(
       BigInt(salePayload.tokenId),
       salePayload.erc721,
-      ethers.utils.parseEther(salePayload.priceEth),
+      ethers.parseEther(salePayload.priceEth),
       BigInt(nonceData.nonce),
       salePayload.erc20Token,
       payload.auctionType,
