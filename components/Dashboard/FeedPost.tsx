@@ -616,11 +616,9 @@ export default function FeedPost({ post }: FeedPostProps) {
       <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div
           className="flex items-center justify-center w-[40px] h-[40px] sm:w-[48px] sm:h-[48px] rounded-full overflow-hidden p-1.5 sm:p-2 flex-shrink-0"
-          style={
-            post.profilePicture
-              ? undefined
-              : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-          }
+          style={{
+            background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)'
+          }}
         >
           {/* Avatar */}
           {post.profilePicture ? (
@@ -656,11 +654,9 @@ export default function FeedPost({ post }: FeedPostProps) {
           <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
             <div
               className="flex items-center justify-center w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden p-1 sm:p-1.5 flex-shrink-0"
-              style={
-                post.originalPost.profilePicture
-                  ? undefined
-                  : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-              }
+              style={{
+                background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)'
+              }}
             >
               {post.originalPost.profilePicture ? (
                 <img
@@ -689,11 +685,11 @@ export default function FeedPost({ post }: FeedPostProps) {
 
           {/* Original Post Media */}
           {post.originalPost.image && (
-            <div className="flex justify-center items-center overflow-hidden rounded-lg">
+            <div className="overflow-hidden rounded-lg w-full">
               <img
                 src={post.originalPost.image}
                 alt="Original Post Image"
-                className="max-w-full h-auto object-contain max-h-[400px]"
+                className="w-full h-auto object-fill max-h-[400px]"
                 style={{ display: 'block' }}
               />
             </div>
@@ -706,11 +702,11 @@ export default function FeedPost({ post }: FeedPostProps) {
 
           {/* Regular Post Media - Only show if not a repost */}
           {post.image && (
-            <div className="flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4">
+            <div className="overflow-hidden rounded-lg sm:rounded-xl w-full mb-3 sm:mb-4">
               <img
                 src={post.image}
                 alt="Post Image"
-                className="max-w-full h-auto object-contain max-h-[500px]"
+                className="w-full h-auto object-fill max-h-[500px]"
                 style={{ display: 'block' }}
               />
             </div>

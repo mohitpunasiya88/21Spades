@@ -39,7 +39,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
     const [editingMessage, setEditingMessage] = useState<string | null>(null)
     const [editText, setEditText] = useState('')
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [showDeleteChatConfirm, setShowDeleteChatConfirm] = useState(false)
     const [messageInput, setMessageInput] = useState('')
     const [showChatMenu, setShowChatMenu] = useState(false)
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
@@ -52,7 +51,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
     const fileInputRef = useRef<HTMLInputElement>(null)
     const emojiPickerRef = useRef<HTMLDivElement>(null)
     const messageInputRef = useRef<HTMLInputElement>(null)
-    const chatMenuRef = useRef<HTMLDivElement>(null)
 
     const currentUserId = user?.id || (user as any)?._id || ''
     // Load messages handled by store when chat is selected
@@ -103,66 +101,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
 
     // Get other participant
     const otherParticipant = selectedChat?.participants?.[0]
-
-    // Format last seen status
-    // Calculate from lastMessage.timestamp or updatedAt (frontend calculation)
-    const formatLastSeen = (participant: typeof otherParticipant): string => {
-        if (!participant) return 'Unknown'
-        
-        // If user is online, show "Online"
-        if (participant.isOnline) {
-            return 'Online'
-        }
-        
-        // Calculate from chat's lastMessage or updatedAt
-        if (!selectedChat) {
-            return 'Last seen recently'
-        }
-        
-        // Prefer lastMessage.timestamp (when user last sent/received a message)
-        // Fallback to updatedAt (when chat was last updated)
-        const lastSeenTimestamp = selectedChat.lastMessage?.timestamp || selectedChat.updatedAt
-        
-        if (!lastSeenTimestamp) {
-            return 'Last seen recently'
-        }
-        
-        try {
-            const lastSeenDate = new Date(lastSeenTimestamp)
-            if (isNaN(lastSeenDate.getTime())) {
-                return 'Last seen recently'
-            }
-            
-            const now = new Date()
-            const diff = now.getTime() - lastSeenDate.getTime()
-            
-            // Handle negative diff (future dates)
-            if (diff < 0) {
-                return 'Last seen recently'
-            }
-            
-            const seconds = Math.floor(diff / 1000)
-            const minutes = Math.floor(seconds / 60)
-            const hours = Math.floor(minutes / 60)
-            const days = Math.floor(hours / 24)
-            
-            if (seconds < 60) {
-                return 'Last seen just now'
-            } else if (minutes < 60) {
-                return `Last seen ${minutes} min ago`
-            } else if (hours < 24) {
-                return `Last seen ${hours} hour${hours > 1 ? 's' : ''} ago`
-            } else if (days === 1) {
-                return 'Last seen yesterday'
-            } else if (days < 7) {
-                return `Last seen ${days} days ago`
-            } else {
-                return `Last seen ${lastSeenDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-            }
-        } catch (error) {
-            return 'Last seen recently'
-        }
-    }
 
     // Format timestamp helper for date separators
     const formatTimestamp = (timestamp: string) => {
@@ -223,7 +161,7 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
         }
     }
 
-    // Handle message click to show menu
+    // Handle message click to show popup
     const handleMessageClick = (e: React.MouseEvent, messageId: string) => {
         e.stopPropagation()
         const message = currentMessages.find((m) => m._id === messageId)
@@ -232,45 +170,47 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
             const msgSenderId = String(message.senderId || '')
             const userId = String(currentUserId || '')
             if (msgSenderId === userId) {
-                // Toggle menu - close if already open for this message, open if closed or different message
-                setMessageMenuOpen(messageMenuOpen === messageId ? null : messageId)
                 setSelectedMessage(messageId)
+                const messageElement = e.currentTarget as HTMLElement
+                const rect = messageElement.getBoundingClientRect()
+                const messagesContainer = messageElement.closest('.overflow-y-auto')
+                if (messagesContainer) {
+                    const containerRect = messagesContainer.getBoundingClientRect()
+                    setPopupPosition({
+                        x: rect.right - containerRect.left,
+                        y: rect.top - containerRect.top
+                    })
+                } else {
+                    setPopupPosition({ x: e.clientX, y: e.clientY })
+                }
+                setShowPopup(true)
             }
         }
     }
 
-    // Close menu when clicking outside
+    // Close popup when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (messageMenuOpen) {
-                const target = event.target as HTMLElement
-                // Check if click is inside the menu
-                const menuElement = target.closest('[data-menu-id]')
-                // Check if click is on any message bubble
-                const messageElement = target.closest('[data-message-id]')
-                const clickedMessageId = messageElement?.getAttribute('data-message-id')
-                
-                // Close menu if click is not inside the menu and not on the message that opened it
-                // (Clicking on the same message will be handled by handleMessageClick which toggles)
-                if (!menuElement && (!clickedMessageId || clickedMessageId !== messageMenuOpen)) {
-                    setMessageMenuOpen(null)
-                }
-            }
             if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
                 setShowPopup(false)
                 setSelectedMessage(null)
             }
-        }
-
-        if (messageMenuOpen || showPopup) {
-            // Use click event in bubble phase (fires after onClick) to allow onClick handlers to process first
-            document.addEventListener('click', handleClickOutside)
-
-            return () => {
-                document.removeEventListener('click', handleClickOutside)
+            if (messageMenuOpen) {
+                const target = event.target as HTMLElement
+                if (!target.closest('.relative')) {
+                    setMessageMenuOpen(null)
+                }
             }
         }
-    }, [messageMenuOpen, showPopup])
+
+        if (showPopup || messageMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [showPopup, messageMenuOpen])
 
     // Handle delete message
     const handleDeleteMessage = async (messageId: string) => {
@@ -281,23 +221,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
             setSelectedMessage(null)
         } catch (error) {
             console.error('Error deleting message:', error)
-        }
-    }
-
-    // Handle delete chat
-    const handleDeleteChat = async () => {
-        if (!selectedChat) return
-        
-        try {
-            await deleteChat(selectedChat._id)
-            setSelectedChat(null)
-            setShowChatMenu(false)
-            setShowDeleteChatConfirm(false)
-            getChats()
-            onChatDeleted?.()
-        } catch (error) {
-            console.error('Error deleting chat:', error)
-            alert('Failed to delete chat. Please try again.')
         }
     }
 
@@ -410,22 +333,15 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
         setEditText('')
     }
 
-    // Handle click outside chat menu, delete chat modal, and emoji picker
+    // Handle click outside chat menu and emoji picker
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement
             
-            // Close chat menu dropdown
-            if (showChatMenu) {
-                if (chatMenuRef.current && !chatMenuRef.current.contains(target)) {
-                    const menuButton = target.closest('button[data-chat-menu-button]')
-                    if (!menuButton) {
-                        setShowChatMenu(false)
-                    }
-                }
+            // Close chat menu
+            if (showChatMenu && !target.closest('.relative')) {
+                setShowChatMenu(false)
             }
-            
-            // Delete chat modal backdrop click is handled directly in the modal component
             
             // Close emoji picker
             if (isEmojiPickerOpen && emojiPickerRef.current && !emojiPickerRef.current.contains(target)) {
@@ -437,14 +353,14 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
             }
         }
 
-        if (showChatMenu || showDeleteChatConfirm || isEmojiPickerOpen) {
+        if (showChatMenu || isEmojiPickerOpen) {
             document.addEventListener('mousedown', handleClickOutside)
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside)
         }
-    }, [showChatMenu, showDeleteChatConfirm, isEmojiPickerOpen])
+    }, [showChatMenu, isEmojiPickerOpen])
 
     if (!selectedChat) {
         return (
@@ -473,27 +389,12 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                         </button>
                     )}
                     <div className="relative">
-                        <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0"
-                            style={
-                                otherParticipant?.profilePicture
-                                    ? undefined
-                                    : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-                            }
-                        >
-                            {otherParticipant?.profilePicture ? (
-                                <img
-                                    src={otherParticipant.profilePicture}
-                                    alt={otherParticipant?.name || 'User'}
-                                    className="w-full h-full rounded-full object-cover"
-                                />
-                            ) : (
-                                <img 
-                                    src="/post/card-21.png" 
-                                    alt="Avatar" 
-                                    className="w-full h-full object-contain" 
-                                />
-                            )}
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                            <img
+                                src={otherParticipant?.profilePicture || '/assets/avatar.jpg'}
+                                alt={otherParticipant?.name || 'User'}
+                                className="w-full h-full rounded-full object-cover"
+                            />
                         </div>
                         {otherParticipant?.isOnline && (
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
@@ -502,13 +403,12 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                     <div>
                         <p className="text-white text-[16px] font-semibold">{otherParticipant?.name || 'Unknown'}</p>
                         <p className="text-[#CC66FF] text-[14px]">
-                            {formatLastSeen(otherParticipant)}
+                            {otherParticipant?.isOnline ? 'Online' : 'Last seen 5 min ago'}
                         </p>
                     </div>
                 </div>
                 <div className="relative">
                     <button
-                        data-chat-menu-button
                         onClick={() => setShowChatMenu(!showChatMenu)}
                         className="text-gray-400 hover:text-white"
                     >
@@ -516,14 +416,21 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                     </button>
                     {/* Chat Menu Dropdown */}
                     {showChatMenu && (
-                        <div 
-                            ref={chatMenuRef}
-                            className="absolute right-0 top-full mt-2 bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-2xl p-2 min-w-[160px] z-50 backdrop-blur-sm"
-                        >
+                        <div className="absolute right-0 top-full mt-2 bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-2xl p-2 min-w-[160px] z-50 backdrop-blur-sm">
                             <button
-                                onClick={() => {
-                                    setShowChatMenu(false)
-                                    setShowDeleteChatConfirm(true)
+                                onClick={async () => {
+                                    if (selectedChat && window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+                                        try {
+                                            await deleteChat(selectedChat._id)
+                                            setSelectedChat(null)
+                                            setShowChatMenu(false)
+                                            getChats()
+                                            onChatDeleted?.()
+                                        } catch (error) {
+                                            console.error('Error deleting chat:', error)
+                                            alert('Failed to delete chat. Please try again.')
+                                        }
+                                    }
                                 }}
                                 className="flex items-center gap-2 px-4 py-2.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors text-sm w-full text-left font-exo2"
                             >
@@ -592,112 +499,93 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                                         <div
                                             className={`max-w-md group relative ${isMine ? 'flex flex-col items-end' : 'flex flex-col items-start'
                                                 }`}
-                                            data-message-id={msg._id}
                                         >
-                                            <div className="relative w-full">
+                                            <div
+                                                onClick={(e) => isMine && handleMessageClick(e, msg._id)}
+                                                className={`px-4 py-2.5 rounded-2xl cursor-pointer transition-all ${isMine
+                                                        ? 'bg-[#4E00E5] text-white text-[14px] rounded-br-sm hover:bg-[#5A00FF]'
+                                                        : 'bg-[#FFFFFF29] text-white text-[16px] rounded-bl-sm hover:bg-[#FFFFFF35]'
+                                                    } shadow-md ${isMine ? 'hover:shadow-lg' : ''}`}
+                                            >
+                                                <p className="text-sm leading-relaxed">{msg.message}</p>
                                                 {msg.images && msg.images.length > 0 && (
-                                                    <div 
-                                                        onClick={(e) => isMine && handleMessageClick(e, msg._id)}
-                                                        className={`grid gap-2 mb-2 ${isMine ? 'ml-auto' : 'mr-auto'} cursor-pointer`} 
-                                                        style={{ maxWidth: '100%', width: 'fit-content' }}
-                                                    >
+                                                    <div className="grid grid-cols-2 gap-2 mt-3">
                                                         {msg.images.map((img, i) => (
                                                             <div
                                                                 key={i}
-                                                                className="rounded-lg overflow-hidden"
+                                                                className="w-32 h-32 bg-gradient-to-br from-orange-300 to-orange-500 rounded-lg overflow-hidden shadow-md"
                                                             >
-                                                                <img 
-                                                                    src={img} 
-                                                                    alt={`Image ${i + 1}`} 
-                                                                    className="w-full h-auto max-w-full object-contain rounded-lg bg-transparent" 
-                                                                    style={{ backgroundColor: 'transparent' }}
-                                                                />
+                                                                <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
                                                             </div>
                                                         ))}
                                                     </div>
                                                 )}
-                                                {msg.message && (
-                                                    <div
-                                                        onClick={(e) => isMine && handleMessageClick(e, msg._id)}
-                                                        className={`px-4 py-2.5 rounded-2xl cursor-pointer transition-all ${isMine
-                                                                ? 'bg-[#4E00E5] text-white text-[14px] rounded-br-sm hover:bg-[#5A00FF]'
-                                                                : 'bg-[#FFFFFF29] text-white text-[16px] rounded-bl-sm hover:bg-[#FFFFFF35]'
-                                                            } shadow-md ${isMine ? 'hover:shadow-lg' : ''}`}
-                                                    >
-                                                        <p className="text-sm leading-relaxed">{msg.message}</p>
-                                                        <div className="flex items-center justify-end gap-1.5 mt-1">
-                                                            {msg.editedAt && (
-                                                                <p className="text-xs text-gray-300 italic">(edited)</p>
-                                                            )}
-                                                            <p className="text-xs text-gray-400">{formatMessageTime(msg.timestamp)}</p>
-                                                            {isMine && (
-                                                                <div className="flex items-center gap-0.5">
-                                                                    {msg.isRead ? (
-                                                                        // Double blue tick - Message read (WhatsApp style)
-                                                                        <CheckCheck className="w-4 h-4 text-blue-400" />
-                                                                    ) : (
-                                                                        // Single gray tick - Message sent but not read (WhatsApp style)
-                                                                        <Check className="w-4 h-4 text-gray-400" />
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {/* Show timestamp and read receipt for image-only messages */}
-                                                {msg.images && msg.images.length > 0 && !msg.message && (
-                                                    <div className="flex items-center justify-end gap-1.5 mt-1">
-                                                        <p className="text-xs text-gray-400">{formatMessageTime(msg.timestamp)}</p>
-                                                        {isMine && (
-                                                            <div className="flex items-center gap-0.5">
-                                                                {msg.isRead ? (
-                                                                    <CheckCheck className="w-4 h-4 text-blue-400" />
+                                                <div className="flex items-center justify-end gap-1.5 mt-1">
+                                                    {msg.editedAt && (
+                                                        <p className="text-xs text-gray-300 italic">(edited)</p>
+                                                    )}
+                                                    <p className="text-xs text-gray-400">{formatMessageTime(msg.timestamp)}</p>
+                                                    {isMine && (
+                                                        <div className="flex items-center gap-0.5">
+                                                            {msg.isRead ? (
+                                                                otherParticipant?.isOnline ? (
+                                                                    <CheckCheck className="w-4 h-4 text-blue-300" />
                                                                 ) : (
-                                                                    <Check className="w-4 h-4 text-gray-400" />
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {/* Edit/Delete Menu - Only for user's own messages */}
-                                                {isMine && messageMenuOpen === msg._id && (
-                                                    <div 
-                                                        className={`absolute ${isMine ? 'right-0' : 'left-0'} top-full mt-2 bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-2xl p-2 min-w-[180px] z-[100] backdrop-blur-sm`}
-                                                        data-menu-id={msg._id}
-                                                    >
-                                                        <div className="flex flex-col gap-1">
-                                                            {msg.message && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation()
-                                                                            handleEditMessage(msg._id)
-                                                                            setMessageMenuOpen(null)
-                                                                        }}
-                                                                        className="flex items-center gap-2 px-4 py-2.5 text-white hover:bg-[#FFFFFF1A] rounded-lg transition-colors text-sm w-full text-left font-exo2"
-                                                                    >
-                                                                        <Edit className="w-4 h-4" />
-                                                                        <span>Edit Message</span>
-                                                                    </button>
-                                                                    <div className="h-px bg-[#FFFFFF1A] my-1"></div>
-                                                                </>
+                                                                    <Check className="w-4 h-4 text-blue-300" />
+                                                                )
+                                                            ) : (
+                                                                <Check className="w-4 h-4 text-gray-400" />
                                                             )}
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    setSelectedMessage(msg._id)
-                                                                    setMessageMenuOpen(null)
-                                                                    setShowDeleteConfirm(true)
-                                                                }}
-                                                                className="flex items-center gap-2 px-4 py-2.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors text-sm w-full text-left font-exo2"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                                <span>Delete Message</span>
-                                                            </button>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
+                                            {/* Edit/Delete Menu Button - Only for user's own messages */}
+                                            {isMine && (
+                                                <div className="relative mt-1">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setMessageMenuOpen(messageMenuOpen === msg._id ? null : msg._id)
+                                                        }}
+                                                        className="p-1.5 rounded-full hover:bg-[#FFFFFF1A] transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Edit or Delete message"
+                                                    >
+                                                        <MoreVertical className="w-4 h-4 text-gray-400 hover:text-white" />
+                                                    </button>
+                                                    {/* Dropdown Menu */}
+                                                    {messageMenuOpen === msg._id && (
+                                                        <div className="absolute right-0 top-full mt-1 bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-2xl p-2 min-w-[160px] z-50 backdrop-blur-sm">
+                                                            <div className="flex flex-col gap-1">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        handleEditMessage(msg._id)
+                                                                        setMessageMenuOpen(null)
+                                                                    }}
+                                                                    className="flex items-center gap-2 px-4 py-2.5 text-white hover:bg-[#FFFFFF1A] rounded-lg transition-colors text-sm w-full text-left font-exo2"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                    <span>Edit Message</span>
+                                                                </button>
+                                                                <div className="h-px bg-[#FFFFFF1A] my-1"></div>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setSelectedMessage(msg._id)
+                                                                        setMessageMenuOpen(null)
+                                                                        setShowDeleteConfirm(true)
+                                                                    }}
+                                                                    className="flex items-center gap-2 px-4 py-2.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors text-sm w-full text-left font-exo2"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                    <span>Delete Message</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -769,7 +657,7 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                     </div>
                 )}
 
-                {/* Delete Message Confirmation Dialog */}
+                {/* Delete Confirmation Dialog */}
                 {showDeleteConfirm && selectedMessage && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                         <div className="bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 font-exo2">
@@ -789,46 +677,6 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                                 </button>
                                 <button
                                     onClick={() => handleDeleteMessage(selectedMessage)}
-                                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors font-exo2"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Delete Chat Confirmation Dialog */}
-                {showDeleteChatConfirm && (
-                    <div 
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                        onClick={(e) => {
-                            // Close modal if clicking on backdrop
-                            if (e.target === e.currentTarget) {
-                                setShowDeleteChatConfirm(false)
-                            }
-                        }}
-                    >
-                        <div 
-                            ref={chatMenuRef}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-[#14122D] border border-[#FFFFFF33] rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 font-exo2"
-                        >
-                            <h3 className="text-white text-lg font-semibold mb-2">Delete Chat</h3>
-                            <p className="text-gray-400 text-sm mb-6">
-                                Are you sure you want to delete this chat? This action cannot be undone and all messages will be permanently deleted.
-                            </p>
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => {
-                                        setShowDeleteChatConfirm(false)
-                                    }}
-                                    className="px-5 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm transition-colors font-exo2"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleDeleteChat}
                                     className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors font-exo2"
                                 >
                                     Delete
@@ -916,9 +764,9 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
                         disabled={isSendingMessage}
                     />
 
-                    {/* <button className="text-white hover:text-gray-300 transition-colors">
+                    <button className="text-white hover:text-gray-300 transition-colors">
                         <Mic className="w-5 h-5" />
-                    </button> */}
+                    </button>
                     <button
                         onClick={handleSendMessage}
                         disabled={(!messageInput.trim() && imagePreviews.length === 0) || isSendingMessage}

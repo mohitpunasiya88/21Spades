@@ -237,28 +237,11 @@ export default function MessagesPage() {
                             className="w-full text-left px-4 py-2 text-white hover:bg-[#090721] rounded-lg transition-colors flex items-center gap-3"
                           >
                             <div className="relative">
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden p-1 flex-shrink-0"
-                                style={
-                                  user.profilePicture
-                                    ? undefined
-                                    : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-                                }
-                              >
-                                {user.profilePicture ? (
-                                  <img
-                                    src={user.profilePicture}
-                                    alt={user.name}
-                                    className="w-full h-full rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <img 
-                                    src="/post/card-21.png" 
-                                    alt="Avatar" 
-                                    className="w-full h-full object-contain" 
-                                  />
-                                )}
-                              </div>
+                              <img
+                                src={user.profilePicture || '/assets/avatar.jpg'}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
                               {user.isOnline && (
                                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border border-gray-900"></div>
                               )}
@@ -322,27 +305,12 @@ export default function MessagesPage() {
                   className="w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A]"
                 >
                   <div className="relative">
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0"
-                      style={
-                        user.profilePicture
-                          ? undefined
-                          : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-                      }
-                    >
-                      {user.profilePicture ? (
-                        <img 
-                          src={user.profilePicture} 
-                          alt={user.name || 'User'}  
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <img 
-                          src="/post/card-21.png" 
-                          alt="Avatar" 
-                          className="w-full h-full object-contain" 
-                        />
-                      )}
+                    <div className="w-12 h-12 rounded-full items-center justify-center">
+                      <img 
+                        src={user.profilePicture || '/assets/avatar.jpg'} 
+                        alt={user.name || 'User'}  
+                        className="w-full h-full rounded-full object-cover"
+                      />
                     </div>
                     {user.isOnline && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
@@ -393,27 +361,12 @@ export default function MessagesPage() {
                     className={`w-full p-2 flex items-center gap-3 hover:bg-[#14122D] transition-colors border-b border-[#FFFFFF1A] ${isSelected ? 'bg-[#14122D]' : ''}`}
                   >
                     <div className="relative">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0"
-                        style={
-                          otherUser?.profilePicture
-                            ? undefined
-                            : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
-                        }
-                      >
-                        {otherUser?.profilePicture ? (
-                          <img 
-                            src={otherUser.profilePicture} 
-                            alt={otherUser?.name || 'User'}  
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <img 
-                            src="/post/card-21.png" 
-                            alt="Avatar" 
-                            className="w-full h-full object-contain" 
-                          />
-                        )}
+                      <div className="w-12 h-12 rounded-full items-center justify-center">
+                        <img 
+                          src={otherUser?.profilePicture || '/assets/avatar.jpg'} 
+                          alt={otherUser?.name || 'User'}  
+                          className="w-full h-full rounded-full object-cover"
+                        />
                       </div>
                       {otherUser?.isOnline && (
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
