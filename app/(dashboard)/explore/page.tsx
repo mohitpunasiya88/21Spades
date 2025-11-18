@@ -11,7 +11,7 @@ export default function ExplorePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#020019]">
+    <div className="relative w-full h-full min-h-[calc(100vh-80px)] bg-[#020019]">
       <ComingSoonModal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
