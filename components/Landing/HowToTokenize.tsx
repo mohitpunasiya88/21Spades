@@ -1,6 +1,7 @@
 "use client";
 
 import { BsSuitSpade } from "react-icons/bs";
+import './landingPage.css'
 
 export default function HowToTokenize() {
   const steps = [
@@ -29,7 +30,9 @@ export default function HowToTokenize() {
   return (
     <section className="mt-10 relative overflow-hidden">
 
-      <img src="/assets/star-animation.jpg" alt="How to Tokenize" className="absolute top-0 left-0 w-full h-full object-cover opacity-50" />
+        <div className="star-animation">
+          <img src="/assets/star-animation.jpg" alt="How to Tokenize" className="absolute top-0 left-0 w-full h-full object-cover opacity-50" />
+        </div>
 
       {/* White spade icon at top center */}
 
@@ -52,7 +55,7 @@ export default function HowToTokenize() {
             <div key={index} className="relative min-h-[200px] md:min-h-[250px] flex flex-col md:flex-row items-center md:items-start justify-between">
               {/* Step Number */}
               <div
-                className={`absolute top-0 z-0 font-audiowide text-[50px] md:text-[100px] font-normal opacity-20 select-none ${index === 0 || index === 2 ? 'md:left-5 left-2 text-left translate-y-1/4 md:-translate-y-1/8 translate-x-1/4 md:translate-x-2/3' : 'md:right-5 right-2 text-right translate-y-1/4 md:-translate-y-1/8 -translate-x-1/4 md:-translate-x-2/3'
+                className={`absolute top-0 z-0 font-audiowide text-[50px] md:text-[100px] font-normal opacity-20 select-none ${index === 0 || index === 2 ? 'md:left-5 left-2 text-left md:-translate-y-1/8 translate-x-1/4 md:translate-x-2/3' : 'md:right-5 right-2 text-right  md:-translate-y-1/8 -translate-x-1/4 md:-translate-x-2/3'
                   }`}
                 style={{
                   background: 'transparent',
@@ -91,7 +94,7 @@ export default function HowToTokenize() {
           ))}
         </div>
 
-        <div className=" absolute flex justify-center items-center mt-20 bottom-0 ">
+        <div className=" md:absolute hidden md:flex  justify-center items-center mt-20 bottom-0 ">
           <img src="/assets/card-icon.png" alt="" className="w-[40%] h-[40%] object-contain translate-y-3/5" />
         </div>
       </div>

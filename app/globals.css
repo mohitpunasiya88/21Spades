@@ -49,6 +49,13 @@ body {
   background: #7c3aed;
 } */
 
+.glass{
+  /* background:"transparent"; */
+  border: 0px solid #CBD5E14D !important;
+  box-shadow:1px 1px 0px 1px #cbd5e126, 1px 1px 0px 0px #cbd5e139;
+  cursor: pointer;
+  filter: drop-shadow(0px 0px 10px #CBD5E14D);
+}
 
 .gold-gradient-text {
   /* font-weight: 400; */
