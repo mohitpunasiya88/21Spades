@@ -20,6 +20,8 @@ import { useNFTFactory } from "@/app/hooks/contracts/useNFTFactory"
 import { useNFTCollection } from "@/app/hooks/contracts/useNFTCollection"
 import { usePrivy, useWallets } from "@privy-io/react-auth"
 import { useContract } from "@/app/hooks/contracts/useContract"
+import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
+import { ethers } from "ethers"
 
 const { TextArea } = Input
 
@@ -192,6 +194,8 @@ export default function CreateNFTPage() {
     }
   }
 
+  const {mint} = useNFTCollection();
+  const {createPutOnSaleSignature, auctionNonceStatus} = useMarketplace();
   const handleCreateItem = async () => {
     // Validation
     if (!uploadedFile) {
@@ -256,7 +260,7 @@ export default function CreateNFTPage() {
       const ipfsAnimationUrl = mediaType === "video" ? "" : undefined
 
       // Map auction type
-      let auctionType = 0 // Default: Fixed Rate
+      let auctionType = 1 // Default: Fixed Rate
       if (selectedMethod === "Time Auction") {
         auctionType = 1
       } else if (selectedMethod === "Open For Bids") {
@@ -344,13 +348,81 @@ export default function CreateNFTPage() {
         payload.nftId = Number(response[0].args.tokenId).toString()
        
        
-       debugger;
+      
         console.log("📡 Response success:", response)
         console.log("📡 Response data tokenId:", response[0].args.tokenId)
       } catch (error) {
         console.error("❌ Error creating NFT:", error)
+        throw error
+      }
+     //todo
+      /// list nft for sale (exppected a sale model at backend to store the sale details)
+
+       // we need to get the nonce from the counter of sales or number of sales from backend like i put nft on sale once
+      //  so the nonce will be 1+previous nonce then for next sale it will be 2+previous nonce and so on create nonce api in backend get_nonce_from_api, 
+      //  and pass the nonce to the salePayload
+      // In cotract we have diffent type of nonce for sale and auction (so create 3 different api for each type of nonce 
+      // 1. lazyMintNonceStatus
+      // 2. auctionNonceStatus // cuurent I am using this for sale
+      // 3. isOfferNonceProcessed)
+debugger
+      const nonceData = {nonce:4} //await get_nonce_from_api()
+      if(await auctionNonceStatus(nonceData.nonce)) {
+        throw new Error("Nonce is not valid")
+      }
+      if(payload.putOnSale && payload.nftId){
+      const salePayload = {
+        tokenId: payload.nftId, // this is the token id of the nft
+        erc721: selectedCollectionAddress, // this is the erc721 collection address of the nft
+        priceEth: payload.price.toString(), // this is the price of the nft
+        nonce: nonceData.nonce, // get nonce by hook of useMarketplace
+        erc20Token: payload.erc20Token || "0x0000000000000000000000000000000000000000", // 0x0000000000000000000000000000000000000000 for native token or erc20 token address 
+        auctionType: payload.auctionType, // 1 (Fixed Price) for fixed price, 2 (Auction) for auction 
+        startingTime: payload.startingTime, // this is the starting time  of the nft Auction type 2 sale in seconds
+        endingTime: payload.endingTime, // this is the ending time of the nft Auction type 2 sale in seconds
+        sign: "", // this is the signature of the sale which will be generate in next step
       }
 
+      /// generate signature for sale
+      try {
+      
+        if(payload.auctionType === 1){
+       const signature = await createPutOnSaleSignature(
+      BigInt(salePayload.tokenId),
+      salePayload.erc721,
+      ethers.parseEther(salePayload.priceEth),
+      BigInt(nonceData.nonce),
+      salePayload.erc20Token,
+      payload.auctionType,
+      BigInt(0),
+      BigInt(0)
+
+    );
+    salePayload.sign = signature.signature;
+    }else if(payload.auctionType === 2 && payload.endingTime && payload.startingTime){
+      const signature = await createPutOnSaleSignature(
+      BigInt(salePayload.tokenId),
+      salePayload.erc721,
+      ethers.parseEther(salePayload.priceEth),
+      BigInt(nonceData.nonce),
+      salePayload.erc20Token,
+      payload.auctionType,
+      BigInt(payload.startingTime),
+      BigInt(payload.endingTime),
+
+    );
+    salePayload.sign = signature.signature;
+    }
+      } catch (error) {
+        console.error("❌ Error creating sale:", error)
+        throw error
+      }
+   
+
+      //todo send salePayload to backend
+      // const saleApiUrl = authRoutes.createSale
+      // const saleResponse = await apiCaller('POST', saleApiUrl, salePayload, true)
+ }
 
       const apiUrl = authRoutes.createNFT
 
@@ -467,7 +539,7 @@ export default function CreateNFTPage() {
     error,
   } = useNFTFactory();
   
-  const {mint} = useNFTCollection();
+  
 
   const [collectionParams, setCollectionParams] = useState({
     name: '',

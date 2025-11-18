@@ -280,13 +280,13 @@ export function useMarketplace() {
     price: BigNumberish,
     nonce: BigNumberish,
     erc20Token: string,
-    pricingType: "Fixed Price" | "Auction",
+    pricingType: 1 | 2,
     startingTime: BigNumberish,
     endingTime: BigNumberish,
   ) => {
     const signer = await getSigner();
     let message: string;
-    if (pricingType !== "Auction") {
+    if (pricingType !== 2) {
       message = ethers.solidityPackedKeccak256(
         ["address", "uint256", "address", "uint256", "uint256", "address"],
         [
@@ -338,6 +338,8 @@ export function useMarketplace() {
     const signature = await signer.signMessage(ethers.getBytes(root));
     return { signature };
   }, [getSigner]);
+
+
 
   return {
     auctions,
