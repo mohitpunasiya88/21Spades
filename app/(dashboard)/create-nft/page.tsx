@@ -1160,7 +1160,7 @@ debugger
                 onChange={setPostToFeed}
                 className="[&.ant-switch-checked]:!bg-[#4E00E5]"
                 style={{
-                  backgroundColor: postToFeed ? '#4E00E5' : undefined
+                  backgroundColor: postToFeed ? '#4E00E5' : '#26017059',
                 }}
               />
             </div>
@@ -1176,7 +1176,7 @@ debugger
                 onChange={setFreeMinting}
                 className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
                 style={{
-                  backgroundColor: freeMinting ? '#4E00E5' : undefined
+                  backgroundColor: freeMinting ? '#4E00E5' : '#26017059'
                 }}
               />
             </div>
@@ -1192,7 +1192,7 @@ debugger
                 onChange={setPutOnMarketplace}
                 className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
                 style={{
-                  backgroundColor: putOnMarketplace ? '#4E00E5' : undefined
+                  backgroundColor: putOnMarketplace ? '#4E00E5' : '#26017059'
                 }}
               />
             </div>
@@ -1208,7 +1208,7 @@ debugger
                 onChange={setUnlockOncePurchased}
                 className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
                 style={{
-                  backgroundColor: unlockOncePurchased ? '#4E00E5' : undefined
+                  backgroundColor: unlockOncePurchased ? '#4E00E5' : '#26017059'
                 }}
               />
             </div>
