@@ -79,8 +79,8 @@ export default function LiveAuctions() {
             <p className="font-exo2 font-semibold text-base md:text-lg text-[#A3AED0] text-center px-4">
               Where Culture Moves.See what's capturing attention across art, gaming, fashion, and culture  all rising on-chain
             </p>
-          </div> 
-          
+          </div>
+
           <div className="w-full flex justify-center md:absolute md:justify-end md:right-10 md:bottom-2 mt-6 md:mt-0">
             <button
               className="
@@ -103,8 +103,6 @@ export default function LiveAuctions() {
               <RiArrowDropDownLine className="w-5 h-5 text-white" />
             </button>
           </div>
-
-
         </div>
 
         <div className="relative w-full overflow-hidden">
