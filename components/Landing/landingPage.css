@@ -59,3 +59,27 @@
   75%  { transform: translate3d(-20vw, 10vh, 0) scale(1.1); }
   100% { transform: translate3d(-40vw, -40vh, 0) scale(1); }
 }
+
+.star-animation {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* above star bg, below content */
+  pointer-events: none;
+  overflow: hidden; /* hide overflow for cleaner edges */
+  will-change: transform;
+ 
+}
+
+.star-animation img {
+  scale: 1.5;
+  animation: star-animation 10s ease-in-out infinite alternate;
+}
+
+@keyframes star-animation {
+  0%   { transform: translate3d(0vw, 0vh, 0) scale(1) rotate(0deg); }
+  50%  { transform: translate3d(0vw, 0vh, 0) scale(1.1) rotate(10deg); }
+  100% { transform: translate3d(0vw, 0vh, 0) scale(1) rotate(0deg); }
+}
+
+
+
