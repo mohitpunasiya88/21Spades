@@ -4,8 +4,7 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
-import { Button, Form, Input, Select, Tabs, Dropdown, Spin } from "antd"
-import { useMessage } from "@/lib/hooks/useMessage"
+import { Button, Form, Input, Select, Tabs, Dropdown, Spin, message } from "antd"
 import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-react"
 import defaultCoverImage from "@/components/assets/profile-bg.jpg"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
@@ -46,7 +45,6 @@ const countryCodes = [
 
 export default function ProfilePage() {
   const { user, getProfile, updateProfile, incrementProfileView } = useAuthStore()
-  const { message } = useMessage()
   const [editing, setEditing] = useState(false)
   const [activeTab, setActiveTab] = useState('Items')
   const [form] = Form.useForm()

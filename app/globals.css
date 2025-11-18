@@ -865,18 +865,3 @@ div.figma-vertical-line {
 .time-auction-datepicker-dropdown .ant-picker-input > input::placeholder {
   color: #9BA3AF !important;
 }
-
-/* Ant Design Message Styling */
-.ant-message {
-  z-index: 9999 !important;
-  top: 30px !important;
-}
-
-.ant-message .ant-message-notice {
-  z-index: 9999 !important;
-}
-
-.ant-message .ant-message-notice-content {
-  z-index: 9999 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
