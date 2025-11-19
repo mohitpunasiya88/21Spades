@@ -6,13 +6,19 @@ export default function Footer() {
     <footer className="bg-gradient-to-t w-[100%] md:w-[97%] mx-auto from-indigo-950 via-purple-950 to-black relative overflow-hidden mb-5 mt-5 mx-3 sm:mx-5 md:rounded-xl">
 
       {/* Background pattern overlay */}
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage: `
-          linear-gradient(rgba(147, 51, 234, 0.3) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(147, 51, 234, 0.3) 1px, transparent 1px)
-        `,
-        backgroundSize: '50px 50px'
-      }} />
+      <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[10%]" style={{}} >
+        <div className="absolute  h-[200vh] md:w-[20%] w-[30%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
+        <div className="absolute h-[200vh] md:w-[40%] w-[80%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
+        <div className="absolute h-[200vh] md:w-[60%] w-[120%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
+        <div className="absolute h-[200vh] md:w-[80%] w-[160%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
+        <div className="absolute h-[200vh] md:w-[100%] w-[200%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
+        <div className="absolute h-[200vh] md:w-[120%] w-[240%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
+      </div>
+
+      {/* <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
+
+
+      </div> */}
 
       <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
 

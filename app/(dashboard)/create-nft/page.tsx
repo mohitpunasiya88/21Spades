@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker } from "antd"
 import dayjs, { Dayjs } from "dayjs"
-import { Upload as UploadIcon, X, Plus, CloudUpload, Calendar } from "lucide-react"
+import { Upload as UploadIcon, X, Plus, CloudUpload, Calendar, Signature } from "lucide-react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
 import { useMarketDataStore } from "@/lib/store/authStore"
@@ -288,7 +288,7 @@ export default function CreateNFTPage() {
         : 0
 
       // Prepare payload according to API schema
-      const payload: any = {
+      let payload: any = {
         collectionId: selectedCollection,
         royalty: royalties || 0,
         walletAddress: walletAddress,
@@ -345,7 +345,7 @@ export default function CreateNFTPage() {
           tokenURI:  "test/pinata", //payload.imageUrl,
           royalty: payload.royalty,
         },selectedCollectionAddress)
-
+const idsssss = Number(response[0].args.tokenId).toString()
         payload.nftId = Number(response[0].args.tokenId).toString()
       } catch (error) {
         console.error("❌ Error creating NFT:", error)
@@ -362,22 +362,40 @@ export default function CreateNFTPage() {
       // 2. auctionNonceStatus // cuurent I am using this for sale
       // 3. isOfferNonceProcessed)
 debugger
-      const nonceData = {nonce:4} //await get_nonce_from_api()
-      if(await auctionNonceStatus(nonceData.nonce)) {
-        throw new Error("Nonce is not valid")
-      }
+       //await get_nonce_from_api()
+  let isValid = true;
+let nonceResponse = null;
+
+while (isValid) {
+  // GET API call
+  nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
+  console.log(nonceResponse, 'nonceResponse');
+
+  // Validate nonce
+  isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+
+  // If still invalid → again call GET
+  if (isValid) {
+    console.log("Nonce invalid, retrying...");
+    await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+  }
+}
+payload.nonce = nonceResponse.data.nonce;
+      console.log("🚀 ~ handleCreateItem ~ payload:", payload)
       if(payload.putOnSale && payload.nftId){
       const salePayload = {
         tokenId: payload.nftId, // this is the token id of the nft
         erc721: selectedCollectionAddress, // this is the erc721 collection address of the nft
         priceEth: payload.price.toString(), // this is the price of the nft
-        nonce: nonceData.nonce, // get nonce by hook of useMarketplace
+        nonce: nonceResponse.data.nonce, // get nonce by hook of useMarketplace
         erc20Token: payload.erc20Token || "0x0000000000000000000000000000000000000000", // 0x0000000000000000000000000000000000000000 for native token or erc20 token address 
         auctionType: payload.auctionType, // 1 (Fixed Price) for fixed price, 2 (Auction) for auction 
         startingTime: payload.startingTime, // this is the starting time  of the nft Auction type 2 sale in seconds
         endingTime: payload.endingTime, // this is the ending time of the nft Auction type 2 sale in seconds
         sign: "", // this is the signature of the sale which will be generate in next step
       }
+   payload.erc20Token = salePayload.erc20Token;
+   
 
       /// generate signature for sale
       try {
@@ -387,7 +405,7 @@ debugger
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(nonceData.nonce),
+      BigInt(nonceResponse.data.nonce),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(0),
@@ -395,12 +413,14 @@ debugger
 
     );
     salePayload.sign = signature.signature;
+
+    payload.signature = signature.signature;
     }else if(payload.auctionType === 2 && payload.endingTime && payload.startingTime){
       const signature = await createPutOnSaleSignature(
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(nonceData.nonce),
+      BigInt(nonceResponse.data.nonce),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(payload.startingTime),
@@ -408,6 +428,9 @@ debugger
 
     );
     salePayload.sign = signature.signature;
+    payload.signature = signature.signature;
+    payload.erc20Token = salePayload.erc20Token;
+
     }
       } catch (error) {
         console.error("❌ Error creating sale:", error)
@@ -421,6 +444,7 @@ debugger
  }
 
       const apiUrl = authRoutes.createNFT
+     
 
       const response = await apiCaller('POST', apiUrl, payload, true)
 
@@ -474,8 +498,14 @@ debugger
       if (loadingMessage) {
         message.destroy(loadingMessage as any)
       }
-      const errorMessage = error?.response?.data?.message || error?.message || "An error occurred"
-      message.error(errorMessage)
+      let friendlyMessage = error?.response?.data?.message || error?.reason || error?.shortMessage || error?.message || "An error occurred"
+      if (
+        (error?.code === 'CALL_EXCEPTION' && (error?.action === 'estimateGas' || /estimateGas/i.test(error?.message))) ||
+        /missing revert data/i.test(error?.message || '')
+      ) {
+        friendlyMessage = "Transaction simulation failed. It would likely revert. Please check your inputs (price, timings, nonce), selected collection, and network, then try again."
+      }
+      message.error(friendlyMessage)
     } finally {
       setIsCreatingNFT(false)
     }

@@ -58,6 +58,9 @@ const authRoutes = {
     createNFT: 'nft/items',
     getNFTsByCollection: 'nft/items', // Use with collectionId: `nft/items?collectionId=${id}`
     bids: 'bids',
+
+    // nonce
+    getNonce: 'nonce',
 }
 
 export default authRoutes;
