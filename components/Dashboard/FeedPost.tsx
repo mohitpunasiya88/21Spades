@@ -705,7 +705,7 @@ export default function FeedPost({ post }: FeedPostProps) {
           {post.content && <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">{post.content}</p>}
 
           {/* Regular Post Media - Only show if not a repost */}
-          {post.image && (
+          {post.image ? (
             <div className="flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4">
               <img
                 src={post.image}
@@ -713,6 +713,10 @@ export default function FeedPost({ post }: FeedPostProps) {
                 className="max-w-full h-auto object-contain max-h-[500px]"
                 style={{ display: 'block' }}
               />
+            </div>
+          ) : (
+            <div className="flex justify-center items-center rounded-lg sm:rounded-xl mb-3 sm:mb-4 border border-dashed border-[#FFFFFF33] text-gray-400 text-sm sm:text-base font-exo2 py-10 w-full">
+              No image available
             </div>
           )}
         </>
