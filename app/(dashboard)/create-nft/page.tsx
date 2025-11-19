@@ -275,10 +275,10 @@ export default function CreateNFTPage() {
 
       if (selectedMethod === "Time Auction") {
         if (startingDate) {
-          startingTime = startingDate.toISOString()
+          startingTime = Math.floor(startingDate.toDate().getTime() / 1000).toString()
         }
         if (expirationDate) {
-          endingTime = expirationDate.toISOString()
+          endingTime = Math.floor(expirationDate.toDate().getTime() / 1000).toString()
         }
       }
 
@@ -347,11 +347,6 @@ export default function CreateNFTPage() {
         },selectedCollectionAddress)
 
         payload.nftId = Number(response[0].args.tokenId).toString()
-       
-       
-      
-        console.log("📡 Response success:", response)
-        console.log("📡 Response data tokenId:", response[0].args.tokenId)
       } catch (error) {
         console.error("❌ Error creating NFT:", error)
         throw error
@@ -563,7 +558,6 @@ debugger
   });
 
   const handleCreateCollection = async () => {
-    console.log("🚀 handleCreateCollection called")
 
     // Check if Privy is ready
     // if (!ready) {
@@ -671,7 +665,6 @@ debugger
 
 
       message.success("Collection created successfully!");
-      console.log("✅ Collection created:", events[0].args.collection);
       collectionAddress = events[0].args.collection;
       
 

@@ -57,6 +57,7 @@ const authRoutes = {
     // NFT Items
     createNFT: 'nft/items',
     getNFTsByCollection: 'nft/items', // Use with collectionId: `nft/items?collectionId=${id}`
+    createBid: 'bids',
 }
 
 export default authRoutes;

@@ -13,8 +13,15 @@ export interface CollectionNFT {
   imageUrl?: string | null
   collectionId?: string
   ownerName?: string
+  owner?: string
   description?: string
   auctionType?: number // 0 = None, 1 = Fixed Rate, 2 = Auction
+  nftId?: string
+  nftLongId?: string
+  createdBy?: {
+    name: string
+    profilePicture: string
+  }
 }
 
 interface SetCollectionPayload {
@@ -60,8 +67,12 @@ export const mapApiNftToCollectionNft = (nft: any): CollectionNFT => ({
   image: nft?.imageUrl || nft?.image || null,
   collectionId: resolveCollectionId(nft),
   ownerName: nft?.owner?.name || nft?.ownerName || nft?.owner || 'Unknown',
+  owner: nft?.owner?.name || nft?.owner || nft?.ownerName,
   description: nft?.description || nft?.itemDescription || '',
   auctionType: nft?.auctionType !== undefined ? Number(nft.auctionType) : undefined,
+  nftId: nft?.nftId ? String(nft.nftId) : nft?.tokenId ? String(nft.tokenId) : undefined,
+  nftLongId: nft?.nftLongId ? String(nft.nftLongId) : undefined,
+  createdBy: nft?.createdBy,
 })
 
 export const useCollectionStore = create<CollectionStore>((set) => ({

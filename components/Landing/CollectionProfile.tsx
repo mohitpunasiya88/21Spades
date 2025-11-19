@@ -20,6 +20,7 @@ interface NFT {
   imageUrl?: string
   itemName?: string
   _id?: string
+  nftId?: string
 }
 
 interface CollectionProfileProps {
@@ -36,19 +37,30 @@ interface CollectionProfileProps {
 }
 
 // NFT Card Component for the grid
-function NFTCard({ name, price, floorPrice, image, imageUrl, id, _id, itemName }: NFT) {
+function NFTCard({
+  name,
+  price,
+  floorPrice,
+  image,
+  imageUrl,
+  id,
+  _id,
+  itemName,
+  nftId: propNftId,
+  collectionId,
+}: NFT & { collectionId?: string }) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [imageError, setImageError] = useState(false)
   const router = useRouter()
   
-  const nftId = _id || id || name
+  const nftId = _id || propNftId || id || name
   const displayName = name || itemName || 'Unnamed NFT'
   const nftImage = imageUrl || image
 
   return (
     <div 
       className="relative w-full mx-auto cursor-pointer"
-      onClick={() => router.push(`/marketplace/nft/${nftId}`)}
+      onClick={() => router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)}
     >
       <div 
         className="relative rounded-2xl overflow-hidden transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
@@ -237,9 +249,9 @@ export default function CollectionProfile({
   // Use API data if available, otherwise use props/defaults
   const displayCollectionName = collectionData?.collectionName || collectionData?.name || collectionName
   const displayDescription = collectionData?.collectionDescription || collectionData?.description || description
-  const displayFloorPrice = collectionData?.floorPrice ? `${collectionData.floorPrice} AVAX` : floorPrice
+  const displayFloorPrice = collectionData?.averagePrice ? `${collectionData.averagePrice} AVAX` : floorPrice
   const displayItems = collectionData?.totalCollectionNfts || collectionData?.totalNfts || items
-  const displayOwners = collectionData?.owners || owners
+  const displayOwners = collectionData?.totalOwners || owners
   const displayNftCount = collectionData?.totalCollectionNfts || collectionData?.totalNfts || nftCount
   const collectionImage = collectionData?.imageUrl || collectionData?.coverPhoto || null
 
@@ -446,12 +458,14 @@ export default function CollectionProfile({
                 <NFTCard 
                   id={nft.id}
                   _id={nft._id}
+                  nftId={nft.nftId}
                   name={nft.name}
                   itemName={nft.itemName}
                   price={nft.price}
                   floorPrice={nft.floorPrice}
                   image={nft.image}
                   imageUrl={nft.imageUrl}
+                  collectionId={collectionId}
                 />
               </div>
             ))}

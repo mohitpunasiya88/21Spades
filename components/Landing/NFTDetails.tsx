@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation'
 
 interface NFTDetailsProps {
   id: string
+  collectionId?: string
   name?: string
   owner?: string
   currentPrice?: string
@@ -89,7 +90,19 @@ function Accordion({ title, children, isOpen: controlledIsOpen, onToggle, id }: 
 }
 
 // Place Bid Modal Component
-function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftImage }: { isOpen: boolean; onClose: () => void; onConfirm: (bidAmount: string) => void; nftName?: string; nftImage?: string }) {
+function PlaceBidModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  nftName = 'MOONLIGHT',
+  nftImage,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: (bidAmount: string) => Promise<void> | void
+  nftName?: string
+  nftImage?: string
+}) {
   const [bidAmount, setBidAmount] = useState<string>('0.00')
   const [showSummary, setShowSummary] = useState(false)
   const [isConfirming, setIsConfirming] = useState(false)
@@ -135,13 +148,14 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
     }
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (isConfirming) return
     setIsConfirming(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await onConfirm(bidAmount)
+    } finally {
       setIsConfirming(false)
-      onConfirm(bidAmount)
-    }, 2000)
+    }
   }
 
   const bidAmountNum = parseFloat(bidAmount) || 0
@@ -284,9 +298,12 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
             <button
               onClick={handleConfirm}
               disabled={isConfirming}
-              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Confirm Bid
+              {isConfirming && (
+                <span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+              )}
+              {isConfirming ? 'Creating bid...' : 'Confirm Bid'}
             </button>
           )}
         </div>
@@ -542,6 +559,7 @@ function OfferSubmittedModal({ isOpen, onClose, offerAmount = '77.9', nftName = 
 
 export default function NFTDetails({
   id,
+  collectionId,
   name = 'new_Spades.avax',
   owner = 'Ulrich Nielsen',
   currentPrice = '8.41',
@@ -565,23 +583,66 @@ export default function NFTDetails({
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
 
+  const matchNftById = useCallback(
+    (nft: CollectionNFT, target: string) => {
+      const possibleIds = [nft._id, nft.id, nft.nftId, nft.nftLongId]
+      return possibleIds.filter(Boolean).map((val) => val!.toString()).includes(target)
+    },
+    [],
+  )
+
+  const normalizeListData = useCallback((data: any) => {
+    if (Array.isArray(data)) return data
+    return data?.items || data?.nfts || data?.data || data?.results || []
+  }, [])
+
   const loadFromCache = useCallback(
     (list: CollectionNFT[]) => {
-      const match = list.find((nft) => (nft._id || nft.id) === id)
+      const match = list.find((nft) => matchNftById(nft, id))
       if (match) {
         setCurrentNft(match)
-        setRelatedNfts(list.filter((nft) => (nft._id || nft.id) !== id))
+        setRelatedNfts(list.filter((nft) => !matchNftById(nft, id)))
         setIsLoadingDetails(false)
         return true
       }
       return false
     },
-    [id],
+    [id, matchNftById],
   )
 
   const fetchNftDetails = useCallback(async () => {
     setIsLoadingDetails(true)
     try {
+      if (collectionId) {
+        const queryParams = new URLSearchParams({
+          collectionId,
+          page: '1',
+          limit: '100',
+          blocked: 'false',
+        })
+        const listResponse = await apiCaller(
+          'GET',
+          `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`,
+          null,
+          true,
+        )
+        if (listResponse.success && listResponse.data) {
+          const listData = normalizeListData(listResponse.data)
+          const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
+          const match = mappedList.find((nft) => matchNftById(nft, id)) || mappedList[0] || null
+          if (match) {
+            setCurrentNft(match)
+          }
+          setRelatedNfts(mappedList.filter((nft) => !matchNftById(nft, id)))
+          setCollectionData({
+            collectionId,
+            collectionData: listResponse.data.collection || listResponse.data.collectionData,
+            nfts: mappedList,
+          })
+          return
+        }
+      }
+
       const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
       if (response.success && response.data) {
         const rawNft = response.data.nft || response.data
@@ -597,11 +658,9 @@ export default function NFTDetails({
             true,
           )
           if (listResponse.success && listResponse.data) {
-            const listData = Array.isArray(listResponse.data)
-              ? listResponse.data
-              : (listResponse.data.items || listResponse.data.nfts || listResponse.data.data || [])
-            const mappedList = listData.map(mapApiNftToCollectionNft)
-            setRelatedNfts(mappedList.filter((nft: CollectionNFT) => (nft._id || nft.id) !== id))
+            const listData = normalizeListData(listResponse.data)
+            const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
+            setRelatedNfts(mappedList.filter((nft: CollectionNFT) => !matchNftById(nft, id)))
             setCollectionData({
               collectionId: associatedCollectionId,
               collectionData: listResponse.data.collection || listResponse.data.collectionData,
@@ -620,18 +679,48 @@ export default function NFTDetails({
     } finally {
       setIsLoadingDetails(false)
     }
-  }, [id, message, setCollectionData])
+  }, [collectionId, id, matchNftById, message, normalizeListData, setCollectionData])
 
   useEffect(() => {
     if (id && !loadFromCache(cachedNfts)) {
       void fetchNftDetails()
     }
-  }, [id, cachedNfts, loadFromCache, fetchNftDetails])
+  }, [id, cachedNfts, collectionId, loadFromCache, fetchNftDetails])
 
-  const handleBidConfirm = (bidAmount: string) => {
-    setPlacedBidAmount(bidAmount)
-    setIsPlaceBidOpen(false)
-    setIsBidPlacedOpen(true)
+  const handleBidConfirm = async (bidAmount: string) => {
+    if (!bidAmount || Number(bidAmount) <= 0) {
+      message.error('Enter a valid bid amount')
+      return
+    }
+    const nftIdentifier = currentNft?._id || currentNft?.id || id
+    if (!nftIdentifier) {
+      message.error('NFT identifier missing')
+      return
+    }
+    let loadingMessage: any = null
+    try {
+      const payload = {
+        price: bidAmount,
+        nftId: nftIdentifier,
+      }
+      const response = await apiCaller('POST', authRoutes.createBid, payload, true)
+      if (response?.success) {
+        message.success(response?.message || 'Bid submitted successfully')
+        setPlacedBidAmount(bidAmount)
+        setIsPlaceBidOpen(false)
+        setIsBidPlacedOpen(true)
+      } else {
+        message.error(response?.message || 'Failed to submit bid')
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to submit bid', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to submit bid'
+      message.error(errorMessage)
+    } finally {
+      if (loadingMessage) {
+        message.destroy(loadingMessage as any)
+      }
+    }
   }
 
   const handleOfferConfirm = () => {
@@ -640,7 +729,11 @@ export default function NFTDetails({
   }
 
   const displayName = currentNft?.name ?? name
-  const displayOwner = currentNft?.ownerName ?? owner
+  const displayOwner =
+    currentNft?.createdBy?.name ||
+    currentNft?.ownerName ||
+    currentNft?.owner ||
+    owner
   const displayPrice = currentNft?.price ?? currentPrice
   const displayUsd = currentUsd
   const displayDescription =
@@ -905,13 +998,22 @@ export default function NFTDetails({
           </div>
           {relatedNfts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {relatedNfts.slice(0, 8).map((nft: CollectionNFT) => (
-                <MiniCard
-                  key={nft._id || nft.id}
-                  nft={nft}
-                  onClick={() => router.push(`/marketplace/nft/${nft._id || nft.id}`)}
-                />
-              ))}
+              {relatedNfts.slice(0, 8).map((nft: CollectionNFT, index: number) => {
+                const targetCollectionId = currentNft?.collectionId || collectionId
+                const targetId = nft._id || nft.id || nft.nftId || `nft-${index}`
+                const href = targetId
+                  ? targetCollectionId
+                    ? `/marketplace/nft/${targetId}?collectionId=${targetCollectionId}`
+                    : `/marketplace/nft/${targetId}`
+                  : '/marketplace/nft'
+                return (
+                  <MiniCard
+                    key={`${targetId}-${index}`}
+                    nft={nft}
+                    onClick={() => router.push(href)}
+                  />
+                )
+              })}
             </div>
           ) : (
             <div className="text-gray-400 text-sm font-exo2">No other NFTs found in this collection.</div>
