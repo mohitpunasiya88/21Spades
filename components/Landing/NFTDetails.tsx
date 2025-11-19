@@ -663,8 +663,24 @@ export default function NFTDetails({
   const [isAuctionLive, setIsAuctionLive] = useState(false)
   
   // Independent state for each accordion
-  const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
+  const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(true)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
+
+  const handleAccordionToggle = useCallback((key: 'token' | 'bids') => {
+    if (key === 'token') {
+      setIsTokenDetailOpen((prev) => {
+        const next = !prev
+        if (next) setIsBidsOpen(false)
+        return next
+      })
+    } else {
+      setIsBidsOpen((prev) => {
+        const next = !prev
+        if (next) setIsTokenDetailOpen(false)
+        return next
+      })
+    }
+  }, [])
 
   const matchNftById = useCallback(
     (nft: CollectionNFT, target: string) => {
@@ -1008,6 +1024,25 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
     currentNft?.ownerName ||
     currentNft?.owner ||
     owner
+  const profilePictureCollection = currentNft?.creator?.profilePicture
+  const ownerAvatar = profilePictureCollection ? (
+    <Avatar
+      src={profilePictureCollection}
+      size={36}
+      className="!flex !items-center !justify-center !bg-[#1A1A2E]"
+      style={{ width: 36, height: 36 }}
+    />
+  ) : (
+    <Avatar
+      size={36}
+      className="!bg-[#1A1A2E] !flex !items-center !justify-center"
+      style={{ width: '36px', height: '36px' }}
+    >
+      <span className="text-[#60A5FA] text-sm sm:text-base font-exo2">
+        {displayOwner?.[0]?.toUpperCase() || 'U'}
+      </span>
+    </Avatar>
+  )
   const displayPrice = currentNft?.price ?? currentPrice
   const displayUsd = currentUsd
   const displayDescription =
@@ -1015,6 +1050,18 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
       ? currentNft.description
       : 'Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.'
   const currentImage = currentNft?.imageUrl || currentNft?.image || null
+  const displayCategory =
+    currentNft?.category ||
+    currentNft?.collectionCategory ||
+    currentNft?.collection?.category ||
+    'N/A'
+  const lastUpdatedText = useMemo(() => {
+    const updatedAt = currentNft?.updatedAt || currentNft?.lastUpdated
+    if (!updatedAt) return '—'
+    const date = new Date(updatedAt)
+    if (Number.isNaN(date.getTime())) return '—'
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+  }, [currentNft])
 
   const baseAvaxPrice = useMemo(
     () => parseNumericValue(currentNft?.price ?? currentPrice),
@@ -1207,26 +1254,21 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
 
           {/* Details */}
           <div className="p-4 sm:p-6 font-exo2">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-2">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Avatar
-                  size={36}
-                  className="!bg-[#1A1A2E] !flex !items-center !justify-center"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                  }}
-                >
-                  <span className="text-[#60A5FA] text-sm sm:text-base font-exo2">U</span>
-                </Avatar>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {ownerAvatar}
                 <div className="flex flex-col">
-                  <span className="text-gray-400 text-xs sm:text-sm font-exo2">Owner</span>
-                  <span className="text-[#884DFF] text-xs sm:text-sm font-exo2 cursor-pointer">{displayOwner}</span>
+                  <span className="text-white/60 text-xs sm:text-sm">Owner</span>
+                  <button className="text-[#7E6BEF] text-sm font-semibold hover:underline text-left">
+                    {displayOwner}
+                  </button>
                 </div>
-                <MessageSquareText className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-1 sm:ml-2" />
+                <button className="ml-2 flex items-center justify-center w-9 h-9 rounded-full border border-white/15 bg-white/5 text-white hover:border-white/40 transition">
+                  <MessageSquareText className="w-4 h-4" />
+                </button>
               </div>
-              <button className="w-24 sm:w-28 flex items-center justify-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#A3AED04D] hover:border-white font-exo2">
-                <Share className="w-3.5 h-3.5 sm:w-4 sm:h-6 text-grey" />
+              <button className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-full border border-white/15 hover:border-white/40 transition">
+                <Share className="w-4 h-4" />
                 Share
               </button>
             </div>
@@ -1239,7 +1281,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
 
             {/* Price and CTA */}
             <div className="mt-6 sm:mt-12 lg:mt-24">
-              <p className="text-white font-exo2 text-xs sm:text-sm flex items-center gap-2">
+              <p className="text-white font-exo2 text-sm font-semibold flex items-center gap-2">
                 {isAuction ? (
                   <>
                     <span>Current Bid</span>
@@ -1249,8 +1291,8 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                         Live
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-gray-400 text-[11px] sm:text-xs font-semibold uppercase tracking-wide">
-                        <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/40 text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-all duration-200 hover:bg-[#F97316]/15 hover:border-[#F97316]/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
                         Scheduled
                       </span>
                     )}
@@ -1259,12 +1301,13 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                   'Current Price'
                 )}
               </p>
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
-                <div className="flex items-center gap-1 sm:gap-1.5">
-                <Image src={bidIcon} alt="Bids icon" className="w-4 h-4 object-contain" />
-                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">{displayPrice}</span>
-                </div> -
-                <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{displayUsd}</span>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Image src={bidIcon} alt="AVAX icon" className="w-5 h-5 object-contain" />
+                  <span className="text-white font-exo2 text-2xl font-bold">{displayPrice}</span>
+                </div>
+                <span className="text-white/40 text-2xl font-bold">•</span>
+                <span className="text-[#7E6BEF] font-exo2 text-2xl font-semibold">{displayUsd}</span>
               </div>
 
               {/* Conditional Buttons based on auctionType */}
@@ -1318,9 +1361,14 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
 
               {isAuction && (
                 <div className="text-xs sm:text-sm font-exo2 text-gray-400 flex items-center gap-2">
-                  <span>{auctionTimerLabel}</span>
-                  <span className="text-white font-mono text-sm sm:text-base">
-                    {auctionTimerValue || '—'}
+                  <span className="inline-flex items-center gap-1 font-semibold"> 
+                    {auctionTimerLabel} 
+                    {/* {auctionTimerLabel === 'Auction Starts In' && !isAuctionLive && !hasAuctionEnded && ( */}
+                      <span className="mx-1 w-1.5 h-1.5 rounded-full bg-[#4F01E6] animate-ping" />
+                    {/* )} */} 
+                  </span>
+                  <span className={`text-white font-mono text-sm sm:text-base transition-all duration-200 ${!isAuctionLive && auctionTimerLabel === 'Auction Starts In' ? 'animate-pulse' : ''}`}>
+                   - {auctionTimerValue || '—'}
                   </span>
                 </div>
               )}
@@ -1329,39 +1377,46 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         </div>
 
         {/* Conditional Accordions based on auctionType */}
-        <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
+        <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8 items-start`}>
           <Accordion
             key="token-detail"
             id="token-detail"
-            title="Token Detail"
+            title={
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#7E6BEF]/15 text-[#7E6BEF]">
+                  <Image src={bidIcon} alt="detail" className="w-3.5 h-3.5 object-contain" />
+                </span>
+                <span>Token Detail</span>
+              </div>
+            }
             isOpen={isTokenDetailOpen}
-            onToggle={() => setIsTokenDetailOpen(!isTokenDetailOpen)}
+            onToggle={() => handleAccordionToggle('token')}
           >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-400 text-sm font-exo2">Creator</span>
-                <span className="text-white text-sm font-exo2">{displayOwner}</span>
-              </div>
-              <div className="flex items-center justify-between ">
-                <span className="text-gray-400 text-sm font-exo2">Token Standard</span>
-                <span className="text-white text-sm font-exo2">ERC-721</span>
-              </div>
-              <div className="flex items-center justify-between ">
-                <span className="text-gray-400 text-sm font-exo2">Blockchain</span>
-                <span className="text-white text-sm font-exo2">Avalanche</span>
+            <div className="space-y-6 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[#A3AED0]">Creator</span>
+                <span className="text-white font-semibold">{displayOwner}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm font-exo2">Last Updated</span>
-                <span className="text-white text-sm font-exo2">October 13, 2025</span>
+                <span className="text-[#A3AED0]">Token Standard</span>
+                <span className="text-white font-semibold">ERC-721</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span className="text-gray-400 text-sm font-exo2">Category</span>
-                <span className="text-white text-sm font-exo2">Art</span>
+              {/* <div className="flex items-center justify-between">
+                <span className="text-[#A3AED0]">Blockchain</span>
+                <span className="text-white font-semibold">Avalanche</span>
+              </div> */}
+              <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                <span className="text-[#A3AED0]">Last Updated</span>
+                <span className="text-white font-semibold">{lastUpdatedText}</span>
               </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-400 text-sm font-exo2">Creator Fee</span>
-                <span className="text-[#A855F7] text-sm font-exo2 font-semibold">10%</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[#A3AED0]">Category</span>
+                <span className="text-white font-semibold capitalize">{displayCategory}</span>
               </div>
+              {/* <div className="flex items-center justify-between">
+                <span className="text-[#A3AED0]">Creator Fee</span>
+                <span className="text-[#7E6BEF] font-semibold">10%</span>
+              </div> */}
             </div>
           </Accordion>
 
@@ -1379,7 +1434,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                 </div>
               }
               isOpen={isBidsOpen}
-              onToggle={() => setIsBidsOpen((prev) => !prev)}
+              onToggle={() => handleAccordionToggle('bids')}
             >
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1456,9 +1511,10 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         {/* More from this collection */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
-            <h2 className="text-white font-exo2 text-base sm:text-lg">More from this collection</h2>
-            <button className="px-6 sm:px-10 py-2 w-full sm:w-auto sm:max-w-[300px] text-xs sm:text-sm text-white border border-white/10 rounded-full hover:bg-[#252540] transition">
+            <h2 className="text-white font-exo2 text-2xl sm:text-3xl font-semibold">More from this collection</h2>
+            <button className="px-5 sm:px-6 py-1.5 sm:py-2 text-sm text-white border border-white/20 rounded-full inline-flex items-center gap-2 hover:border-white/40 transition">
               Explore all
+              <ChevronDown className="w-4 h-4" />
             </button>
           </div>
           {relatedNfts.length > 0 ? (

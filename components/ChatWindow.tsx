@@ -105,7 +105,7 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
     const otherParticipant = selectedChat?.participants?.[0]
 
     // Format last seen status
-    // Calculate from lastMessage.timestamp or updatedAt (frontend calculation)
+    // Use participant's lastSeen field (when they were last active), not lastMessage timestamp
     const formatLastSeen = (participant: typeof otherParticipant): string => {
         if (!participant) return 'Unknown'
         
@@ -114,15 +114,21 @@ export default function ChatWindow({ selectedChat, onChatDeleted, onBack, isMobi
             return 'Online'
         }
         
-        // Calculate from chat's lastMessage or updatedAt
-        if (!selectedChat) {
-            return 'Last seen recently'
+        // Use participant's lastSeen field (from API) - this is when they were last active
+        let lastSeenTimestamp = participant.lastSeen
+        
+        // If no lastSeen from participant, check if last message was sent by them
+        // Only use lastMessage.timestamp if the other person sent the last message
+        if (!lastSeenTimestamp && selectedChat?.lastMessage) {
+            const lastMessageSenderId = String(selectedChat.lastMessage.senderId || '')
+            const otherParticipantId = String(participant._id || '')
+            // Only use lastMessage timestamp if it was sent by the other person
+            if (lastMessageSenderId === otherParticipantId) {
+                lastSeenTimestamp = selectedChat.lastMessage.timestamp
+            }
         }
         
-        // Prefer lastMessage.timestamp (when user last sent/received a message)
-        // Fallback to updatedAt (when chat was last updated)
-        const lastSeenTimestamp = selectedChat.lastMessage?.timestamp || selectedChat.updatedAt
-        
+        // If still no timestamp, use fallback
         if (!lastSeenTimestamp) {
             return 'Last seen recently'
         }
