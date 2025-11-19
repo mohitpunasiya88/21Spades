@@ -803,7 +803,7 @@ const currentNftIdentifier = useMemo(() => {
   }, [id, cachedNfts, collectionId, loadFromCache, fetchNftDetails])
 
 
-  const { bid, getBrokerage, decimalPrecision, auctions,buy } = useMarketplace()
+  const { bid, getBrokerage, decimalPrecision, auctions,buy,auctionNonceStatus } = useMarketplace()
   const address = useWallets()?.wallets[0]?.address
   const fetchBids = useCallback(
     async (page = 1, orderOverride?: BidOrder) => {
@@ -914,16 +914,31 @@ const currentNftIdentifier = useMemo(() => {
   }, [isPlaceBidOpen, currentNftIdentifier, bids.length, bidsOrder, fetchBids])
 
   const handleBidConfirm = async (bidAmount: string) => {
-    console.log(bidAmount,'bidAmount',currentNft)
       const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
-      console.log(response,'response1222222222222')
+      let isValid = true;
+      let nonceResponse = null;
+      
+      while (isValid) {
+        // GET API call
+        nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
+      
+        // Validate nonce
+        isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+      
+        // If still invalid → again call GET
+        if (isValid) {
+            console.log("Nonce invalid, retrying...");
+          await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+        }
+      }
+      // payload.nonce = nonceResponse.data.nonce; 
       const NFTDetails = response?.data?.nft;
       const bidPayload = {
         erc20Token: NFTDetails?.ipfsHash,
         price: bidAmount,
         nftId: Number(NFTDetails?.nftId),
         collectionAddress: NFTDetails?.collectionId?.collectionAddress,
-        nonce: Number(NFTDetails?.nonce),
+        nonce: Number(nonceResponse.data.nonce),
         sign: NFTDetails?.signature,
       }
 console.log(bidPayload,'bidPayloadbidPayload')
@@ -958,7 +973,6 @@ console.log(bidPayload,'bidPayloadbidPayload')
 if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && bidPayload?.sign) {
   const auction = await auctions(bidPayload?.collectionAddress, bidPayload?.nftId)
         
-        console.log("auction11111111111111", auction)
 
         // Normalize auction (ethers v6 Result is read-only)
         const auctionStruct = {
@@ -981,7 +995,6 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
           bidPayload?.sign as `0x${string}`,
           overrides,
         )
-        console.log("receipt", receipt)
       }
       const response = await apiCaller('POST', authRoutes.bids, payload, true)
       if (response?.success) {
@@ -1011,7 +1024,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
     setApprovalForAll,} = useNFTCollection()
  const handleBuyNow = async () => {
     try {
-      
+      debugger;
       if (!address) {
         try {
           message.info('Wallet connected. Please click Buy Now again.')
@@ -1036,8 +1049,8 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
       // Build inputs for buy
       const tokenId = Number(NFTDetails?.nftId)
       const erc721 = NFTDetails?.collectionId?.collectionAddress as string
-      const priceStr = String('0')
-      const nonceNum = Number(4)
+      const priceStr = String(NFTDetails?.price)
+      const nonceNum = Number(NFTDetails?.nonce)
       const sign = NFTDetails?.signature as `0x${string}`
       const erc20Token = NFTDetails?.erc20Token === undefined ? ethers.ZeroAddress : NFTDetails?.erc20Token as string
     const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
@@ -1070,8 +1083,15 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         address,
         overrides,
       )
-      console.log('buy receipt', receipt)
-      message.success('Purchase transaction submitted')
+      if(receipt){
+        message.success('Purchase transaction submitted');
+        
+          const payload = {
+            walletAddress: address,
+          }
+        
+        const response = await apiCaller('POST', `${authRoutes.buyNow}/${id}/buy`, payload, true)
+      }
     } catch (error: any) {
       console.error('❌ Failed to buy now', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to buy now'

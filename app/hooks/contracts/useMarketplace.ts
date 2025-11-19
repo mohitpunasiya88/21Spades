@@ -95,7 +95,6 @@ export function useMarketplace() {
     buyer: string, // buyer address
     overrides: ethers.Overrides = {},
   ) => {
-debugger
 let message = ethers.solidityPackedKeccak256(
         ["address", "uint256", "address", "uint256", "uint256", "address"],
         [
@@ -108,15 +107,14 @@ let message = ethers.solidityPackedKeccak256(
         ]
       );
       const recoveredAddress = ethers.verifyMessage(ethers.getBytes(message), sign as string);
-      console.log('recoveredAddress', recoveredAddress);
      
    
-          const gas = await getGasLimit(
-      'ERC721Marketplace', 'buy', 11155111, "",
-      [tokenId, erc721, BigInt(price), nonce, sign, erc20Token, buyer],
+    //       const gas = await getGasLimit(
+    //   'ERC721Marketplace', 'buy', 11155111, "",
+    //   [tokenId, erc721, BigInt(price), nonce, sign, erc20Token, buyer],
 
-    );
-    const receipt = await execute('ERC721Marketplace', 'buy', chainId,"", [tokenId, erc721, price, nonce, sign, erc20Token, buyer], { ...overrides, gasLimit: gas });
+    // );
+    const receipt = await execute('ERC721Marketplace', 'buy', chainId,"", [tokenId, erc721, price, nonce, sign, erc20Token, buyer], { ...overrides, gasLimit: 500000 });
     const events = getEventFromTx( 'ERC721Marketplace',receipt as any, 'buy', chainId,"",)
     return events
   }, [execute]);
