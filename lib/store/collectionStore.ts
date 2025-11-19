@@ -41,6 +41,17 @@ export interface CollectionNFT {
     name: string
     profilePicture: string
   }
+  creator?: {
+    name?: string
+    profilePicture?: string | null
+  }
+  updatedAt?: string
+  lastUpdated?: string
+  category?: string
+  collectionCategory?: string
+  collection?: {
+    category?: string
+  }
 }
 
 interface SetCollectionPayload {
@@ -94,6 +105,12 @@ export const mapApiNftToCollectionNft = (nft: any): CollectionNFT => ({
   startingTime: parseEpochTimestamp(nft?.startingTime ?? nft?.startTime),
   endingTime: parseEpochTimestamp(nft?.endingTime ?? nft?.endTime),
   createdBy: nft?.createdBy,
+  creator: nft?.creator || nft?.createdBy || undefined,
+  updatedAt: nft?.updatedAt ?? nft?.lastUpdated ?? nft?.modifiedAt,
+  lastUpdated: nft?.lastUpdated ?? nft?.updatedAt ?? nft?.modifiedAt,
+  category: nft?.category?.name || nft?.category || nft?.collectionCategory,
+  collectionCategory: nft?.collectionCategory || nft?.category,
+  collection: nft?.collection || undefined,
 })
 
 export const useCollectionStore = create<CollectionStore>((set) => ({
