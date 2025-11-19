@@ -717,6 +717,7 @@ const currentNftIdentifier = useMemo(() => {
           null,
           true,
         )
+        console.log('Submitting bid...1111111111111111111', listResponse)
         if (listResponse.success && listResponse.data) {
           const listData = normalizeListData(listResponse.data)
           const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
@@ -890,6 +891,19 @@ const currentNftIdentifier = useMemo(() => {
   }, [isPlaceBidOpen, currentNftIdentifier, bids.length, bidsOrder, fetchBids])
 
   const handleBidConfirm = async (bidAmount: string) => {
+    console.log(bidAmount,'bidAmount',currentNft)
+      const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
+      console.log(response,'response1222222222222')
+      const NFTDetails = response?.data?.nft;
+      const bidPayload = {
+        erc20Token: NFTDetails?.ipfsHash,
+        price: bidAmount,
+        nftId: Number(NFTDetails?.nftId),
+        collectionAddress: NFTDetails?.collectionId?.collectionAddress,
+        nonce: Number(NFTDetails?.nonce),
+        sign: NFTDetails?.signature,
+      }
+console.log(bidPayload,'bidPayloadbidPayload')
     if (!bidAmount || Number(bidAmount) <= 0) {
       message.error('Enter a valid bid amount')
       return
@@ -903,7 +917,7 @@ const currentNftIdentifier = useMemo(() => {
       // loadingMessage = message.loading('Submitting bid...', 0)
       const payload = {
         price: bidAmount,
-        nftId: currentNftIdentifier,
+        nftId: currentNftIdentifier,   /// _id pass ho rahi hai
       }
       // call blockchain bid hook 
 
@@ -918,19 +932,30 @@ const currentNftIdentifier = useMemo(() => {
       }
 // ------------------------------
 debugger
-if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && currentNft?.sign) {
-  const auction = await auctions(currentNft?.collectionAddress, currentNft?.nftId)
+if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && bidPayload?.sign) {
+  const auction = await auctions(bidPayload?.collectionAddress, bidPayload?.nftId)
         
-        console.log("auction", auction)
+        console.log("auction11111111111111", auction)
 
-        
-        const receipt = await bid(BigInt(currentNft?.nftId),
-          currentNft?.collectionAddress,
+        // Normalize auction (ethers v6 Result is read-only)
+        const auctionStruct = {
+          seller: auction.seller,
+          currentBid: BigInt(auction.currentBid ?? 0),
+          highestBidder: auction.highestBidder ?? auction.currentBidder ?? auction.bidder ?? address,
+          auctionType: BigInt(auction.auctionType ?? 2),
+          startingPrice: BigInt(auction.startingPrice),
+          startingTime: BigInt(auction.startingTime),
+          closingTime: BigInt(auction.closingTime),
+          erc20Token: auction.erc20Token,
+        }
+
+        const receipt = await bid(BigInt(bidPayload?.nftId),
+          bidPayload?.collectionAddress,
           ethers.parseEther(bidAmount),
           address,
-          auction,
-          BigInt(currentNft?.nonce),
-          currentNft?.sign as `0x${string}`,
+          auctionStruct,
+          BigInt(bidPayload?.nonce),
+          bidPayload?.sign as `0x${string}`,
           overrides,
         )
         console.log("receipt", receipt)

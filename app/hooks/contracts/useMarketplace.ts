@@ -367,6 +367,7 @@ export function useMarketplace() {
     decimalPrecision,
     createPutOnSaleSignature,
     createPutOnSaleBatchRootSignature,
+    getSigner,
     ...rest,
   };
 }
