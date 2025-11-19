@@ -11,6 +11,9 @@ import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
 import { useMessage } from '@/lib/hooks/useMessage'
 import { useRouter } from 'next/navigation'
+import { useMarketplace } from '@/app/hooks/contracts/useMarketplace'
+import { useWallets } from '@privy-io/react-auth'
+import { ethers } from 'ethers'
 
 interface NFTDetailsProps {
   id: string
@@ -64,7 +67,7 @@ interface AccordionProps {
 function Accordion({ title, children, isOpen: controlledIsOpen, onToggle, id }: AccordionProps) {
   // Create a unique state key based on id to ensure independent state
   const [internalIsOpen, setInternalIsOpen] = useState(false)
-  
+
   // Use controlled state if provided, otherwise use internal state
   const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen
   const handleToggle = onToggle || (() => {
@@ -106,7 +109,7 @@ function PlaceBidModal({
   const [bidAmount, setBidAmount] = useState<string>('0.00')
   const [showSummary, setShowSummary] = useState(false)
   const [isConfirming, setIsConfirming] = useState(false)
-  const minBid = 47.9
+  const minBid = 0
   const balance = 124
   const balanceUsd = 150.6
   const gasFee = 0.5
@@ -141,7 +144,7 @@ function PlaceBidModal({
     }
   }
 
-  const handleAddAvax = () => {
+  const handleInputBitAmount = () => {
     const bidAmountNum = parseFloat(bidAmount) || 0
     if (bidAmountNum >= minBid) {
       setShowSummary(true)
@@ -288,11 +291,11 @@ function PlaceBidModal({
           {/* Action Button */}
           {!showSummary ? (
             <button
-              onClick={handleAddAvax}
+              onClick={handleInputBitAmount}
               disabled={bidAmountNum < minBid}
               className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add AVAX
+              Procced for Bid
             </button>
           ) : (
             <button
@@ -447,8 +450,8 @@ function BidPlacedSuccessModal({ isOpen, onClose, bidAmount = '77.9', nftName = 
             <div className="relative mb-6 rounded-xl overflow-hidden">
               <div className="relative h-[200px] sm:h-[250px] w-full bg-gradient-to-b from-[#4F01E6] to-[#25016E]">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Image 
-                    src={nftImage} 
+                  <Image
+                    src={nftImage}
                     alt={nftName}
                     width={200}
                     height={200}
@@ -578,7 +581,7 @@ export default function NFTDetails({
   const [isBidPlacedOpen, setIsBidPlacedOpen] = useState(false)
   const [isOfferSubmittedOpen, setIsOfferSubmittedOpen] = useState(false)
   const [placedBidAmount, setPlacedBidAmount] = useState<string>('77.9')
-  
+
   // Independent state for each accordion
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
@@ -687,6 +690,10 @@ export default function NFTDetails({
     }
   }, [id, cachedNfts, collectionId, loadFromCache, fetchNftDetails])
 
+
+  const { bid, getBrokerage, decimalPrecision, auctions } = useMarketplace()
+  const address = useWallets().wallets[0].address
+
   const handleBidConfirm = async (bidAmount: string) => {
     if (!bidAmount || Number(bidAmount) <= 0) {
       message.error('Enter a valid bid amount')
@@ -702,6 +709,36 @@ export default function NFTDetails({
       const payload = {
         price: bidAmount,
         nftId: nftIdentifier,
+      }
+      // call blockchain bid hook 
+
+
+
+      let overrides: ethers.Overrides = {};
+      if (currentNft?.erc20Token === ethers.ZeroAddress) {
+        const br = await getBrokerage(ethers.ZeroAddress) as { seller: bigint; buyer: bigint };
+        const precision = await decimalPrecision() as bigint; // 100
+        const buyerFee = (br.buyer * ethers.parseEther(bidAmount)) / (BigInt(100) * precision);
+        overrides = { value: ethers.parseEther(bidAmount) + buyerFee };
+      }
+// ------------------------------
+debugger
+if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && currentNft?.sign) {
+  const auction = await auctions(currentNft?.collectionAddress, currentNft?.nftId)
+        
+        console.log("auction", auction)
+
+        
+        const receipt = await bid(BigInt(currentNft?.nftId),
+          currentNft?.collectionAddress,
+          ethers.parseEther(bidAmount),
+          address,
+          auction,
+          BigInt(currentNft?.nonce),
+          currentNft?.sign as `0x${string}`,
+          overrides,
+        )
+        console.log("receipt", receipt)
       }
       const response = await apiCaller('POST', authRoutes.createBid, payload, true)
       if (response?.success) {
@@ -723,6 +760,14 @@ export default function NFTDetails({
     }
   }
 
+
+  const handleBuyNow = () => {
+
+    // get current nft details
+    // call blockchain buy now hook
+    
+  }
+
   const handleOfferConfirm = () => {
     setIsMakeOfferOpen(false)
     setIsOfferSubmittedOpen(true)
@@ -741,12 +786,12 @@ export default function NFTDetails({
       ? currentNft.description
       : 'Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.'
   const currentImage = currentNft?.imageUrl || currentNft?.image || null
-  
+
   // Get auctionType from API data, fallback to method prop for backward compatibility
-  const auctionType = currentNft?.auctionType !== undefined 
-    ? currentNft.auctionType 
+  const auctionType = currentNft?.auctionType !== undefined
+    ? currentNft.auctionType
     : (method === 'auction' ? 2 : method === 'fixed-rate' ? 1 : undefined)
-  
+
   // Determine button visibility based on auctionType
   // 0 = None (only Make an Offer), 1 = Fixed Rate (only Buy Now), 2 = Auction (Bid Now + Make an Offer)
   const isAuction = auctionType === 2
@@ -789,30 +834,30 @@ export default function NFTDetails({
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="absolute left-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
-                    <Image 
-                      src={spadesImage} 
-                      alt="21" 
-                      width={140} 
-                      height={140} 
-                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                    <Image
+                      src={spadesImage}
+                      alt="21"
+                      width={140}
+                      height={140}
+                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl"
                     />
                   </div>
                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                    <Image 
-                      src={spadesImage} 
-                      alt="21" 
-                      width={180} 
-                      height={180} 
-                      className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                    <Image
+                      src={spadesImage}
+                      alt="21"
+                      width={180}
+                      height={180}
+                      className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl"
                     />
                   </div>
                   <div className="absolute right-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
-                    <Image 
-                      src={spadesImage} 
-                      alt="21" 
-                      width={140} 
-                      height={140} 
-                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                    <Image
+                      src={spadesImage}
+                      alt="21"
+                      width={140}
+                      height={140}
+                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl"
                     />
                   </div>
                 </div>
@@ -824,7 +869,7 @@ export default function NFTDetails({
           <div className="p-4 sm:p-6 font-exo2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-2">
               <div className="flex items-center gap-2 sm:gap-3">
-                <Avatar 
+                <Avatar
                   size={36}
                   className="!bg-[#1A1A2E] !flex !items-center !justify-center"
                   style={{
@@ -845,9 +890,9 @@ export default function NFTDetails({
                 Share
               </button>
             </div>
-            
+
             <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{displayName}</h1>
-            
+
             <p className="text-[#A3AED0] max-w-full sm:max-w-[400px] text-xs sm:text-sm font-exo2 leading-relaxed mb-6 sm:mb-10">
               {displayDescription}
             </p>
@@ -864,20 +909,20 @@ export default function NFTDetails({
                 </div>
                 <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{displayUsd}</span>
               </div>
-              
+
               {/* Conditional Buttons based on auctionType */}
               {/* 0 = None (only Make an Offer), 1 = Fixed Rate (only Buy Now), 2 = Auction (Bid Now + Make an Offer) */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
                 {isAuction ? (
                   // Auction (auctionType = 2): Bid Now + Make an Offer
                   <>
-                    <button 
+                    <button
                       onClick={() => setIsPlaceBidOpen(true)}
                       className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
                     >
                       Bid Now
                     </button>
-                    <button 
+                    <button
                       onClick={() => setIsMakeOfferOpen(true)}
                       className="px-5 py-2.5 justify-center items-center  rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
                     >
@@ -887,12 +932,13 @@ export default function NFTDetails({
                   </>
                 ) : isFixedRate ? (
                   // Fixed Rate (auctionType = 1): Only Buy Now button
-                  <button className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                  <button onClick={handleBuyNow}
+                   className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
                     Buy Now
                   </button>
                 ) : (
                   // None (auctionType = 0 or undefined): Only Make an Offer button
-                  <button 
+                  <button
                     onClick={() => setIsMakeOfferOpen(true)}
                     className="px-5 py-2.5 justify-center items-center rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
                   >
@@ -901,7 +947,7 @@ export default function NFTDetails({
                   </button>
                 )}
               </div>
-              
+
               {isAuction && (
                 <p className="text-gray-400 text-xs font-exo2">
                   Auction Ends In <span className="text-white font-mono font-exo2">{timeLeft}</span>
@@ -913,9 +959,9 @@ export default function NFTDetails({
 
         {/* Conditional Accordions based on auctionType */}
         <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
-          <Accordion 
-            key="token-detail" 
-            id="token-detail" 
+          <Accordion
+            key="token-detail"
+            id="token-detail"
             title="Token Detail"
             isOpen={isTokenDetailOpen}
             onToggle={() => setIsTokenDetailOpen(!isTokenDetailOpen)}
@@ -950,9 +996,9 @@ export default function NFTDetails({
 
           {/* Bids Accordion - Only for Auction (auctionType = 2) */}
           {isAuction && (
-            <Accordion 
-              key="bids" 
-              id="bids" 
+            <Accordion
+              key="bids"
+              id="bids"
               title="Bids"
               isOpen={isBidsOpen}
               onToggle={() => setIsBidsOpen(!isBidsOpen)}
@@ -1022,28 +1068,28 @@ export default function NFTDetails({
       </div>
 
       {/* Modals */}
-      <PlaceBidModal 
-        isOpen={isPlaceBidOpen} 
-        onClose={() => setIsPlaceBidOpen(false)} 
+      <PlaceBidModal
+        isOpen={isPlaceBidOpen}
+        onClose={() => setIsPlaceBidOpen(false)}
         onConfirm={handleBidConfirm}
         nftName={displayName}
         nftImage={currentImage || undefined}
       />
-      <MakeOfferModal 
-        isOpen={isMakeOfferOpen} 
-        onClose={() => setIsMakeOfferOpen(false)} 
+      <MakeOfferModal
+        isOpen={isMakeOfferOpen}
+        onClose={() => setIsMakeOfferOpen(false)}
         onConfirm={handleOfferConfirm}
         nftName={displayName}
       />
-      <BidPlacedSuccessModal 
-        isOpen={isBidPlacedOpen} 
+      <BidPlacedSuccessModal
+        isOpen={isBidPlacedOpen}
         onClose={() => setIsBidPlacedOpen(false)}
         bidAmount={placedBidAmount}
         nftName={displayName}
         nftImage={currentImage || undefined}
       />
-      <OfferSubmittedModal 
-        isOpen={isOfferSubmittedOpen} 
+      <OfferSubmittedModal
+        isOpen={isOfferSubmittedOpen}
         onClose={() => setIsOfferSubmittedOpen(false)}
         offerAmount="77.9"
         nftName={displayName}
