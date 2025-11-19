@@ -126,11 +126,21 @@ export interface Comment {
   updatedAt: string
 }
 
+interface PostCache {
+  posts: Post[]
+  pagination: Pagination | null
+  timestamp: number
+  categoryId?: string
+  page?: number
+  limit?: number
+}
+
 interface FeedState {
   posts: Post[]
   isLoading: boolean
   pagination: Pagination | null
-  getPosts: (params?: { categoryId?: string; page?: number; limit?: number }) => Promise<void>
+  postsCache: Map<string, PostCache>
+  getPosts: (params?: { categoryId?: string; page?: number; limit?: number; forceRefresh?: boolean }) => Promise<void>
   getPost: (id: string) => Promise<Post | null>
   createPost: (data: CreatePostData) => Promise<void>
   updatePost: (id: string, data: CreatePostData) => Promise<void>
@@ -638,8 +648,33 @@ export const useFeedStore = create<FeedState>()(
       posts: [],
       isLoading: false,
       pagination: null,
+      postsCache: new Map<string, PostCache>(),
 
-      getPosts: async (params?: { categoryId?: string; page?: number; limit?: number }) => {
+      getPosts: async (params?: { categoryId?: string; page?: number; limit?: number; forceRefresh?: boolean }) => {
+        const CACHE_DURATION = 60000 // 60 seconds cache duration
+        const categoryId = params?.categoryId || 'all'
+        const page = params?.page || 1
+        const limit = params?.limit || 20
+        
+        // Create cache key from params
+        const cacheKey = `${categoryId}_${page}_${limit}`
+        
+        // Check cache if not forcing refresh
+        if (!params?.forceRefresh) {
+          const cache = get().postsCache.get(cacheKey)
+          const now = Date.now()
+          
+          if (cache && (now - cache.timestamp) < CACHE_DURATION) {
+            // Cache is valid, use cached data
+            set({ 
+              posts: cache.posts,
+              pagination: cache.pagination,
+              isLoading: false 
+            })
+            return
+          }
+        }
+        
         set({ isLoading: true })
         try {
           const queryParams = new URLSearchParams()
@@ -653,10 +688,25 @@ export const useFeedStore = create<FeedState>()(
 
           const response = await apiCaller('GET', url)
           if (response.success) {
+            const posts = response.data.posts || []
+            const pagination = response.data.pagination || null
+            
+            // Update cache
+            const newCache = new Map(get().postsCache)
+            newCache.set(cacheKey, {
+              posts,
+              pagination,
+              timestamp: Date.now(),
+              categoryId: params?.categoryId,
+              page,
+              limit
+            })
+            
             set({ 
-              posts: response.data.posts || [],
-              pagination: response.data.pagination || null,
-              isLoading: false 
+              posts,
+              pagination,
+              isLoading: false,
+              postsCache: newCache
             })
           }
         } catch (error) {
@@ -684,8 +734,9 @@ export const useFeedStore = create<FeedState>()(
         try {
           const response = await apiCaller('POST', authRoutes.createPost, data)
           if (response.success) {
-            // Refresh posts after creating
-            await get().getPosts()
+            // Clear cache and force refresh posts after creating
+            set({ postsCache: new Map() })
+            await get().getPosts({ forceRefresh: true })
           }
         } catch (error) {
           console.error('Error creating post:', error)

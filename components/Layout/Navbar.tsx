@@ -41,13 +41,19 @@ export default function Navbar() {
   const mobileProfileRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const hasFetchedNotificationsRef = useRef(false)
   
-  // Fetch notification count on mount
+  // Fetch notification count on mount - only once when authenticated
   useEffect(() => {
-    if (isAuthenticated && (!Array.isArray(notifItems) || notifItems.length === 0)) {
+    if (isAuthenticated && !hasFetchedNotificationsRef.current) {
+      hasFetchedNotificationsRef.current = true
       fetchNotifInitial(5) // Fetch initial notifications to get the unread count
     }
-  }, [isAuthenticated, fetchNotifInitial, notifItems])
+    // Reset ref when user logs out
+    if (!isAuthenticated) {
+      hasFetchedNotificationsRef.current = false
+    }
+  }, [isAuthenticated, fetchNotifInitial])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,6 +84,8 @@ export default function Navbar() {
   }, [])
 
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
+
+  const profileSrc = user?.profilePicture || '/post/card-21.png'
 
   const handleLogout = async () => {
     try {
@@ -500,14 +508,18 @@ export default function Navbar() {
                     setIsProfileHovered(false)
                     setIsProfileOpen(false)
                   }}
-                  className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${isProfileHovered ? 'px-3 py-2' : 'p-2'
+                  className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${isProfileHovered ? 'px-3 py-2' : 'p-0'
                     }`}
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={
+                    user?.profilePicture
+                      ? undefined
+                      : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                  }>
                     {user?.profilePicture ? (
                       <img
                         src={user?.profilePicture}
-                        alt={user?.name || 'User'}
+                        alt={user?.name || 'N/A'}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.currentTarget.src = '/assets/avatar.jpg'
@@ -515,7 +527,7 @@ export default function Navbar() {
                       />
                     ) : (
                       <img
-                        src="/assets/avatar.jpg"
+                        src="/post/card-21.png"
                         alt="Avatar"
                         className="w-full h-full object-cover"
                       />
@@ -563,7 +575,11 @@ export default function Navbar() {
                       {/* User Info */}
                       <div className="p-4 border-b border-[#2A2F4A]">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-600 bg-purple-600">
+                          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={
+                            user?.profilePicture
+                              ? undefined
+                              : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                          }>
                             {user?.profilePicture ? (
                               <img
                                 src={user?.profilePicture}
@@ -575,7 +591,7 @@ export default function Navbar() {
                               />
                             ) : (
                               <img
-                                src="/assets/avatar.jpg"
+                                src="/post/card-21.png"
                                 alt="Avatar"
                                 className="w-full h-full object-cover"
                               />
@@ -630,9 +646,9 @@ export default function Navbar() {
                     />
                   ) : (
                     <img
-                      src="/post/card-21.png"
+                      src={profileSrc}
                       alt="Avatar"
-                      className="w-full h-full object-contain"
+                      className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] object-contain"
                     />
                   )}
                 </button>
