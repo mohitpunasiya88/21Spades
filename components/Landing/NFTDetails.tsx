@@ -1,15 +1,74 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Check, Heart, ShoppingCart, Share2, ChevronDown, X, ChevronUp, Coins } from 'lucide-react'
+import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins } from 'lucide-react'
 import spadesImage from '../assets/21spades.png'
-import { Avatar } from 'antd'
+import { Avatar, Spin } from 'antd'
 import { MessageSquareText, Share } from "lucide-react";
-import AuthFooter from '../Auth/AuthFooter'
+import { useCollectionStore, mapApiNftToCollectionNft, type CollectionNFT } from '@/lib/store/collectionStore'
+import { apiCaller } from '@/app/interceptors/apicall/apicall'
+import authRoutes from '@/lib/routes'
+import { useMessage } from '@/lib/hooks/useMessage'
+import { useRouter } from 'next/navigation'
+import { useMarketplace } from '@/app/hooks/contracts/useMarketplace'
+import { useWallets } from '@privy-io/react-auth'
+import { ethers } from 'ethers'
+import bidIcon from '@/components/assets/image.png'
+
+const parseNumericValue = (input: unknown): number | undefined => {
+  if (input === undefined || input === null) return undefined
+  if (typeof input === 'number') return Number.isFinite(input) ? input : undefined
+  const numeric = parseFloat(String(input).replace(/[^0-9.\-]/g, ''))
+  return Number.isFinite(numeric) ? numeric : undefined
+}
+
+const formatAvaxAmount = (value?: number): string => {
+  if (value === undefined || value === null || !Number.isFinite(value)) {
+    return '0.00'
+  }
+  const amount = Number(value)
+  return amount >= 1 ? amount.toFixed(2) : amount.toFixed(4)
+}
+
+const formatUsdAmount = (value?: number): string | undefined => {
+  if (value === undefined || value === null || !Number.isFinite(value)) return undefined
+  const amount = Number(value)
+  return amount >= 1 ? amount.toFixed(2) : amount.toFixed(4)
+}
+
+const formatDurationFromMs = (ms: number): string => {
+  if (!Number.isFinite(ms) || ms <= 0) return '0s'
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const parts: string[] = []
+  if (days > 0) parts.push(`${days}d`)
+  if (hours > 0 || days > 0) parts.push(`${hours}h`)
+  if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`)
+  parts.push(`${seconds}s`)
+  return parts.join(' ')
+}
+
+interface Bid {
+  _id?: string
+  id?: string
+  price?: number | string
+  createdAt?: string
+  user?: {
+    name?: string
+    profilePicture?: string | null
+    walletAddress?: string
+  }
+}
+
+type BidOrder = '' | 'asc' | 'desc' | 'low' | 'high'
 
 interface NFTDetailsProps {
   id: string
+  collectionId?: string
   name?: string
   owner?: string
   currentPrice?: string
@@ -18,40 +77,38 @@ interface NFTDetailsProps {
   method?: 'fixed-rate' | 'auction' // New prop for method type
 }
 
-function MiniCard({ title }: { title: string }) {
+function MiniCard({ nft, onClick }: { nft: CollectionNFT; onClick: () => void }) {
+  const imageSource = nft.imageUrl || nft.image || spadesImage
   return (
-    <div className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 ring-1 ring-white/5 hover:ring-white/10 transition w-full">
-      {/* Image Area */}
-      <div className="relative h-[180px] sm:h-[220px] w-full rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#050616]">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }} />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Image src={spadesImage} alt="21" width={120} height={120} className="sm:w-[140px] sm:h-[140px] object-contain pointer-events-none select-none" />
+    <button
+      onClick={onClick}
+      className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 ring-1 ring-white/5 hover:ring-white/10 transition w-full text-left"
+    >
+      <div className="relative h-[280px] sm:h-[250px] w-full rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#050616]">
+        <div className="absolute" style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }} />
+        <div className="absolute  ">
+          <Image src={imageSource} alt={nft.name} width={240} height={340} className="sm:w-[100%] h-[291px] sm:h-[250px] object-contain pointer-events-none select-none" />
         </div>
-        <button className="absolute glass top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/5 hover:bg-white/10 transition">
+        <span className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/10 ring-1 ring-white/20 hover:bg-white/20 transition">
           <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-        </button>
+        </span>
       </div>
-      
-      {/* Content Area */}
       <div className="mt-3 sm:mt-4">
-        {/* Title */}
-        <p className="text-white text-xs sm:text-sm font-exo2 mb-2 sm:mb-3">{title}</p>
-        
-        {/* Price and Details Button */}
+        <p className="text-white text-xs sm:text-sm font-exo2 mb-2 sm:mb-3">{nft.name}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 fill-red-500" />
-            <span className="text-white text-xs sm:text-sm font-exo2 font-semibold">A. 8.56</span>
+            <span className="text-white text-xs sm:text-sm font-exo2 font-semibold">A. {nft.price}</span>
           </div>
-          <button className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-full hover:border-gray-500 transition-colors font-exo2">Details</button>
+          <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-lg font-exo2">Details</span>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
 interface AccordionProps {
-  title: string
+  title: React.ReactNode
   children?: React.ReactNode
   isOpen?: boolean
   onToggle?: () => void
@@ -61,7 +118,7 @@ interface AccordionProps {
 function Accordion({ title, children, isOpen: controlledIsOpen, onToggle, id }: AccordionProps) {
   // Create a unique state key based on id to ensure independent state
   const [internalIsOpen, setInternalIsOpen] = useState(false)
-  
+
   // Use controlled state if provided, otherwise use internal state
   const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen
   const handleToggle = onToggle || (() => {
@@ -87,11 +144,25 @@ function Accordion({ title, children, isOpen: controlledIsOpen, onToggle, id }: 
 }
 
 // Place Bid Modal Component
-function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftImage }: { isOpen: boolean; onClose: () => void; onConfirm: (bidAmount: string) => void; nftName?: string; nftImage?: string }) {
+function PlaceBidModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  nftName = 'MOONLIGHT',
+  nftImage,
+  minBidAmount = 0,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: (bidAmount: string) => Promise<void> | void
+  nftName?: string
+  nftImage?: string
+  minBidAmount?: number
+}) {
   const [bidAmount, setBidAmount] = useState<string>('0.00')
   const [showSummary, setShowSummary] = useState(false)
   const [isConfirming, setIsConfirming] = useState(false)
-  const minBid = 47.9
+  const [inputError, setInputError] = useState<string>('')
   const balance = 124
   const balanceUsd = 150.6
   const gasFee = 0.5
@@ -104,8 +175,9 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
       setBidAmount('0.00')
       setShowSummary(false)
       setIsConfirming(false)
+      setInputError('')
     }
-  }, [isOpen])
+  }, [isOpen, minBidAmount])
 
   const handleIncrement = () => {
     const current = parseFloat(bidAmount) || 0
@@ -123,26 +195,38 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
     const value = e.target.value
     if (/^\d*\.?\d*$/.test(value) || value === '') {
       setBidAmount(value)
+      if (value === '') {
+        setInputError('Enter a bid amount')
+      } else if (parseFloat(value) < minBidAmount) {
+        setInputError(`Bid must be greater than ${formatAvaxAmount(minBidAmount)} AVAX`)
+      } else {
+        setInputError('')
+      }
     }
   }
 
-  const handleAddAvax = () => {
+  const handleInputBitAmount = () => {
     const bidAmountNum = parseFloat(bidAmount) || 0
-    if (bidAmountNum >= minBid) {
+    if (bidAmountNum >= minBidAmount) {
       setShowSummary(true)
+      setInputError('')
+    } else {
+      setInputError(`Bid must be greater than ${formatAvaxAmount(minBidAmount)} AVAX`)
     }
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (isConfirming) return
     setIsConfirming(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await onConfirm(bidAmount)
+    } finally {
       setIsConfirming(false)
-      onConfirm(bidAmount)
-    }, 2000)
+    }
   }
 
   const bidAmountNum = parseFloat(bidAmount) || 0
+  const isBelowMinBid = bidAmountNum < minBidAmount
   const bidAmountUsd = (bidAmountNum * 0.3).toFixed(2)
   const total = (bidAmountNum + gasFee).toFixed(2)
   const totalUsd = ((bidAmountNum + gasFee) * 0.3).toFixed(2)
@@ -192,12 +276,12 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
           </p>
 
           {/* Balance Information */}
-          <div className="mb-6 flex items-center justify-center gap-2 bg-[#1A1A2E] rounded-lg p-3">
+          {/* <div className="mb-6 flex items-center justify-center gap-2 bg-[#1A1A2E] rounded-lg p-3">
             <Coins className="w-5 h-5 text-yellow-400" />
             <p className="text-white text-sm sm:text-base font-exo2">
               Balance : <span className="text-[#7E6BEF]">{balance} AVAX</span> (<span className="text-[#7E6BEF]">${balanceUsd}</span>)
             </p>
-          </div>
+          </div> */}
 
           {/* Bid Input Field */}
           <div className="mb-4">
@@ -227,12 +311,15 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
                 </button>
               </div>
             </div>
+            {inputError && (
+              <p className="mt-2 text-xs text-red-400 font-exo2">{inputError}</p>
+            )}
           </div>
 
           {/* Minimum Bid */}
           <div className="mb-6">
             <p className="text-white text-sm text-right font-exo2">
-              Min bid: <span className="text-[#7E6BEF]">{minBid} AVAX</span>
+              Min bid: <span className="text-[#7E6BEF]">{formatAvaxAmount(minBidAmount)} AVAX</span>
             </p>
           </div>
 
@@ -244,47 +331,50 @@ function PlaceBidModal({ isOpen, onClose, onConfirm, nftName = 'MOONLIGHT', nftI
                 <span className="text-gray-400 text-sm font-exo2">Item</span>
                 <span className="text-[#7E6BEF] text-sm font-exo2">{nftName}</span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-gray-400 text-sm font-exo2">Current Bid</span>
                 <span className="text-white text-sm font-exo2">{currentBid} AVAX</span>
-              </div>
+              </div> */}
               <div className="flex justify-between">
                 <span className="text-gray-400 text-sm font-exo2">Your Bid</span>
                 <span className="text-white text-sm font-exo2">
                   {bidAmountNum} AVAX (<span className="text-[#7E6BEF]">${bidAmountUsd}</span>)
                 </span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-gray-400 text-sm font-exo2">Gas Fee</span>
                 <span className="text-white text-sm font-exo2">
                   {gasFee} AVAX (<span className="text-[#7E6BEF]">${gasFeeUsd}</span>)
                 </span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-white/10">
+              </div> */}
+              {/* <div className="flex justify-between pt-2 border-t border-white/10">
                 <span className="text-white font-semibold text-sm font-exo2">Total</span>
                 <span className="text-white font-semibold text-sm font-exo2">
                   {total} AVAX (<span className="text-[#7E6BEF]">${totalUsd}</span>)
                 </span>
-              </div>
+              </div> */}
             </div>
           )}
 
           {/* Action Button */}
           {!showSummary ? (
             <button
-              onClick={handleAddAvax}
-              disabled={bidAmountNum < minBid}
+              onClick={handleInputBitAmount}
+              disabled={isBelowMinBid}
               className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add AVAX
+              Procced for Bid
             </button>
           ) : (
             <button
               onClick={handleConfirm}
               disabled={isConfirming}
-              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Confirm Bid
+              {isConfirming && (
+                <span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+              )}
+              {isConfirming ? 'Creating bid...' : 'Confirm Bid'}
             </button>
           )}
         </div>
@@ -428,8 +518,8 @@ function BidPlacedSuccessModal({ isOpen, onClose, bidAmount = '77.9', nftName = 
             <div className="relative mb-6 rounded-xl overflow-hidden">
               <div className="relative h-[200px] sm:h-[250px] w-full bg-gradient-to-b from-[#4F01E6] to-[#25016E]">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Image 
-                    src={nftImage} 
+                  <Image
+                    src={nftImage}
                     alt={nftName}
                     width={200}
                     height={200}
@@ -540,27 +630,344 @@ function OfferSubmittedModal({ isOpen, onClose, offerAmount = '77.9', nftName = 
 
 export default function NFTDetails({
   id,
+  collectionId,
   name = 'new_Spades.avax',
   owner = 'Ulrich Nielsen',
   currentPrice = '8.41',
   currentUsd = '$ 22.93',
   timeLeft = '19d 6h',
-  method = 'auction', // Default to auction, can be 'fixed-rate' or 'auction'
+  method = 'auction',
 }: NFTDetailsProps) {
+  const router = useRouter()
+  const { message } = useMessage()
+  const { nfts: cachedNfts, setCollectionData } = useCollectionStore()
+  const [currentNft, setCurrentNft] = useState<CollectionNFT | null>(null)
+  const [relatedNfts, setRelatedNfts] = useState<CollectionNFT[]>([])
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true)
   const [isPlaceBidOpen, setIsPlaceBidOpen] = useState(false)
   const [isMakeOfferOpen, setIsMakeOfferOpen] = useState(false)
   const [isBidPlacedOpen, setIsBidPlacedOpen] = useState(false)
   const [isOfferSubmittedOpen, setIsOfferSubmittedOpen] = useState(false)
   const [placedBidAmount, setPlacedBidAmount] = useState<string>('77.9')
+  const [bids, setBids] = useState<Bid[]>([])
+  const [bidsLoading, setBidsLoading] = useState(false)
+  const [bidsLoadingMore, setBidsLoadingMore] = useState(false)
+  const [bidsPage, setBidsPage] = useState(1)
+  const [bidsHasMore, setBidsHasMore] = useState(false)
+  const [bidsOrder, setBidsOrder] = useState<BidOrder>('high')
+  const BID_PAGE_SIZE = 10
+  const [auctionTimerLabel, setAuctionTimerLabel] = useState('Auction Ends In')
+  const [auctionTimerValue, setAuctionTimerValue] = useState(timeLeft)
+  const [hasAuctionEnded, setHasAuctionEnded] = useState(false)
   
   // Independent state for each accordion
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
 
-  const handleBidConfirm = (bidAmount: string) => {
+  const matchNftById = useCallback(
+    (nft: CollectionNFT, target: string) => {
+      const possibleIds = [nft._id, nft.id, nft.nftId, nft.nftLongId]
+      return possibleIds.filter(Boolean).map((val) => val!.toString()).includes(target)
+    },
+    [],
+  )
+
+  const normalizeListData = useCallback((data: any) => {
+    if (Array.isArray(data)) return data
+    return data?.items || data?.nfts || data?.data || data?.results || []
+  }, [])
+
+const currentNftIdentifier = useMemo(() => {
+  const possibleIds = [
+    currentNft?._id,
+    currentNft?.id,
+    id,
+  ]
+  const found = possibleIds.find((value) => value)
+  return found ? String(found) : undefined
+}, [currentNft, id])
+
+  const loadFromCache = useCallback(
+    (list: CollectionNFT[]) => {
+      const match = list.find((nft) => matchNftById(nft, id))
+      if (match) {
+        setCurrentNft(match)
+        setRelatedNfts(list.filter((nft) => !matchNftById(nft, id)))
+        setIsLoadingDetails(false)
+        return true
+      }
+      return false
+    },
+    [id, matchNftById],
+  )
+
+  const fetchNftDetails = useCallback(async () => {
+    setIsLoadingDetails(true)
+    try {
+      if (collectionId) {
+        const queryParams = new URLSearchParams({
+          collectionId,
+          page: '1',
+          limit: '100',
+          blocked: 'false',
+        })
+        const listResponse = await apiCaller(
+          'GET',
+          `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`,
+          null,
+          true,
+        )
+        if (listResponse.success && listResponse.data) {
+          const listData = normalizeListData(listResponse.data)
+          const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
+          const match = mappedList.find((nft) => matchNftById(nft, id)) || mappedList[0] || null
+          if (match) {
+            setCurrentNft(match)
+          }
+          setRelatedNfts(mappedList.filter((nft) => !matchNftById(nft, id)))
+          setCollectionData({
+            collectionId,
+            collectionData: listResponse.data.collection || listResponse.data.collectionData,
+            nfts: mappedList,
+          })
+          return
+        }
+      }
+
+      const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
+      if (response.success && response.data) {
+        const rawNft = response.data.nft || response.data
+        const mappedNft = mapApiNftToCollectionNft(rawNft)
+        setCurrentNft(mappedNft)
+
+        const associatedCollectionId = mappedNft.collectionId
+        if (associatedCollectionId && typeof associatedCollectionId === 'string') {
+          const listResponse = await apiCaller(
+            'GET',
+            `${authRoutes.getNFTsByCollection}?collectionId=${associatedCollectionId}&page=1&limit=100&blocked=false`,
+            null,
+            true,
+          )
+          if (listResponse.success && listResponse.data) {
+            const listData = normalizeListData(listResponse.data)
+            const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
+            setRelatedNfts(mappedList.filter((nft: CollectionNFT) => !matchNftById(nft, id)))
+            setCollectionData({
+              collectionId: associatedCollectionId,
+              collectionData: listResponse.data.collection || listResponse.data.collectionData,
+              nfts: mappedList,
+            })
+          }
+        } else if (!associatedCollectionId) {
+          setRelatedNfts([])
+        }
+      } else {
+        message.error('NFT not found')
+      }
+    } catch (error) {
+      console.error('Failed to fetch NFT details', error)
+      message.error('Failed to fetch NFT details')
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  }, [collectionId, id, matchNftById, message, normalizeListData, setCollectionData])
+
+  useEffect(() => {
+    if (id && !loadFromCache(cachedNfts)) {
+      void fetchNftDetails()
+    }
+  }, [id, cachedNfts, collectionId, loadFromCache, fetchNftDetails])
+
+
+  const { bid, getBrokerage, decimalPrecision, auctions } = useMarketplace()
+  const address = useWallets().wallets[0].address
+  const fetchBids = useCallback(
+    async (page = 1, orderOverride?: BidOrder) => {
+      if (!currentNftIdentifier) return
+      const isLoadMore = page > 1
+      isLoadMore ? setBidsLoadingMore(true) : setBidsLoading(true)
+      const orderParam = orderOverride ?? bidsOrder
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(BID_PAGE_SIZE),
+          nftId: currentNftIdentifier,
+        })
+        if (orderParam) {
+          params.set('order', orderParam)
+        }
+
+        const response = await apiCaller(
+          'GET',
+          `${authRoutes.bids}?${params.toString()}`,
+          null,
+          true,
+        )
+
+        if (response?.success) {
+          const payload =
+            response?.data?.bids ??
+            response?.data?.items ??
+            response?.data?.data?.bids ??
+            response?.data?.data?.items ??
+            response?.data?.data ??
+            response?.bids ??
+            []
+
+          const list = Array.isArray(payload)
+            ? payload
+            : Array.isArray((payload as any)?.data)
+              ? (payload as any).data
+              : []
+
+          const normalized: Bid[] = list.map((entry: any) => {
+            const createdBy = entry?.createdBy
+            return {
+              _id: entry?._id || entry?.id,
+              id: entry?.id,
+              price: entry?.price ?? entry?.amount,
+              createdAt: entry?.createdAt || entry?.created_at,
+              user:
+                entry?.user ||
+                entry?.bidder ||
+                (createdBy
+                  ? {
+                      name: createdBy?.name || createdBy?.username,
+                      profilePicture: createdBy?.profilePicture || null,
+                      walletAddress: createdBy?.walletAddress,
+                    }
+                  : {
+                      name: entry?.userName || entry?.username,
+                      profilePicture: entry?.avatar || entry?.profilePicture || null,
+                      walletAddress: entry?.walletAddress,
+                    }),
+            }
+          })
+
+          setBids((prev) => (page === 1 ? normalized : [...prev, ...normalized]))
+          setBidsPage(page)
+
+          const pagination =
+            response?.data?.pagination ||
+            response?.pagination ||
+            response?.data?.data?.pagination
+
+          if (pagination?.pages) {
+            setBidsHasMore(page < pagination.pages)
+          } else {
+            setBidsHasMore(normalized.length === BID_PAGE_SIZE)
+          }
+        } else if (page === 1) {
+          setBids([])
+          setBidsHasMore(false)
+        }
+      } catch (error) {
+        console.error('Failed to fetch bids', error)
+        if (page === 1) {
+          setBids([])
+        }
+        setBidsHasMore(false)
+      } finally {
+        isLoadMore ? setBidsLoadingMore(false) : setBidsLoading(false)
+      }
+    },
+    [BID_PAGE_SIZE, bidsOrder, currentNftIdentifier],
+  )
+
+  useEffect(() => {
+    if (isBidsOpen && currentNftIdentifier) {
+      void fetchBids(1, bidsOrder)
+    } else if (!isBidsOpen) {
+      setBidsPage(1)
+      setBidsHasMore(false)
+    }
+  }, [currentNftIdentifier, isBidsOpen, bidsOrder, fetchBids])
+
+  useEffect(() => {
+    if (isPlaceBidOpen && currentNftIdentifier && bids.length === 0) {
+      void fetchBids(1, bidsOrder)
+    }
+  }, [isPlaceBidOpen, currentNftIdentifier, bids.length, bidsOrder, fetchBids])
+
+  const handleBidConfirm = async (bidAmount: string) => {
+    if (!bidAmount || Number(bidAmount) <= 0) {
+      message.error('Enter a valid bid amount')
+      return
+    }
+    if (!currentNftIdentifier) {
+      message.error('NFT identifier missing')
+      return
+    }
+    let loadingMessage: any = null
+    try {
+      // loadingMessage = message.loading('Submitting bid...', 0)
+      const payload = {
+        price: bidAmount,
+        nftId: currentNftIdentifier,
+      }
+      // call blockchain bid hook 
+
+
+
+      let overrides: ethers.Overrides = {};
+      if (currentNft?.erc20Token === ethers.ZeroAddress) {
+        const br = await getBrokerage(ethers.ZeroAddress) as { seller: bigint; buyer: bigint };
+        const precision = await decimalPrecision() as bigint; // 100
+        const buyerFee = (br.buyer * ethers.parseEther(bidAmount)) / (BigInt(100) * precision);
+        overrides = { value: ethers.parseEther(bidAmount) + buyerFee };
+      }
+// ------------------------------
+debugger
+if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && currentNft?.sign) {
+  const auction = await auctions(currentNft?.collectionAddress, currentNft?.nftId)
+        
+        console.log("auction", auction)
+
+        
+        const receipt = await bid(BigInt(currentNft?.nftId),
+          currentNft?.collectionAddress,
+          ethers.parseEther(bidAmount),
+          address,
+          auction,
+          BigInt(currentNft?.nonce),
+          currentNft?.sign as `0x${string}`,
+          overrides,
+        )
+        console.log("receipt", receipt)
+      }
+      const response = await apiCaller('POST', authRoutes.bids, payload, true)
+      if (response?.success) {
+        message.success(response?.message || 'Bid submitted successfully')
     setPlacedBidAmount(bidAmount)
     setIsPlaceBidOpen(false)
     setIsBidPlacedOpen(true)
+        if (isBidsOpen) {
+          await fetchBids(1, bidsOrder)
+        }
+      } else {
+        message.error(response?.message || 'Failed to submit bid')
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to submit bid', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to submit bid'
+      message.error(errorMessage)
+    } finally {
+      if (loadingMessage) {
+        message.destroy(loadingMessage as any)
+      }
+    }
+  }
+
+
+  const handleBuyNow = () => {
+
+    // get current nft details
+    // call blockchain buy now hook
+    
+  }
+
+  const handleCollect = () => {
+    message.info('Collect feature coming soon')
   }
 
   const handleOfferConfirm = () => {
@@ -568,19 +975,145 @@ export default function NFTDetails({
     setIsOfferSubmittedOpen(true)
   }
 
+  const displayName = currentNft?.name ?? name
+  const displayOwner =
+    currentNft?.createdBy?.name ||
+    currentNft?.ownerName ||
+    currentNft?.owner ||
+    owner
+  const displayPrice = currentNft?.price ?? currentPrice
+  const displayUsd = currentUsd
+  const displayDescription =
+    currentNft?.description && currentNft.description.trim().length > 0
+      ? currentNft.description
+      : 'Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.'
+  const currentImage = currentNft?.imageUrl || currentNft?.image || null
+
+  const baseAvaxPrice = useMemo(
+    () => parseNumericValue(currentNft?.price ?? currentPrice),
+    [currentNft?.price, currentPrice],
+  )
+
+  const baseUsdValue = useMemo(() => parseNumericValue(currentUsd), [currentUsd])
+
+  const highestBidAmount = useMemo(() => {
+    if (!bids.length) {
+      return undefined
+    }
+    return bids.reduce<number | undefined>((max, bidEntry) => {
+      const amount = parseNumericValue(bidEntry.price)
+      if (amount === undefined) return max
+      if (max === undefined) return amount
+      return amount > max ? amount : max
+    }, undefined)
+  }, [bids])
+
+  const enforcedMinBid = useMemo(() => {
+    const fallback = baseAvaxPrice ?? 0
+    const value = highestBidAmount ?? fallback
+    return Number.isFinite(value) && value !== undefined ? value : 0
+  }, [highestBidAmount, baseAvaxPrice])
+
+  const formatBidUsdValue = useCallback(
+    (avaxAmount?: number) => {
+      if (
+        !baseAvaxPrice ||
+        !baseUsdValue ||
+        !avaxAmount ||
+        !Number.isFinite(avaxAmount) ||
+        baseAvaxPrice === 0
+      ) {
+        return undefined
+      }
+      const perAvaxUsd = baseUsdValue / baseAvaxPrice
+      if (!Number.isFinite(perAvaxUsd)) return undefined
+      const usdValue = avaxAmount * perAvaxUsd
+      return formatUsdAmount(usdValue)
+    },
+    [baseAvaxPrice, baseUsdValue],
+  )
+  
+  // Get auctionType from API data, fallback to method prop for backward compatibility
+  const auctionType = currentNft?.auctionType !== undefined
+    ? currentNft.auctionType
+    : (method === 'auction' ? 2 : method === 'fixed-rate' ? 1 : undefined)
+
+  const auctionStartTime = currentNft?.startingTime
+  const auctionEndTime = currentNft?.endingTime
+
+  // Determine button visibility based on auctionType
+  // 0 = None (only Make an Offer), 1 = Fixed Rate (only Buy Now), 2 = Auction (Bid Now + Make an Offer)
+  const isAuction = auctionType === 2
+  const isFixedRate = auctionType === 1
+  const isNone = auctionType === 0 || auctionType === undefined
+
+  useEffect(() => {
+    if (!isAuction || !auctionEndTime) {
+      setAuctionTimerLabel('Auction Ends In')
+      setAuctionTimerValue(timeLeft)
+      setHasAuctionEnded(false)
+      return
+    }
+    const updateTimer = () => {
+      const now = Date.now()
+      if (auctionStartTime && now < auctionStartTime) {
+        setAuctionTimerLabel('Auction Starts In')
+        setAuctionTimerValue(formatDurationFromMs(auctionStartTime - now))
+        setHasAuctionEnded(false)
+        return
+      }
+      if (now >= auctionEndTime) {
+        setAuctionTimerLabel('Auction Status')
+        setAuctionTimerValue('Ended')
+        setHasAuctionEnded(true)
+        return
+      }
+      setAuctionTimerLabel('Auction Ends In')
+      setAuctionTimerValue(formatDurationFromMs(auctionEndTime - now))
+      setHasAuctionEnded(false)
+    }
+    updateTimer()
+    const intervalId = window.setInterval(updateTimer, 1000)
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [isAuction, auctionStartTime, auctionEndTime, timeLeft])
+
+  if (!currentNft && isLoadingDetails) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!currentNft && !isLoadingDetails) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center text-white">
+        NFT details not available.
+      </div>
+    )
+  }
+
   return (
-    <div className="w-full min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+    <div className="w-full min-h-screen font-exo2 mt-2 sm:mt-4 md:mt-6">
+      <div className="w-full mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Top section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           {/* Media */}
           <div className="relative rounded-xl sm:rounded-2xl">
-            <div className="relative h-[280px] sm:h-[350px] lg:h-[420px] rounded-xl overflow-visible">
-              <div className="absolute inset-0 rounded-xl overflow-hidden bg-gradient-to-b from-[#4F01E6] to-[#25016E]"/>
-              
-              {/* Three Overlapping Spade Images */}
+            <div className={`relative h-[280px] sm:h-[350px] lg:h-[385px] rounded-xl overflow-hidden flex items-center justify-center ${currentImage ? 'bg-[#0A0D1F]' : 'bg-gradient-to-b from-[#4F01E6] to-[#25016E]'}`}>
+              {currentImage ? (
+                <Image
+                  src={currentImage}
+                  alt={displayName}
+                  fill
+                  className="object-contain rounded-xl"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                {/* Left Spade - Smaller, Behind */}
                 <div className="absolute left-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
                   <Image 
                     src={spadesImage} 
@@ -590,8 +1123,6 @@ export default function NFTDetails({
                     className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
                   />
                 </div>
-                
-                {/* Center Spade - Largest, Most Prominent */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                   <Image 
                     src={spadesImage} 
@@ -601,8 +1132,6 @@ export default function NFTDetails({
                     className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl" 
                   />
                 </div>
-                
-                {/* Right Spade - Smaller, Behind */}
                 <div className="absolute right-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
                   <Image 
                     src={spadesImage} 
@@ -613,6 +1142,7 @@ export default function NFTDetails({
                   />
                 </div>
               </div>
+              )}
             </div>
           </div>
 
@@ -620,7 +1150,7 @@ export default function NFTDetails({
           <div className="p-4 sm:p-6 font-exo2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-2">
               <div className="flex items-center gap-2 sm:gap-3">
-                <Avatar 
+                <Avatar
                   size={36}
                   className="!bg-[#1A1A2E] !flex !items-center !justify-center"
                   style={{
@@ -632,7 +1162,7 @@ export default function NFTDetails({
                 </Avatar>
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-xs sm:text-sm font-exo2">Owner</span>
-                  <span className="text-[#884DFF] text-xs sm:text-sm font-exo2 cursor-pointer">{owner}</span>
+                  <span className="text-[#884DFF] text-xs sm:text-sm font-exo2 cursor-pointer">{displayOwner}</span>
                 </div>
                 <MessageSquareText className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-1 sm:ml-2" />
               </div>
@@ -641,43 +1171,48 @@ export default function NFTDetails({
                 Share
               </button>
             </div>
-            
-            <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{name}</h1>
-            
+
+            <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{displayName}</h1>
+
             <p className="text-[#A3AED0] max-w-full sm:max-w-[400px] text-xs sm:text-sm font-exo2 leading-relaxed mb-6 sm:mb-10">
-              Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.
+              {displayDescription}
             </p>
 
             {/* Price and CTA */}
             <div className="mt-6 sm:mt-12 lg:mt-24">
               <p className="text-white font-exo2 text-xs sm:text-sm">
-                {method === 'auction' ? `Current Bid • Live` : 'Current Price'}
+                {isAuction ? 'Current Bid • Live' : 'Current Price'}
               </p>
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
                 <div className="flex items-center gap-1 sm:gap-1.5">
                   <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500 fill-red-500" />
-                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">A. {currentPrice}</span>
+                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">A. {displayPrice}</span>
                 </div>
-                <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{currentUsd}</span>
+                <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{displayUsd}</span>
               </div>
-              
-              {/* Conditional Buttons based on method */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2  sm:gap-3 mb-3 sm:mb-2">
-                {method === 'fixed-rate' ? (
-                  // Fixed Rate: Only Buy Now button
-                  <button className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
-                    Buy Now
-                  </button>
-                ) : (
-                  // Auction: Bid Now and Make an Offer buttons
+
+              {/* Conditional Buttons based on auctionType */}
+              {/* 0 = None (only Make an Offer), 1 = Fixed Rate (only Buy Now), 2 = Auction (Bid Now + Make an Offer) */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
+                {isAuction ? (
+                  // Auction (auctionType = 2): Bid Now + Make an Offer
                   <>
-                    <button 
-                      onClick={() => setIsPlaceBidOpen(true)}
-                      className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
-                    >
-                      Bid Now
-                    </button>
-                    <button 
+                    {hasAuctionEnded ? (
+                      <button
+                        onClick={handleCollect}
+                        className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
+                      >
+                        Collect
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setIsPlaceBidOpen(true)}
+                        className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
+                      >
+                        Bid Now
+                      </button>
+                    )}
+                    <button
                       onClick={() => setIsMakeOfferOpen(true)}
                       className="px-5 py-2.5 justify-center items-center  rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
                     >
@@ -685,23 +1220,41 @@ export default function NFTDetails({
                       Make an Offer
                     </button>
                   </>
+                ) : isFixedRate ? (
+                  // Fixed Rate (auctionType = 1): Only Buy Now button
+                  <button onClick={handleBuyNow}
+                   className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                    Buy Now
+                  </button>
+                ) : (
+                  // None (auctionType = 0 or undefined): Only Make an Offer button
+                  <button
+                    onClick={() => setIsMakeOfferOpen(true)}
+                    className="px-5 py-2.5 justify-center items-center rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Make an Offer
+                  </button>
                 )}
               </div>
-              
-              {method === 'auction' && (
+
+              {isAuction && (
                 <p className="text-gray-400 text-xs font-exo2">
-                  Auction Ends In <span className="text-white font-mono font-exo2">{timeLeft}</span>
+                  {auctionTimerLabel}{' '}
+                  <span className="text-white font-mono font-exo2">
+                    {auctionTimerValue || '—'}
+                  </span>
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Conditional Accordions based on method */}
-        <div className={`grid grid-cols-1 ${method === 'auction' ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mt-4 sm:mt-6`}>
-          <Accordion 
-            key="token-detail" 
-            id="token-detail" 
+        {/* Conditional Accordions based on auctionType */}
+        <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
+          <Accordion
+            key="token-detail"
+            id="token-detail"
             title="Token Detail"
             isOpen={isTokenDetailOpen}
             onToggle={() => setIsTokenDetailOpen(!isTokenDetailOpen)}
@@ -709,7 +1262,7 @@ export default function NFTDetails({
             <div className="space-y-3">
               <div className="flex items-center justify-between py-2">
                 <span className="text-gray-400 text-sm font-exo2">Creator</span>
-                <span className="text-white text-sm font-exo2">{owner}</span>
+                <span className="text-white text-sm font-exo2">{displayOwner}</span>
               </div>
               <div className="flex items-center justify-between ">
                 <span className="text-gray-400 text-sm font-exo2">Token Standard</span>
@@ -734,87 +1287,154 @@ export default function NFTDetails({
             </div>
           </Accordion>
 
-          {/* Bids Accordion - Only for Auction */}
-          {method === 'auction' && (
+          {/* Bids Accordion - Only for Auction (auctionType = 2) */}
+          {isAuction && (
             <Accordion 
               key="bids" 
               id="bids" 
-              title="Bids"
+              title={
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Image src={bidIcon} alt="Bids icon" className="w-4 h-4 object-contain" />
+                  </div>
+                  <span className="text-base font-semibold">Bids</span>
+                </div>
+              }
               isOpen={isBidsOpen}
-              onToggle={() => setIsBidsOpen(!isBidsOpen)}
+              onToggle={() => setIsBidsOpen((prev) => !prev)}
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-400 text-sm font-exo2">Sort by</span>
-                  <select className="bg-[#1A1A2E] border border-gray-600 rounded-lg px-3 py-1 text-white text-sm font-exo2">
-                    <option>High to Low</option>
-                    <option>Low to High</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between py-2 border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <ArrowUp className="w-4 h-4 text-red-500 fill-red-500" />
-                      <span className="text-[#7E6BEF] text-sm font-exo2">5.68</span>
-                      <span className="text-white text-sm font-exo2">• $22.93</span>
-                    </div>
-                    <span className="text-gray-400 text-sm font-exo2">by Bartosz Tiedeman</span>
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="relative inline-flex items-center rounded-full border border-white/10 px-4 py-1.5">
+                    <select
+                      value={bidsOrder}
+                      onChange={(event) => setBidsOrder(event.target.value as BidOrder)}
+                      className="bg-transparent pr-6 text-sm font-semibold text-white focus:outline-none appearance-none"
+                    >
+                      <option value="high">High to Low</option>
+                      <option value="low">Low to High</option>
+                      <option value="desc">Newest</option>
+                      <option value="asc">Oldest</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2 pointer-events-none" />
                   </div>
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-2">
-                      <ArrowUp className="w-4 h-4 text-red-500 fill-red-500" />
-                      <span className="text-[#7E6BEF] text-sm font-exo2">0.28</span>
-                      <span className="text-white text-sm font-exo2">• $1.27</span>
-                    </div>
-                    <span className="text-gray-400 text-sm font-exo2">by Jonas Kahnwald</span>
-                  </div>
+                  {bidsLoading && bids.length === 0 && (
+                    <span className="text-xs text-gray-400 font-exo2">Fetching bids…</span>
+                  )}
                 </div>
+
+                {bids.length === 0 && !bidsLoading ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 text-sm font-exo2 border border-dashed border-white/10 rounded-xl">
+                    <p>No bids yet. Be the first to place a bid!</p>
+                  </div>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+                    {bids.map((bid) => {
+                      const avaxAmount = parseNumericValue(bid.price)
+                      const usdText = formatBidUsdValue(avaxAmount)
+                      return (
+                        <div
+                          key={bid._id || bid.id}
+                          className="px-5 py-4 flex items-center gap-4 border-b border-white/10 last:border-b-0"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                            <Image src={bidIcon} alt="Bid icon" className="w-4 h-4 object-contain" />
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2 text-base font-semibold text-white">
+                              <span>{formatAvaxAmount(avaxAmount)}</span>
+                              {usdText && (
+                                <span className="text-[#7E6BEF] text-sm">• ${usdText}</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-400 font-exo2">
+                              by {bid.user?.name || 'NA'}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {bidsLoading && bids.length > 0 && (
+                      <div className="text-center text-sm text-gray-400">Loading more bids…</div>
+                    )}
+                    {bidsHasMore && (
+                      <div className="text-center">
+                        <button
+                          onClick={() => fetchBids(bidsPage + 1, bidsOrder)}
+                          disabled={bidsLoadingMore}
+                          className="px-4 py-2 text-sm font-exo2 text-white border border-white/20 rounded-full hover:bg-white/5 transition disabled:opacity-60"
+                        >
+                          {bidsLoadingMore ? 'Loading…' : 'Load more bids'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </Accordion>
           )}
         </div>
 
         {/* More from this collection */}
-        <div className="mt-6 sm:mt-10">
+        <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <h2 className="text-white font-exo2 text-base sm:text-lg">More from this collection</h2>
             <button className="px-6 sm:px-10 py-2 w-full sm:w-auto sm:max-w-[300px] text-xs sm:text-sm text-white border border-white/10 rounded-full hover:bg-[#252540] transition">
               Explore all
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {['sleeper_tyu.avax','qetchr.avax','buiquat.avax','dashmond.avax'].map((t) => (
-              <MiniCard key={t} title={t} />
-            ))}
+          {relatedNfts.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {relatedNfts.slice(0, 8).map((nft: CollectionNFT, index: number) => {
+                const targetCollectionId = currentNft?.collectionId || collectionId
+                const targetId = nft._id || nft.id || nft.nftId || `nft-${index}`
+                const href = targetId
+                  ? targetCollectionId
+                    ? `/marketplace/nft/${targetId}?collectionId=${targetCollectionId}`
+                    : `/marketplace/nft/${targetId}`
+                  : '/marketplace/nft'
+                return (
+                  <MiniCard
+                    key={`${targetId}-${index}`}
+                    nft={nft}
+                    onClick={() => router.push(href)}
+                  />
+                )
+              })}
           </div>
+          ) : (
+            <div className="text-gray-400 text-sm font-exo2">No other NFTs found in this collection.</div>
+          )}
         </div>
       </div>
 
       {/* Modals */}
-      <PlaceBidModal 
-        isOpen={isPlaceBidOpen} 
-        onClose={() => setIsPlaceBidOpen(false)} 
+      <PlaceBidModal
+        isOpen={isPlaceBidOpen}
+        onClose={() => setIsPlaceBidOpen(false)}
         onConfirm={handleBidConfirm}
-        nftName={name}
+        nftName={displayName}
+        nftImage={currentImage || undefined}
+        minBidAmount={enforcedMinBid}
       />
-      <MakeOfferModal 
-        isOpen={isMakeOfferOpen} 
-        onClose={() => setIsMakeOfferOpen(false)} 
+      <MakeOfferModal
+        isOpen={isMakeOfferOpen}
+        onClose={() => setIsMakeOfferOpen(false)}
         onConfirm={handleOfferConfirm}
-        nftName={name}
+        nftName={displayName}
       />
-      <BidPlacedSuccessModal 
-        isOpen={isBidPlacedOpen} 
+      <BidPlacedSuccessModal
+        isOpen={isBidPlacedOpen}
         onClose={() => setIsBidPlacedOpen(false)}
         bidAmount={placedBidAmount}
-        nftName={name}
-        nftImage="/assets/image6.jpeg"
+        nftName={displayName}
+        nftImage={currentImage || undefined}
       />
-      <OfferSubmittedModal 
-        isOpen={isOfferSubmittedOpen} 
+      <OfferSubmittedModal
+        isOpen={isOfferSubmittedOpen}
         onClose={() => setIsOfferSubmittedOpen(false)}
         offerAmount="77.9"
-        nftName={name}
+        nftName={displayName}
       />
     </div>
   )

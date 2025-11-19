@@ -49,7 +49,7 @@ type BidInput = {
 };
 
 export function useMarketplace() {
-  const { call, execute, ...rest } = useContract();
+  const { call, execute, getGasLimit, ...rest } = useContract();
   const { wallets } = useWallets();
   const chainId = 11155111;
 
@@ -86,16 +86,22 @@ export function useMarketplace() {
   }, [call]);
 
   const buy = useCallback(async (
-    tokenId: BigNumberish,
-    erc721: string,
-    price: BigNumberish,
-    nonce: BigNumberish,
-    sign: BytesLike,
-    erc20Token: string,
-    buyer: string,
+    tokenId: BigNumberish, // nft id
+    erc721: string, // collection address
+    price: BigNumberish, // price
+    nonce: BigNumberish, // nonce
+    sign: BytesLike, // signature
+    erc20Token: string, // erc20 token
+    buyer: string, // buyer address
     overrides: ethers.Overrides = {},
   ) => {
-    return execute('ERC721Marketplace', 'buy', chainId,"", [tokenId, erc721, price, nonce, sign, erc20Token, buyer], overrides);
+
+          const gas = await getGasLimit(
+      'ERC721Marketplace', 'buy', 11155111, "",
+      [tokenId, erc721, price, nonce, sign, erc20Token, buyer],
+
+    );
+    return execute('ERC721Marketplace', 'buy', chainId,"", [tokenId, erc721, price, nonce, sign, erc20Token, buyer], { ...overrides, gasLimit: gas });
   }, [execute]);
 
   const buyBatch = useCallback(async (
