@@ -386,28 +386,28 @@ debugger
   let isValid = true;
 let nonceResponse = null;
 
-while (isValid) {
-  // GET API call
-  nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
-  console.log(nonceResponse, 'nonceResponse');
+// while (isValid) {
+//   // GET API call
+//   nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
+//   console.log(nonceResponse, 'nonceResponse');
 
-  // Validate nonce
-  isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+//   // Validate nonce
+//   isValid = await auctionNonceStatus(nonceResponse.data.nonce);
 
-  // If still invalid → again call GET
-  if (isValid) {
-    console.log("Nonce invalid, retrying...");
-    await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
-  }
-}
-payload.nonce = nonceResponse.data.nonce;
+//   // If still invalid → again call GET
+//   if (isValid) {
+//     console.log("Nonce invalid, retrying...");
+//     await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+//   }
+// }
+payload.nonce = 4  //nonceResponse.data.nonce; 
       console.log("🚀 ~ handleCreateItem ~ payload:", payload)
       if(payload.putOnSale && payload.nftId){
       const salePayload = {
         tokenId: payload.nftId, // this is the token id of the nft
         erc721: selectedCollectionAddress, // this is the erc721 collection address of the nft
         priceEth: payload.price.toString(), // this is the price of the nft
-        nonce: nonceResponse.data.nonce, // get nonce by hook of useMarketplace
+        nonce: 4, // get nonce by hook of useMarketplace
         erc20Token: payload.erc20Token || "0x0000000000000000000000000000000000000000", // 0x0000000000000000000000000000000000000000 for native token or erc20 token address 
         auctionType: payload.auctionType, // 1 (Fixed Price) for fixed price, 2 (Auction) for auction 
         startingTime: payload.startingTime, // this is the starting time  of the nft Auction type 2 sale in seconds
@@ -425,7 +425,7 @@ payload.nonce = nonceResponse.data.nonce;
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(nonceResponse.data.nonce),
+      BigInt(4),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(0),
@@ -440,7 +440,7 @@ payload.nonce = nonceResponse.data.nonce;
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(nonceResponse.data.nonce),
+      BigInt(4),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(payload.startingTime),
