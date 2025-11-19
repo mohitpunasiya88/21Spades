@@ -12,6 +12,10 @@ export interface CollectionNFT {
   image?: string | null
   imageUrl?: string | null
   collectionId?: string
+  erc20Token?: string
+  collectionAddress?: string
+  nonce?: string
+  sign?: string
   ownerName?: string
   owner?: string
   description?: string
