@@ -37,6 +37,7 @@ export default function MessagesPage() {
   const [newMessageSearch, setNewMessageSearch] = useState('')
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
   const editMenuRef = useRef<HTMLDivElement>(null)
+  const prevParamsRef = useRef<string>('')
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -55,17 +56,42 @@ export default function MessagesPage() {
 
 
   // Handle URL query parameters for chat selection
+  // Use ref to track previous URL params to avoid re-selection on chats update
   useEffect(() => {
     const chatId = searchParams.get('chat')
     const userId = searchParams.get('userId')
+    const currentParams = `${chatId || ''}-${userId || ''}`
     
-    if (chatId && chats.length > 0) {
+    // If no URL params, never change selected chat (this prevents unwanted re-selection)
+    if (!chatId && !userId) {
+      prevParamsRef.current = currentParams
+      return
+    }
+    
+    // Only proceed if URL params actually changed or chats are first loaded
+    const paramsChanged = prevParamsRef.current !== currentParams
+    if (!paramsChanged && chats.length > 0) {
+      // If params haven't changed and we already have a selected chat, don't re-select
+      if (selectedChat) return
+    }
+    
+    prevParamsRef.current = currentParams
+    
+    // Only proceed if chats are loaded
+    if (chats.length === 0) return
+    
+    // If we already have a selected chat and it matches the URL params, don't change it
+    const currentSelectedChatId = selectedChat?._id
+    if (chatId && currentSelectedChatId === chatId) return
+    if (userId && selectedChat?.participants?.some(p => p._id === userId || (p as any).id === userId)) return
+    
+    if (chatId) {
       const chat = chats.find(c => c._id === chatId)
       if (chat) {
         setSelectedChat(chat)
         setIsMobileChatOpen(true)
       }
-    } else if (userId && chats.length > 0) {
+    } else if (userId) {
       // Find chat by userId - check both _id and id formats
       const chat = chats.find(c => 
         c.participants && c.participants.some(p => 
@@ -84,7 +110,7 @@ export default function MessagesPage() {
         })
       }
     }
-  }, [searchParams, chats, setSelectedChat, createOrGetChat])
+  }, [searchParams, chats, selectedChat, setSelectedChat, createOrGetChat])
 
   // Search users when typing in new message search (Backend API Call)
   useEffect(() => {
