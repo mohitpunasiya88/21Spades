@@ -283,7 +283,7 @@ const TokenizedCollectionCard: React.FC = () => {
   const mappedCollections = collections.map((collection: any) => {
     const collectionId = collection._id || collection.id || collection.collectionId
     const collectionName = collection.collectionName || collection.name || 'Unnamed Collection'
-    const creatorName = collection?.createdBy?.name || 'Unknown Creator'
+    const creatorName = collection?.creator?.name || 'Unknown Creator'
     const floorPrice = collection.floorPrice ? `${collection.floorPrice} AVAX` : '0.01 AVAX'
     const imageUrl = collection.imageUrl || collection.coverPhoto || null
     

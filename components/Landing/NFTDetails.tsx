@@ -86,6 +86,7 @@ function MiniCard({ nft, onClick }: { nft: CollectionNFT; onClick: () => void })
     <button
       onClick={onClick}
       className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 ring-1 ring-white/5 hover:ring-white/10 transition w-full text-left"
+      style={{ cursor: 'pointer' }}
     >
       <div className="relative h-[280px] sm:h-[250px] w-full rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#050616]">
         <div className="absolute" style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }} />
@@ -133,6 +134,7 @@ function Accordion({ title, children, isOpen: controlledIsOpen, onToggle, id }: 
       <button
         onClick={handleToggle}
         className="flex items-center justify-between w-full text-white px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-white/5 transition-colors"
+        style={{ cursor: 'pointer' }}
       >
         <span className="font-exo2 text-sm sm:text-base">{title}</span>
         <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -1088,7 +1090,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
 
   const displayName = currentNft?.name ?? name
   const displayOwner =
-    currentNft?.createdBy?.name ||
+    currentNft?.creator?.name ||
     currentNft?.ownerName ||
     currentNft?.owner ||
     owner
@@ -1327,15 +1329,15 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                 {ownerAvatar}
                 <div className="flex flex-col">
                   <span className="text-white/60 text-xs sm:text-sm">Owner</span>
-                  <button className="text-[#7E6BEF] text-sm font-semibold hover:underline text-left">
+                  <button className="text-[#7E6BEF] text-sm font-semibold hover:underline text-left" style={{ cursor: 'pointer' }}>
                     {displayOwner}
                   </button>
                 </div>
-                <button className="ml-2 flex items-center justify-center w-9 h-9 rounded-full border border-white/15 bg-white/5 text-white hover:border-white/40 transition">
+                <button className="ml-2 flex items-center justify-center w-9 h-9 rounded-full border border-white/15 bg-white/5 text-white hover:border-white/40 transition" style={{ cursor: 'pointer' }}>
                   <MessageSquareText className="w-4 h-4" />
                 </button>
               </div>
-              <button className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-full border border-white/15 hover:border-white/40 transition">
+              <button className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-full border border-white/15 hover:border-white/40 transition" style={{ cursor: 'pointer' }}>
                 <Share className="w-4 h-4" />
                 Share
               </button>
@@ -1388,6 +1390,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                       <button
                         onClick={handleCollect}
                         className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
+                        style={{ cursor: 'pointer' }}
                       >
                         Collect
                       </button>
@@ -1397,6 +1400,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                         disabled={!isAuctionLive}
                         title={bidDisabledReason}
                         className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ cursor: 'pointer' }}
                       >
                         Bid Now
                       </button>
@@ -1404,6 +1408,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                     <button
                       onClick={() => setIsMakeOfferOpen(true)}
                       className="px-5 py-2.5 justify-center items-center  rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
+                      style={{ cursor: 'pointer' }}
                     >
                       <ShoppingCart className="w-4 h-4" />
                       Make an Offer
@@ -1411,8 +1416,11 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                   </>
                 ) : isFixedRate ? (
                   // Fixed Rate (auctionType = 1): Only Buy Now button
-                  <button onClick={handleBuyNow}
-                   className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                  <button 
+                    onClick={handleBuyNow}
+                    className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
+                    style={{ cursor: 'pointer' }}
+                  >
                     Buy Now
                   </button>
                 ) : (
@@ -1420,6 +1428,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                   <button
                     onClick={() => setIsMakeOfferOpen(true)}
                     className="px-5 py-2.5 justify-center items-center rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
+                    style={{ cursor: 'pointer' }}
                   >
                     <ShoppingCart className="w-4 h-4" />
                     Make an Offer
@@ -1563,7 +1572,8 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                         <button
                           onClick={() => fetchBids(bidsPage + 1, bidsOrder)}
                           disabled={bidsLoadingMore}
-                          className="px-4 py-2 text-sm font-exo2 text-white border border-white/20 rounded-full hover:bg-white/5 transition disabled:opacity-60"
+                          className="px-4 py-2 text-sm font-exo2 text-white border border-white/20 rounded-full hover:bg-white/5 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                          style={{ cursor: 'pointer' }}
                         >
                           {bidsLoadingMore ? 'Loading…' : 'Load more bids'}
                         </button>
@@ -1580,7 +1590,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <h2 className="text-white font-exo2 text-2xl sm:text-3xl font-semibold">More from this collection</h2>
-            <button className="px-5 sm:px-6 py-1.5 sm:py-2 text-sm text-white border border-white/20 rounded-full inline-flex items-center gap-2 hover:border-white/40 transition">
+            <button className="px-5 sm:px-6 py-1.5 sm:py-2 text-sm text-white border border-white/20 rounded-full inline-flex items-center gap-2 hover:border-white/40 transition" style={{ cursor: 'pointer' }}>
               Explore all
               <ChevronDown className="w-4 h-4" />
             </button>

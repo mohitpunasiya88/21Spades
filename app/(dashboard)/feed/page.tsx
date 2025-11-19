@@ -158,9 +158,12 @@ export default function FeedPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
   const [isPosting, setIsPosting] = useState(false)
+  const [postProgress, setPostProgress] = useState(0)
+  const [postStatus, setPostStatus] = useState<'posting' | 'finished' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emojiPickerRef = useRef<HTMLDivElement>(null)
   const textInputRef = useRef<HTMLInputElement>(null)
+  const postsSectionRef = useRef<HTMLDivElement>(null)
 
   // Prepare categories list with "All" option at the beginning
   const categoriesList = useMemo(() => {
@@ -292,6 +295,22 @@ export default function FeedPage() {
     }
 
     setIsPosting(true)
+    setPostStatus('posting')
+    setPostProgress(0)
+
+    // Simulate smooth progress
+    const progressInterval = setInterval(() => {
+      setPostProgress((prev) => {
+        if (prev >= 85) {
+          clearInterval(progressInterval)
+          return 85
+        }
+        // Smooth increment: start fast, slow down as we approach 85%
+        const increment = (85 - prev) * 0.15 + Math.random() * 3
+        return Math.min(85, prev + increment)
+      })
+    }, 150)
+
     try {
       // Get category ID if a category is selected for post creation
       const categoryId = postCategory === 'All' 
@@ -308,20 +327,49 @@ export default function FeedPage() {
         categoryId: categoryId,
       })
 
+      // Complete progress
+      clearInterval(progressInterval)
+      setPostProgress(100)
+      setPostStatus('finished')
+
       // Reset form after successful post
       setPostText('')
       setSelectedImages([])
       setImagePreviews([])
       setPostCategory('All')
       
-      // Refresh posts to show the new post
+      // Refresh posts to show the new post - fetch all posts regardless of category
+      const currentCategoryId = selectedCategory === 'All' 
+        ? undefined 
+        : categories.find(cat => cat.name === selectedCategory)?._id
+      
       await getPosts({ 
-        categoryId: categoryId,
+        categoryId: currentCategoryId,
         page: 1,
         limit: 20
       })
+
+      // Scroll to posts section after posts are loaded
+      setTimeout(() => {
+        if (postsSectionRef.current) {
+          postsSectionRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          })
+        }
+      }, 300)
+
+      // Hide progress indicator after 2 seconds
+      setTimeout(() => {
+        setPostStatus(null)
+        setPostProgress(0)
+      }, 2000)
     } catch (error: any) {
+      clearInterval(progressInterval)
       console.error('Error creating post:', error)
+      setPostStatus(null)
+      setPostProgress(0)
       alert(error?.response?.data?.message || error?.message || 'Failed to create post. Please try again.')
     } finally {
       setIsPosting(false)
@@ -511,6 +559,26 @@ export default function FeedPage() {
                   {isPosting ? 'Posting...' : 'Post'}
                 </button>
               </div>
+              
+              {/* Progress Indicator */}
+              {postStatus && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-white font-exo2 font-medium">
+                      {postStatus === 'posting' ? 'Posting...' : 'Finished'}
+                    </span>
+                    <span className="text-gray-400 font-exo2">
+                      {Math.round(postProgress)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#FFFFFF10] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#4F01E6] to-[#7E6BEF] transition-all duration-300 ease-out rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(0, postProgress))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -518,7 +586,7 @@ export default function FeedPage() {
           <Ddrop />
          
           {/* Explore Feed Section */}
-          <div className="mb-4 sm:mb-6">
+          <div ref={postsSectionRef} className="mb-4 sm:mb-6">
             <div className="mb-2 sm:mb-3">
               <h2 className="text-white text-lg sm:text-xl font-bold mb-1">Explore Feed</h2>
               <p className="text-gray-400 text-sm sm:text-base">Explore Feed, the premier Web3 marketplace for securely buying, selling, and trading digital assets.</p>

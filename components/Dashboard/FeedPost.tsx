@@ -62,6 +62,61 @@ const UserList = ['U', 'Lucy', 'Tom', 'Edward'];
 const ColorList = ['#f56a00', '#7265e6', '#ffbf00', '#00a2ae'];
 const GapList = [4, 3, 2, 1];
 
+// Helper function to render text with clickable links
+const renderTextWithLinks = (text: string) => {
+  if (!text) return null
+  
+  // URL regex pattern - matches http, https, www, and common domains
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/gi
+  
+  const parts: (string | JSX.Element)[] = []
+  let lastIndex = 0
+  let match
+  
+  while ((match = urlRegex.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index))
+    }
+    
+    // Add the link
+    let url = match[0]
+    let displayUrl = url
+    
+    // Add protocol if missing
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url
+    }
+    
+    // Truncate long URLs for display
+    if (displayUrl.length > 50) {
+      displayUrl = displayUrl.substring(0, 47) + '...'
+    }
+    
+    parts.push(
+      <a
+        key={match.index}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[#7E6BEF] hover:text-[#9B8AFF] underline break-all"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {displayUrl}
+      </a>
+    )
+    
+    lastIndex = match.index + match[0].length
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+  
+  return parts.length > 0 ? <>{parts}</> : text
+}
+
 export default function FeedPost({ post }: FeedPostProps) {
   const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes } = useFeedStore()
   const { searchUsers, searchedUsers, clearSearchedUsers } = useChatStore()
@@ -646,7 +701,9 @@ export default function FeedPost({ post }: FeedPostProps) {
 
       {/* Repost Caption - Only show if it's a repost and has caption */}
       {isRepost && post.repostCaption && (
-        <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">{post.repostCaption}</p>
+        <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">
+          {renderTextWithLinks(post.repostCaption)}
+        </p>
       )}
 
       {/* Embedded Original Post - Show if it's a repost */}
@@ -684,7 +741,9 @@ export default function FeedPost({ post }: FeedPostProps) {
 
           {/* Original Post Content */}
           {post.originalPost.content && (
-            <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm leading-relaxed break-words">{post.originalPost.content}</p>
+            <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm leading-relaxed break-words">
+              {renderTextWithLinks(post.originalPost.content)}
+            </p>
           )}
 
           {/* Original Post Media */}
@@ -702,7 +761,11 @@ export default function FeedPost({ post }: FeedPostProps) {
       ) : (
         <>
           {/* Regular Post Text - Only show if not a repost */}
-          {post.content && <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">{post.content}</p>}
+          {post.content && (
+            <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed break-words">
+              {renderTextWithLinks(post.content)}
+            </p>
+          )}
 
           {/* Regular Post Media - Only show if not a repost */}
           {post.image ? (
@@ -715,9 +778,10 @@ export default function FeedPost({ post }: FeedPostProps) {
               />
             </div>
           ) : (
-            <div className="flex justify-center items-center rounded-lg sm:rounded-xl mb-3 sm:mb-4 border border-dashed border-[#FFFFFF33] text-gray-400 text-sm sm:text-base font-exo2 py-10 w-full">
-              No image available
-            </div>
+            ''
+            // <div className="flex justify-center items-center rounded-lg sm:rounded-xl mb-3 sm:mb-4 border border-dashed border-[#FFFFFF33] text-gray-400 text-sm sm:text-base font-exo2 py-10 w-full">
+            //   No image available
+            // </div>
           )}
         </>
       )}
