@@ -21,8 +21,9 @@ export function useNFTCollection() {
 
   // Mint a new NFT
   const mint = useCallback(async (params: MintParams, contractAddress?: string) => {
-    debugger;
-
+    if (!contractAddress || !ethers.isAddress(contractAddress)) {
+      throw new Error('Invalid collection contract address passed to mint');
+    }
     const mintCharges = await call('ERC721Mintable', 'mintingCharge', 11155111, contractAddress, []);
 
     const gas = await getGasLimit(

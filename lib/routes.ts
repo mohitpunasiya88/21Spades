@@ -61,6 +61,9 @@ const authRoutes = {
 
     // nonce
     getNonce: 'nonce',
+
+    // NFT BUY
+    buyNow: 'nft/items',
 }
 
 export default authRoutes;

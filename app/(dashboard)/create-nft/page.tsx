@@ -381,27 +381,24 @@ const idsssss = Number(response[0].args.tokenId).toString()
       // 1. lazyMintNonceStatus
       // 2. auctionNonceStatus // cuurent I am using this for sale
       // 3. isOfferNonceProcessed)
-debugger
        //await get_nonce_from_api()
   let isValid = true;
 let nonceResponse = null;
 
-// while (isValid) {
-//   // GET API call
-//   nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
-//   console.log(nonceResponse, 'nonceResponse');
+while (isValid) {
+  // GET API call
+  nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
 
-//   // Validate nonce
-//   isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+  // Validate nonce
+  isValid = await auctionNonceStatus(nonceResponse.data.nonce);
 
-//   // If still invalid → again call GET
-//   if (isValid) {
-//     console.log("Nonce invalid, retrying...");
-//     await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
-//   }
-// }
-payload.nonce = 4  //nonceResponse.data.nonce; 
-      console.log("🚀 ~ handleCreateItem ~ payload:", payload)
+  // If still invalid → again call GET
+  if (isValid) {
+    console.log("Nonce invalid, retrying...");
+    await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+  }
+}
+payload.nonce = nonceResponse.data.nonce; 
       if(payload.putOnSale && payload.nftId){
       // Use the exact string value to avoid scientific notation issues
       const priceString = fixedPrice && fixedPrice.trim() !== "" ? fixedPrice : "0"
@@ -428,11 +425,11 @@ payload.nonce = 4  //nonceResponse.data.nonce;
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(4),
+      BigInt(nonceResponse.data.nonce),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(0),
-      BigInt(0)
+      BigInt(0),
 
     );
     salePayload.sign = signature.signature;
@@ -443,7 +440,7 @@ payload.nonce = 4  //nonceResponse.data.nonce;
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(4),
+      BigInt(`${nonceResponse.data.nonce}`),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(payload.startingTime),
