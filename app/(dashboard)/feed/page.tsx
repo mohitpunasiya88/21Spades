@@ -100,7 +100,7 @@ function transformPost(post: Post) {
     walletAddress: repostAuthor._id ? repostAuthor._id.slice(-8) : 'unknown',
     profilePicture: repostAuthor.profilePicture,
     content: displayPost.text,
-    image: displayPost.postUrl || '/post/post.png',
+    image: displayPost.postUrl,
     likes: displayPost.likesCount,
     comments: displayPost.commentsCount,
     shares: displayPost.sharesCount,
