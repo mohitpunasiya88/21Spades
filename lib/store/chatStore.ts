@@ -13,6 +13,7 @@ export interface Chat {
     username: string
     profilePicture?: string
     isOnline?: boolean
+    lastSeen?: string
   }>
   lastMessage?: {
     _id: string
@@ -111,7 +112,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 : (chat.participants || [])
               
               // Transform otherUser to participant format
-              // lastSeen is calculated on frontend from lastMessage.timestamp in ChatWindow
               if (chat.otherUser) {
                 participants = [{
                   _id: chat.otherUser._id || chat.otherUser.id,
@@ -119,6 +119,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                   username: chat.otherUser.username,
                   profilePicture: chat.otherUser.profilePicture || chat.otherUser.avatar,
                   isOnline: chat.otherUser.isOnline !== undefined ? chat.otherUser.isOnline : false,
+                  lastSeen: chat.otherUser.lastSeen || chat.otherUser.last_seen || chat.otherUser.lastActive || undefined,
                 }]
               }
               
@@ -181,7 +182,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
               : (apiChat.participants || [])
             
             // Transform otherUser to participant format
-            // lastSeen is calculated on frontend from lastMessage.timestamp in ChatWindow
             if (apiChat.otherUser) {
               participants = [{
                 _id: apiChat.otherUser._id || apiChat.otherUser.id,
@@ -189,6 +189,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 username: apiChat.otherUser.username,
                 profilePicture: apiChat.otherUser.profilePicture || apiChat.otherUser.avatar,
                 isOnline: apiChat.otherUser.isOnline !== undefined ? apiChat.otherUser.isOnline : false,
+                lastSeen: apiChat.otherUser.lastSeen || apiChat.otherUser.last_seen || apiChat.otherUser.lastActive || undefined,
               }]
             }
             
@@ -503,11 +504,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
       get().addMessage(transformedMessage)
       
-      // Update online status of sender if available in message
+      // Update online status and lastSeen of sender if available in message
       const senderId = transformedMessage.senderId
       const senderIsOnline = message.sender?.isOnline !== undefined ? message.sender.isOnline : true // Assume online if sending message
+      const senderLastSeen = message.sender?.lastSeen || message.sender?.last_seen || message.sender?.lastActive
       
-      // Update online status in chats and selectedChat
+      // Update online status and lastSeen in chats and selectedChat
       set(state => {
         const updatedChats = state.chats.map(chat => {
           if (chat._id === transformedMessage.chatId) {
@@ -515,7 +517,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ...chat,
               participants: chat.participants.map(participant =>
                 participant._id === senderId
-                  ? { ...participant, isOnline: senderIsOnline }
+                  ? { 
+                      ...participant, 
+                      isOnline: senderIsOnline,
+                      lastSeen: senderLastSeen || (senderIsOnline ? new Date().toISOString() : participant.lastSeen)
+                    }
                   : participant
               )
             }
@@ -528,7 +534,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ...state.selectedChat,
               participants: state.selectedChat.participants.map(participant =>
                 participant._id === senderId
-                  ? { ...participant, isOnline: senderIsOnline }
+                  ? { 
+                      ...participant, 
+                      isOnline: senderIsOnline,
+                      lastSeen: senderLastSeen || (senderIsOnline ? new Date().toISOString() : participant.lastSeen)
+                    }
                   : participant
               ),
               lastMessage: {
@@ -597,7 +607,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         : (chat.participants || [])
       
       // Transform otherUser to participant format
-      // lastSeen is calculated on frontend from lastMessage.timestamp in ChatWindow
       if (chat.otherUser) {
         participants = [{
           _id: chat.otherUser._id || chat.otherUser.id,
@@ -605,6 +614,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           username: chat.otherUser.username,
           profilePicture: chat.otherUser.profilePicture || chat.otherUser.avatar,
           isOnline: chat.otherUser.isOnline !== undefined ? chat.otherUser.isOnline : false,
+          lastSeen: chat.otherUser.lastSeen || chat.otherUser.last_seen || chat.otherUser.lastActive || undefined,
         }]
       }
       
@@ -636,7 +646,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ...chat,
           participants: chat.participants.map(participant =>
             participant._id === userId
-              ? { ...participant, isOnline }
+              ? { ...participant, isOnline, lastSeen: isOnline ? new Date().toISOString() : participant.lastSeen }
               : participant
           )
         }))
@@ -646,7 +656,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ...state.selectedChat,
               participants: state.selectedChat.participants.map(participant =>
                 participant._id === userId
-                  ? { ...participant, isOnline }
+                  ? { ...participant, isOnline, lastSeen: isOnline ? new Date().toISOString() : participant.lastSeen }
                   : participant
               )
             }
@@ -668,7 +678,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ...chat,
           participants: chat.participants.map(participant =>
             participant._id === userId
-              ? { ...participant, isOnline }
+              ? { ...participant, isOnline, lastSeen: isOnline ? new Date().toISOString() : participant.lastSeen }
               : participant
           )
         }))
@@ -678,7 +688,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ...state.selectedChat,
               participants: state.selectedChat.participants.map(participant =>
                 participant._id === userId
-                  ? { ...participant, isOnline }
+                  ? { ...participant, isOnline, lastSeen: isOnline ? new Date().toISOString() : participant.lastSeen }
                   : participant
               )
             }
