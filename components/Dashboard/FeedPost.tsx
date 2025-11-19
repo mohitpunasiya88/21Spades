@@ -740,7 +740,6 @@ export default function FeedPost({ post }: FeedPostProps) {
                 return
               }
               // TODO: Implement buy functionality
-              console.log('Buy clicked for post:', post.id, 'Price:', post.price)
             }}
             className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base whitespace-nowrap flex-shrink-0"
           >
