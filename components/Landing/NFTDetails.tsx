@@ -798,7 +798,7 @@ const currentNftIdentifier = useMemo(() => {
   }, [id, cachedNfts, collectionId, loadFromCache, fetchNftDetails])
 
 
-  const { bid, getBrokerage, decimalPrecision, auctions } = useMarketplace()
+  const { bid, getBrokerage, decimalPrecision, auctions,buy } = useMarketplace()
   const address = useWallets()?.wallets[0]?.address
   const fetchBids = useCallback(
     async (page = 1, orderOverride?: BidOrder) => {
@@ -1002,11 +1002,68 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
   }
 
 
-  const handleBuyNow = () => {
+ const handleBuyNow = async () => {
+    try {
+      if (!address) {
+        try {
+          message.info('Wallet connected. Please click Buy Now again.')
+        } catch (e) {
+          message.error('Please connect your wallet to continue')
+        }
+        return
+      }
+      if (!id) {
+        message.error('NFT id missing')
+        return
+      }
 
-    // get current nft details
-    // call blockchain buy now hook
-    
+      const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
+      const NFTDetails = response?.data?.nft
+      if (!NFTDetails) {
+        message.error('NFT details not found')
+        return
+      }
+
+      // Build inputs for buy
+      const tokenId = Number(NFTDetails?.nftId)
+      const erc721 = NFTDetails?.collectionId?.collectionAddress as string
+      const priceStr = String(NFTDetails?.price ?? currentNft?.price ?? '0')
+      const nonceNum = Number(NFTDetails?.nonce)
+      const sign = NFTDetails?.signature as `0x${string}`
+      const erc20Token = (NFTDetails?.erc20Token ?? NFTDetails?.ipfsHash ?? ethers.ZeroAddress) as string
+
+      if (!tokenId || !erc721 || !sign || nonceNum === undefined || nonceNum === null) {
+        message.error('Missing buy parameters')
+        return
+      }
+
+      let overrides: ethers.Overrides = {}
+      // If paying in native token, include value with buyer fee
+      if (erc20Token === ethers.ZeroAddress) {
+        const br = (await getBrokerage(ethers.ZeroAddress)) as { seller: bigint; buyer: bigint }
+        const precision = (await decimalPrecision()) as bigint
+        const base = ethers.parseEther(priceStr)
+        const buyerFee = (br.buyer * base) / (BigInt(100) * precision)
+        overrides = { value: base + buyerFee }
+      }
+
+      const receipt = await buy(
+        BigInt(tokenId),
+        erc721,
+        ethers.parseEther(priceStr),
+        BigInt(nonceNum),
+        sign,
+        erc20Token,
+        address,
+        overrides,
+      )
+      console.log('buy receipt', receipt)
+      message.success('Purchase transaction submitted')
+    } catch (error: any) {
+      console.error('❌ Failed to buy now', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to buy now'
+      message.error(errorMessage)
+    }
   }
 
   const handleCollect = () => {
