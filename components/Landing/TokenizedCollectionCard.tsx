@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Heart, Check, AlertTriangle } from 'lucide-react'
+import { Heart, AlertTriangle, ArrowUp } from 'lucide-react'
 import { Carousel, Dropdown, Space, Spin } from 'antd'
 import { DownOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -11,6 +11,8 @@ import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
 import { useAuthStore } from '@/lib/store/authStore'
 import spadesImage from '../assets/21spades.png'
+import bidIcon from '../assets/image.png'
+import { HiCheckBadge } from 'react-icons/hi2'
 
 interface marketplace {
   title?: string
@@ -40,6 +42,7 @@ function CardContent({
         alt={title} 
         fill
         className="object-cover "
+        loading="lazy"
       />
       
       {/* Overlay Gradient */}
@@ -99,17 +102,23 @@ function CardContent({
 interface NFTCardProps {
   title: string
   creator: string
-  price: string
   floorPrice?: string
   verified?: boolean
   collectionId?: string
   imageUrl?: string
 }
 
-function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = true, collectionId, imageUrl }: NFTCardProps) {
+function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, collectionId, imageUrl }: NFTCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [imageError, setImageError] = useState(false)
   const router = useRouter()
+
+  const [floorValue, floorUnit] = useMemo(() => {
+    const [value, unit] = floorPrice.split(' ')
+    return [value, unit || 'AVAX']
+  }, [floorPrice])
+
+  const hasValidImage = !!imageUrl && !imageError
 
   const handleCardClick = () => {
     // Navigate to collection page with actual collection ID
@@ -123,100 +132,63 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
   }
 
   return (
-    <div className="relative w-[280px] sm:w-[300px] md:w-[320px]">
-      <div 
-        onClick={handleCardClick}
-        className="relative rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-transform hover:scale-[1.03] m-1 sm:m-2 p-2 sm:p-3 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
-        style={{
-          minHeight: '340px',
-          boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-        }}
+    <div
+      onClick={handleCardClick}
+      className="group relative flex flex-col rounded-[32px] bg-gradient-to-b from-[#24084F] via-[#0B0320] to-[#050215] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)] overflow-hidden cursor-pointer transition-transform hover:scale-[1.015]"
+    >
+      <div
+        className={`relative h-[220px] w-full overflow-hidden p-6 ${
+          hasValidImage ? '' : 'bg-gradient-to-br from-[#5F1BFF] via-[#4210C3] to-[#0E041F]'
+        }`}
       >
-        {/* Media box */}
-        <div className="relative h-[180px] sm:h-[200px] md:h-[214px] p-2 sm:p-3">
-          {/* Heart Icon - Top Right with light purple background */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsFavorite(!isFavorite)
-            }}
-            className="absolute top-5 sm:top-6 md:top-7.5 right-5 sm:right-6 md:right-7.5 z-10 p-1.5 sm:p-2 rounded-full transition-colors ring-1 ring-white/25"
-            style={{
-              background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
-            }}
-          >
-            <Heart 
-              className={`w-4 h-4 sm:w-5 sm:h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
-            />
-          </button>
-
-          {/* Padded media with gradient and vignette */}
-          <div className="absolute inset-0 p-2.5 sm:p-3 md:p-3.5">
-            <div
-              className="relative p-2 sm:p-2.5 md:p-3 h-full w-full rounded-[10px] sm:rounded-[12px] md:rounded-[14px] overflow-hidden ring-1 ring-white/10 bg-[#050616]"
-              style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }}
-            >
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{ background: 'radial-gradient(120% 100% at 50% 0%, rgba(0,0,0,0) 52%, rgba(5,6,20,0.65) 100%)' }}
-              />
-              <div className="pointer-events-none absolute inset-0 ring-1 ring-[#7E6BEF]/25 rounded-[10px] sm:rounded-[12px] md:rounded-[14px]" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                {imageUrl && !imageError ? (
-                  <Image 
-                    src={imageUrl} 
-                    alt={title} 
-                    fill
-                    className="object-cover rounded-[10px] sm:rounded-[12px] md:rounded-[14px] pointer-events-none select-none"
-                    onError={() => {
-                      // Fallback to default image if API image fails to load
-                      setImageError(true)
-                    }}
-                  />
-                ) : (
-                  <Image 
-                    src={spadesImage} 
-                    alt="21 Spade" 
-                    width={120}
-                    height={120}
-                    className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[145px] md:h-[145px] object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
-                    priority
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-         
-        </div>
-
-        {/* Bottom Section - Information */}
-        <div 
-          className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 sm:pt-3"
-          style={{
-            // background: 'linear-gradient(to bottom, rgba(25, 11, 63, 0.3), rgba(0,0,0,0.6))',
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsFavorite(!isFavorite)
           }}
+          className="absolute top-6 right-6 z-10 p-2 rounded-full border border-white/35 bg-white/10 text-white transition-colors hover:bg-white/25"
         >
-          {/* Creator */}
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
-            <span className="inline-flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-[#162345] ring-1 ring-[#3B82F6]/45">
-              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#69A8FF]" />
+          <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+        </button>
+        <div className="absolute inset-0">
+          {hasValidImage ? (
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              className="object-cover"
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <Image
+              src={spadesImage}
+              alt="21 Spade"
+              width={160}
+              height={160}
+              className="object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 px-6 py-5">
+        <div className="flex items-center gap-2 text-[#A5B3D6] text-xs sm:text-sm font-semibold font-exo2 uppercase tracking-wide">
+          <span className="inline-flex items-center justify-center rounded-full bg-white/5 text-[#5CC8FF] p-1.5">
+            <HiCheckBadge className="w-4 h-4" />
+          </span>
+          {creator || '21Spades NFTs'}
+        </div>
+        <h3 className="text-white text-[1.25rem] sm:text-[1.35rem] font-bold font-exo2">{title}</h3>
+        <div className="h-px w-full bg-white/10" />
+        <div className="flex items-center justify-between">
+          <span className="text-[#7E6BEF] text-sm font-semibold font-exo2">Floor Price</span>
+          <div className="flex items-center gap-2 text-white font-semibold font-exo2 text-base">
+            <Image src={bidIcon} alt="AVAX" width={18} height={18} className="w-4 h-4 object-contain" />
+            <span className="flex items-center gap-1">
+              {floorValue}
+              <span className="text-[#A3AED0] text-xs">{floorUnit}</span>
             </span>
-            <span className="text-[#D6DEFF] text-xs sm:text-sm font-medium font-exo2">{creator}</span>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-white text-lg sm:text-xl md:text-[21px] font-bold tracking-tight mb-2 sm:mb-3 font-exo2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
-            {title}
-          </h3>
-          <div className="h-px w-full bg-white/10 mb-2 sm:mb-3" />
-
-          {/* Floor Price Section */}
-          <div className="flex items-center justify-between">
-            <span className="text-[#7E6BEF] text-xs sm:text-sm font-medium font-exo2">Floor Price</span>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <AlertTriangle className="w-3 h-3 sm:w-[14px] sm:h-[14px] text-[#FF5E57] flex-shrink-0" />
-              <span className="text-white text-xs sm:text-sm font-semibold tracking-wide font-exo2">{floorPrice}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -227,12 +199,9 @@ function NFTCard({ title, creator, price, floorPrice = '0.01 AVAX', verified = t
 // Main Component with Carousel
 const TokenizedCollectionCard: React.FC = () => {
   const { user } = useAuthStore()
-  const [activeCategory, setActiveCategory] = useState('ALL')
   const [selectedNetwork, setSelectedNetwork] = useState('Avalanche')
-  const [visibleCards, setVisibleCards] = useState(3)
   const [collections, setCollections] = useState<any[]>([])
   const [isLoadingCollections, setIsLoadingCollections] = useState(false)
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   
   const onChange = (currentSlide: number) => {
   }
@@ -245,7 +214,7 @@ const TokenizedCollectionCard: React.FC = () => {
       // Build query params - fetch all collections (not filtered by wallet)
       const queryParams = new URLSearchParams()
       queryParams.append('page', '1')
-      queryParams.append('limit', '100')
+      queryParams.append('limit', '24')
       queryParams.append('blocked', 'false')
       
       const url = `${authRoutes.getCollections}?${queryParams.toString()}`
@@ -314,7 +283,7 @@ const TokenizedCollectionCard: React.FC = () => {
   const mappedCollections = collections.map((collection: any) => {
     const collectionId = collection._id || collection.id || collection.collectionId
     const collectionName = collection.collectionName || collection.name || 'Unnamed Collection'
-    const creatorName = collection.creator?.name || collection.creator?.username || 'Unknown Creator'
+    const creatorName = collection?.createdBy?.name || 'Unknown Creator'
     const floorPrice = collection.floorPrice ? `${collection.floorPrice} AVAX` : '0.01 AVAX'
     const imageUrl = collection.imageUrl || collection.coverPhoto || null
     
@@ -330,52 +299,19 @@ const TokenizedCollectionCard: React.FC = () => {
     }
   })
 
-  const filteredNfts = activeCategory === 'ALL' 
-    ? mappedCollections 
-    : mappedCollections.filter(nft => nft.category === activeCategory);
-
-  // Handle scroll to load more cards
-  React.useEffect(() => {
-    const handleScroll = () => {
-      if (!scrollContainerRef.current) return
-
-      const container = scrollContainerRef.current
-      const scrollLeft = container.scrollLeft
-      const scrollWidth = container.scrollWidth
-      const clientWidth = container.clientWidth
-
-      // Load more when user scrolls to 80% of the container
-      if (scrollLeft + clientWidth >= scrollWidth * 0.8) {
-        if (visibleCards < filteredNfts.length) {
-          setVisibleCards(prev => Math.min(prev + 3, filteredNfts.length))
-        }
-      }
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener('scroll', handleScroll)
-      return () => container.removeEventListener('scroll', handleScroll)
-    }
-  }, [visibleCards, filteredNfts.length])
+  const displayedCollections = useMemo(() => mappedCollections, [mappedCollections])
 
   return (
     <div className="w-full relative pb-12 px-6">
-      <Carousel afterChange={onChange} dots={true} dotPosition="bottom" className="tribe-warrior-carousel" autoplay>
+      <Carousel
+        afterChange={onChange}
+        dots={true}
+        dotPosition="bottom"
+        className="tribe-warrior-carousel"
+        autoplay
+      >
         <div>
-          <CardContent 
-            title="Tribe Warrior"
-            creatorAddress="0x3cE...8A288"
-            price={0.785}
-            currency="AVAX"
-            items={856}
-            auctionTime="00 : 17 : 02 : 67"
-            imageSrc="/assets/image6.jpeg"
-            
-          />
-        </div>
-        <div>
-          <CardContent 
+          <CardContent
             title="Tribe Warrior"
             creatorAddress="0x3cE...8A288"
             price={0.785}
@@ -386,7 +322,18 @@ const TokenizedCollectionCard: React.FC = () => {
           />
         </div>
         <div>
-          <CardContent 
+          <CardContent
+            title="Tribe Warrior"
+            creatorAddress="0x3cE...8A288"
+            price={0.785}
+            currency="AVAX"
+            items={856}
+            auctionTime="00 : 17 : 02 : 67"
+            imageSrc="/assets/image6.jpeg"
+          />
+        </div>
+        <div>
+          <CardContent
             title="Tribe Warrior"
             creatorAddress="0x3cE...8A288"
             price={0.785}
@@ -397,49 +344,51 @@ const TokenizedCollectionCard: React.FC = () => {
           />
         </div>
       </Carousel>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .tribe-warrior-carousel .ant-carousel {
-            position: relative;
-          }
-          .tribe-warrior-carousel .ant-carousel .slick-dots {
-            bottom: -40px !important;
-            position: absolute !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            list-style: none !important;
-            width: auto !important;
-          }
-          .tribe-warrior-carousel .ant-carousel .slick-dots li {
-            width: 40px !important;
-            height: 4px !important;
-            margin: 0 4px !important;
-            padding: 0 !important;
-          }
-          .tribe-warrior-carousel .ant-carousel .slick-dots li button {
-            width: 100% !important;
-            height: 100% !important;
-            border-radius: 2px !important;
-            background: rgba(255, 255, 255, 0.3) !important;
-            opacity: 1 !important;
-            border: none !important;
-            padding: 0 !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-          }
-          .tribe-warrior-carousel .ant-carousel .slick-dots li.slick-active button {
-            background: #7E6BEF !important;
-          }
-          .tribe-warrior-carousel .ant-carousel .slick-dots li button:hover {
-            background: rgba(255, 255, 255, 0.5) !important;
-          }
-        `
-      }} />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .tribe-warrior-carousel .ant-carousel {
+              position: relative;
+            }
+            .tribe-warrior-carousel .ant-carousel .slick-dots {
+              bottom: -40px !important;
+              position: absolute !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              display: flex !important;
+              justify-content: center !important;
+              align-items: center !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              list-style: none !important;
+              width: auto !important;
+            }
+            .tribe-warrior-carousel .ant-carousel .slick-dots li {
+              width: 40px !important;
+              height: 4px !important;
+              margin: 0 4px !important;
+              padding: 0 !important;
+            }
+            .tribe-warrior-carousel .ant-carousel .slick-dots li button {
+              width: 100% !important;
+              height: 100% !important;
+              border-radius: 2px !important;
+              background: rgba(126, 107, 239, 0.25) !important;
+              opacity: 1 !important;
+              border: none !important;
+              padding: 0 !important;
+              cursor: pointer !important;
+              transition: all 0.3s ease !important;
+            }
+            .tribe-warrior-carousel .ant-carousel .slick-dots li.slick-active button {
+              background: #7E6BEF !important;
+            }
+            .tribe-warrior-carousel .ant-carousel .slick-dots li button:hover {
+              background: rgba(126, 107, 239, 0.5) !important;
+            }
+          `,
+        }}
+      />
  
       <div className='w-full h-full mt-6 sm:mt-8 md:mt-10'>
         <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0'>
@@ -465,24 +414,18 @@ const TokenizedCollectionCard: React.FC = () => {
             <div className="flex justify-center items-center py-12">
               <Spin size="large" />
             </div>
-          ) : filteredNfts.length > 0 ? (
-            <div 
-              ref={scrollContainerRef}
-              className="flex gap-4 sm:gap-6 md:gap-10 lg:gap-12 overflow-x-auto pb-4 scrollbar-hide" 
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {filteredNfts.slice(0, visibleCards).map((nft, index) => (
-                <div key={nft.collectionId || index} className="flex-shrink-0">
-                  <NFTCard 
-                    title={nft.title}
-                    creator={nft.creator}
-                    price={nft.price}
-                    floorPrice={nft.floorPrice}
-                    verified={nft.verified}
-                    collectionId={nft.collectionId}
-                    imageUrl={nft.imageUrl}
-                  />
-                </div>
+          ) : displayedCollections.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              {displayedCollections.map((nft, index) => (
+                <NFTCard 
+                  key={nft.collectionId || index}
+                  title={nft.title}
+                  creator={nft.creator}
+                  floorPrice={nft.floorPrice}
+                  verified={nft.verified}
+                  collectionId={nft.collectionId}
+                  imageUrl={nft.imageUrl}
+                />
               ))}
             </div>
           ) : (

@@ -635,7 +635,7 @@ export default function NFTDetails({
   owner = 'Ulrich Nielsen',
   currentPrice = '8.41',
   currentUsd = '$ 22.93',
-  timeLeft = '19d 6h',
+  timeLeft = 'NA',
   method = 'auction',
 }: NFTDetailsProps) {
   const router = useRouter()
@@ -659,6 +659,8 @@ export default function NFTDetails({
   const [auctionTimerLabel, setAuctionTimerLabel] = useState('Auction Ends In')
   const [auctionTimerValue, setAuctionTimerValue] = useState(timeLeft)
   const [hasAuctionEnded, setHasAuctionEnded] = useState(false)
+  const [hasAuctionStarted, setHasAuctionStarted] = useState(false)
+  const [isAuctionLive, setIsAuctionLive] = useState(false)
   
   // Independent state for each accordion
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
@@ -781,7 +783,7 @@ const currentNftIdentifier = useMemo(() => {
 
 
   const { bid, getBrokerage, decimalPrecision, auctions } = useMarketplace()
-  const address = useWallets().wallets[0].address
+  const address = useWallets()?.wallets[0]?.address
   const fetchBids = useCallback(
     async (page = 1, orderOverride?: BidOrder) => {
       if (!currentNftIdentifier) return
@@ -1072,11 +1074,32 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
   const isFixedRate = auctionType === 1
   const isNone = auctionType === 0 || auctionType === undefined
 
+  const bidDisabledReason = useMemo(() => {
+    if (!isAuction || hasAuctionEnded || isAuctionLive) {
+      return undefined
+    }
+    if (!hasAuctionStarted && auctionStartTime) {
+      const startDate = new Date(auctionStartTime)
+      return `Auction starts on ${startDate.toLocaleString()}`
+    }
+    return 'Auction not live yet'
+  }, [isAuction, hasAuctionEnded, isAuctionLive, hasAuctionStarted, auctionStartTime])
+
   useEffect(() => {
-    if (!isAuction || !auctionEndTime) {
+    if (!isAuction) {
       setAuctionTimerLabel('Auction Ends In')
       setAuctionTimerValue(timeLeft)
       setHasAuctionEnded(false)
+      setHasAuctionStarted(false)
+      setIsAuctionLive(false)
+      return
+    }
+    if (!auctionStartTime && !auctionEndTime) {
+      setAuctionTimerLabel('Auction Status')
+      setAuctionTimerValue(timeLeft)
+      setHasAuctionEnded(false)
+      setHasAuctionStarted(true)
+      setIsAuctionLive(true)
       return
     }
     const updateTimer = () => {
@@ -1085,17 +1108,28 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         setAuctionTimerLabel('Auction Starts In')
         setAuctionTimerValue(formatDurationFromMs(auctionStartTime - now))
         setHasAuctionEnded(false)
+        setHasAuctionStarted(false)
+        setIsAuctionLive(false)
         return
       }
-      if (now >= auctionEndTime) {
+      if (auctionEndTime && now >= auctionEndTime) {
         setAuctionTimerLabel('Auction Status')
         setAuctionTimerValue('Ended')
         setHasAuctionEnded(true)
+        setHasAuctionStarted(true)
+        setIsAuctionLive(false)
         return
       }
-      setAuctionTimerLabel('Auction Ends In')
-      setAuctionTimerValue(formatDurationFromMs(auctionEndTime - now))
+      if (auctionEndTime) {
+        setAuctionTimerLabel('Auction Ends In')
+        setAuctionTimerValue(formatDurationFromMs(auctionEndTime - now))
+      } else {
+        setAuctionTimerLabel('Auction Status')
+        setAuctionTimerValue('Live')
+      }
       setHasAuctionEnded(false)
+      setHasAuctionStarted(true)
+      setIsAuctionLive(true)
     }
     updateTimer()
     const intervalId = window.setInterval(updateTimer, 1000)
@@ -1205,14 +1239,31 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
 
             {/* Price and CTA */}
             <div className="mt-6 sm:mt-12 lg:mt-24">
-              <p className="text-white font-exo2 text-xs sm:text-sm">
-                {isAuction ? 'Current Bid • Live' : 'Current Price'}
+              <p className="text-white font-exo2 text-xs sm:text-sm flex items-center gap-2">
+                {isAuction ? (
+                  <>
+                    <span>Current Bid</span>
+                    {isAuctionLive ? (
+                      <span className="inline-flex items-center gap-1 text-[#33E030] text-[11px] sm:text-xs font-semibold uppercase tracking-wide">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#33E030] animate-pulse" />
+                        Live
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-gray-400 text-[11px] sm:text-xs font-semibold uppercase tracking-wide">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                        Scheduled
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  'Current Price'
+                )}
               </p>
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-2">
                 <div className="flex items-center gap-1 sm:gap-1.5">
-                  <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500 fill-red-500" />
-                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">A. {displayPrice}</span>
-                </div>
+                <Image src={bidIcon} alt="Bids icon" className="w-4 h-4 object-contain" />
+                  <span className="text-white font-exo2 text-base sm:text-lg font-bold">{displayPrice}</span>
+                </div> -
                 <span className="text-[#884DFF] font-exo2 text-base sm:text-lg">{displayUsd}</span>
               </div>
 
@@ -1232,7 +1283,9 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                     ) : (
                       <button
                         onClick={() => setIsPlaceBidOpen(true)}
-                        className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
+                        disabled={!isAuctionLive}
+                        title={bidDisabledReason}
+                        className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Bid Now
                       </button>
@@ -1264,12 +1317,12 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
               </div>
 
               {isAuction && (
-                <p className="text-gray-400 text-xs font-exo2">
-                  {auctionTimerLabel}{' '}
-                  <span className="text-white font-mono font-exo2">
+                <div className="text-xs sm:text-sm font-exo2 text-gray-400 flex items-center gap-2">
+                  <span>{auctionTimerLabel}</span>
+                  <span className="text-white font-mono text-sm sm:text-base">
                     {auctionTimerValue || '—'}
                   </span>
-                </p>
+                </div>
               )}
             </div>
           </div>
