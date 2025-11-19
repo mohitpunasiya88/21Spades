@@ -14,6 +14,42 @@ import { useRouter } from 'next/navigation'
 import { useMarketplace } from '@/app/hooks/contracts/useMarketplace'
 import { useWallets } from '@privy-io/react-auth'
 import { ethers } from 'ethers'
+import bidIcon from '@/components/assets/image.png'
+
+const parseNumericValue = (input: unknown): number | undefined => {
+  if (input === undefined || input === null) return undefined
+  if (typeof input === 'number') return Number.isFinite(input) ? input : undefined
+  const numeric = parseFloat(String(input).replace(/[^0-9.\-]/g, ''))
+  return Number.isFinite(numeric) ? numeric : undefined
+}
+
+const formatAvaxAmount = (value?: number): string => {
+  if (value === undefined || value === null || !Number.isFinite(value)) {
+    return '0.00'
+  }
+  const amount = Number(value)
+  return amount >= 1 ? amount.toFixed(2) : amount.toFixed(4)
+}
+
+const formatUsdAmount = (value?: number): string | undefined => {
+  if (value === undefined || value === null || !Number.isFinite(value)) return undefined
+  const amount = Number(value)
+  return amount >= 1 ? amount.toFixed(2) : amount.toFixed(4)
+}
+
+interface Bid {
+  _id?: string
+  id?: string
+  price?: number | string
+  createdAt?: string
+  user?: {
+    name?: string
+    profilePicture?: string | null
+    walletAddress?: string
+  }
+}
+
+type BidOrder = '' | 'asc' | 'desc' | 'low' | 'high'
 
 interface NFTDetailsProps {
   id: string
@@ -57,7 +93,7 @@ function MiniCard({ nft, onClick }: { nft: CollectionNFT; onClick: () => void })
 }
 
 interface AccordionProps {
-  title: string
+  title: React.ReactNode
   children?: React.ReactNode
   isOpen?: boolean
   onToggle?: () => void
@@ -581,7 +617,14 @@ export default function NFTDetails({
   const [isBidPlacedOpen, setIsBidPlacedOpen] = useState(false)
   const [isOfferSubmittedOpen, setIsOfferSubmittedOpen] = useState(false)
   const [placedBidAmount, setPlacedBidAmount] = useState<string>('77.9')
-
+  const [bids, setBids] = useState<Bid[]>([])
+  const [bidsLoading, setBidsLoading] = useState(false)
+  const [bidsLoadingMore, setBidsLoadingMore] = useState(false)
+  const [bidsPage, setBidsPage] = useState(1)
+  const [bidsHasMore, setBidsHasMore] = useState(false)
+  const [bidsOrder, setBidsOrder] = useState<BidOrder>('high')
+  const BID_PAGE_SIZE = 10
+  
   // Independent state for each accordion
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
@@ -598,6 +641,16 @@ export default function NFTDetails({
     if (Array.isArray(data)) return data
     return data?.items || data?.nfts || data?.data || data?.results || []
   }, [])
+
+const currentNftIdentifier = useMemo(() => {
+  const possibleIds = [
+    currentNft?._id,
+    currentNft?.id,
+    id,
+  ]
+  const found = possibleIds.find((value) => value)
+  return found ? String(found) : undefined
+}, [currentNft, id])
 
   const loadFromCache = useCallback(
     (list: CollectionNFT[]) => {
@@ -693,22 +746,123 @@ export default function NFTDetails({
 
   const { bid, getBrokerage, decimalPrecision, auctions } = useMarketplace()
   const address = useWallets().wallets[0].address
+  const fetchBids = useCallback(
+    async (page = 1, orderOverride?: BidOrder) => {
+      if (!currentNftIdentifier) return
+      const isLoadMore = page > 1
+      isLoadMore ? setBidsLoadingMore(true) : setBidsLoading(true)
+      const orderParam = orderOverride ?? bidsOrder
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(BID_PAGE_SIZE),
+          nftId: currentNftIdentifier,
+        })
+        if (orderParam) {
+          params.set('order', orderParam)
+        }
+
+        const response = await apiCaller(
+          'GET',
+          `${authRoutes.bids}?${params.toString()}`,
+          null,
+          true,
+        )
+
+        if (response?.success) {
+          const payload =
+            response?.data?.bids ??
+            response?.data?.items ??
+            response?.data?.data?.bids ??
+            response?.data?.data?.items ??
+            response?.data?.data ??
+            response?.bids ??
+            []
+
+          const list = Array.isArray(payload)
+            ? payload
+            : Array.isArray((payload as any)?.data)
+              ? (payload as any).data
+              : []
+
+          const normalized: Bid[] = list.map((entry: any) => {
+            const createdBy = entry?.createdBy
+            return {
+              _id: entry?._id || entry?.id,
+              id: entry?.id,
+              price: entry?.price ?? entry?.amount,
+              createdAt: entry?.createdAt || entry?.created_at,
+              user:
+                entry?.user ||
+                entry?.bidder ||
+                (createdBy
+                  ? {
+                      name: createdBy?.name || createdBy?.username,
+                      profilePicture: createdBy?.profilePicture || null,
+                      walletAddress: createdBy?.walletAddress,
+                    }
+                  : {
+                      name: entry?.userName || entry?.username,
+                      profilePicture: entry?.avatar || entry?.profilePicture || null,
+                      walletAddress: entry?.walletAddress,
+                    }),
+            }
+          })
+
+          setBids((prev) => (page === 1 ? normalized : [...prev, ...normalized]))
+          setBidsPage(page)
+
+          const pagination =
+            response?.data?.pagination ||
+            response?.pagination ||
+            response?.data?.data?.pagination
+
+          if (pagination?.pages) {
+            setBidsHasMore(page < pagination.pages)
+          } else {
+            setBidsHasMore(normalized.length === BID_PAGE_SIZE)
+          }
+        } else if (page === 1) {
+          setBids([])
+          setBidsHasMore(false)
+        }
+      } catch (error) {
+        console.error('Failed to fetch bids', error)
+        if (page === 1) {
+          setBids([])
+        }
+        setBidsHasMore(false)
+      } finally {
+        isLoadMore ? setBidsLoadingMore(false) : setBidsLoading(false)
+      }
+    },
+    [BID_PAGE_SIZE, bidsOrder, currentNftIdentifier],
+  )
+
+  useEffect(() => {
+    if (isBidsOpen && currentNftIdentifier) {
+      void fetchBids(1, bidsOrder)
+    } else if (!isBidsOpen) {
+      setBidsPage(1)
+      setBidsHasMore(false)
+    }
+  }, [currentNftIdentifier, isBidsOpen, bidsOrder, fetchBids])
 
   const handleBidConfirm = async (bidAmount: string) => {
     if (!bidAmount || Number(bidAmount) <= 0) {
       message.error('Enter a valid bid amount')
       return
     }
-    const nftIdentifier = currentNft?._id || currentNft?.id || id
-    if (!nftIdentifier) {
+    if (!currentNftIdentifier) {
       message.error('NFT identifier missing')
       return
     }
     let loadingMessage: any = null
     try {
+      loadingMessage = message.loading('Submitting bid...', 0)
       const payload = {
         price: bidAmount,
-        nftId: nftIdentifier,
+        nftId: currentNftIdentifier,
       }
       // call blockchain bid hook 
 
@@ -740,12 +894,15 @@ if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && c
         )
         console.log("receipt", receipt)
       }
-      const response = await apiCaller('POST', authRoutes.createBid, payload, true)
+      const response = await apiCaller('POST', authRoutes.bids, payload, true)
       if (response?.success) {
         message.success(response?.message || 'Bid submitted successfully')
-        setPlacedBidAmount(bidAmount)
-        setIsPlaceBidOpen(false)
-        setIsBidPlacedOpen(true)
+    setPlacedBidAmount(bidAmount)
+    setIsPlaceBidOpen(false)
+    setIsBidPlacedOpen(true)
+        if (isBidsOpen) {
+          await fetchBids(1, bidsOrder)
+        }
       } else {
         message.error(response?.message || 'Failed to submit bid')
       }
@@ -787,6 +944,32 @@ if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && c
       : 'Born from grit, discipline, and hustle. The Spades inspire the pursuit of excellence.'
   const currentImage = currentNft?.imageUrl || currentNft?.image || null
 
+  const baseAvaxPrice = useMemo(
+    () => parseNumericValue(currentNft?.price ?? currentPrice),
+    [currentNft?.price, currentPrice],
+  )
+
+  const baseUsdValue = useMemo(() => parseNumericValue(currentUsd), [currentUsd])
+
+  const formatBidUsdValue = useCallback(
+    (avaxAmount?: number) => {
+      if (
+        !baseAvaxPrice ||
+        !baseUsdValue ||
+        !avaxAmount ||
+        !Number.isFinite(avaxAmount) ||
+        baseAvaxPrice === 0
+      ) {
+        return undefined
+      }
+      const perAvaxUsd = baseUsdValue / baseAvaxPrice
+      if (!Number.isFinite(perAvaxUsd)) return undefined
+      const usdValue = avaxAmount * perAvaxUsd
+      return formatUsdAmount(usdValue)
+    },
+    [baseAvaxPrice, baseUsdValue],
+  )
+  
   // Get auctionType from API data, fallback to method prop for backward compatibility
   const auctionType = currentNft?.auctionType !== undefined
     ? currentNft.auctionType
@@ -832,35 +1015,35 @@ if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && c
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="absolute left-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
-                    <Image
-                      src={spadesImage}
-                      alt="21"
-                      width={140}
-                      height={140}
-                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl"
-                    />
-                  </div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                    <Image
-                      src={spadesImage}
-                      alt="21"
-                      width={180}
-                      height={180}
-                      className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl"
-                    />
-                  </div>
-                  <div className="absolute right-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
-                    <Image
-                      src={spadesImage}
-                      alt="21"
-                      width={140}
-                      height={140}
-                      className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl"
-                    />
-                  </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute left-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
+                  <Image 
+                    src={spadesImage} 
+                    alt="21" 
+                    width={140} 
+                    height={140} 
+                    className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                  />
                 </div>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                  <Image 
+                    src={spadesImage} 
+                    alt="21" 
+                    width={180} 
+                    height={180} 
+                    className="sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                  />
+                </div>
+                <div className="absolute right-[15%] top-1/2 -translate-y-1/2 z-10 opacity-90">
+                  <Image 
+                    src={spadesImage} 
+                    alt="21" 
+                    width={140} 
+                    height={140} 
+                    className="sm:w-[180px] sm:h-[180px] lg:w-[200px] lg:h-[200px] object-contain pointer-events-none select-none drop-shadow-2xl" 
+                  />
+                </div>
+              </div>
               )}
             </div>
           </div>
@@ -996,39 +1179,87 @@ if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && c
 
           {/* Bids Accordion - Only for Auction (auctionType = 2) */}
           {isAuction && (
-            <Accordion
-              key="bids"
-              id="bids"
-              title="Bids"
+            <Accordion 
+              key="bids" 
+              id="bids" 
+              title={
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Image src={bidIcon} alt="Bids icon" className="w-4 h-4 object-contain" />
+                  </div>
+                  <span className="text-base font-semibold">Bids</span>
+                </div>
+              }
               isOpen={isBidsOpen}
-              onToggle={() => setIsBidsOpen(!isBidsOpen)}
+              onToggle={() => setIsBidsOpen((prev) => !prev)}
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-400 text-sm font-exo2">Sort by</span>
-                  <select className="bg-[#1A1A2E] border border-gray-600 rounded-lg px-3 py-1 text-white text-sm font-exo2">
-                    <option>High to Low</option>
-                    <option>Low to High</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between py-2 border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <ArrowUp className="w-4 h-4 text-red-500 fill-red-500" />
-                      <span className="text-[#7E6BEF] text-sm font-exo2">5.68</span>
-                      <span className="text-white text-sm font-exo2">• $22.93</span>
-                    </div>
-                    <span className="text-gray-400 text-sm font-exo2">by Bartosz Tiedeman</span>
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="relative inline-flex items-center rounded-full border border-white/10 px-4 py-1.5">
+                    <select
+                      value={bidsOrder}
+                      onChange={(event) => setBidsOrder(event.target.value as BidOrder)}
+                      className="bg-transparent pr-6 text-sm font-semibold text-white focus:outline-none appearance-none"
+                    >
+                      <option value="high">High to Low</option>
+                      <option value="low">Low to High</option>
+                      <option value="desc">Newest</option>
+                      <option value="asc">Oldest</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2 pointer-events-none" />
                   </div>
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-2">
-                      <ArrowUp className="w-4 h-4 text-red-500 fill-red-500" />
-                      <span className="text-[#7E6BEF] text-sm font-exo2">0.28</span>
-                      <span className="text-white text-sm font-exo2">• $1.27</span>
-                    </div>
-                    <span className="text-gray-400 text-sm font-exo2">by Jonas Kahnwald</span>
-                  </div>
+                  {bidsLoading && bids.length === 0 && (
+                    <span className="text-xs text-gray-400 font-exo2">Fetching bids…</span>
+                  )}
                 </div>
+
+                {bids.length === 0 && !bidsLoading ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 text-sm font-exo2 border border-dashed border-white/10 rounded-xl">
+                    <p>No bids yet. Be the first to place a bid!</p>
+                  </div>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+                    {bids.map((bid) => {
+                      const avaxAmount = parseNumericValue(bid.price)
+                      const usdText = formatBidUsdValue(avaxAmount)
+                      return (
+                        <div
+                          key={bid._id || bid.id}
+                          className="px-5 py-4 flex items-center gap-4 border-b border-white/10 last:border-b-0"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                            <Image src={bidIcon} alt="Bid icon" className="w-4 h-4 object-contain" />
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2 text-base font-semibold text-white">
+                              <span>{formatAvaxAmount(avaxAmount)}</span>
+                              {usdText && (
+                                <span className="text-[#7E6BEF] text-sm">• ${usdText}</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-400 font-exo2">
+                              by {bid.user?.name || 'NA'}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {bidsLoading && bids.length > 0 && (
+                      <div className="text-center text-sm text-gray-400">Loading more bids…</div>
+                    )}
+                    {bidsHasMore && (
+                      <div className="text-center">
+                        <button
+                          onClick={() => fetchBids(bidsPage + 1, bidsOrder)}
+                          disabled={bidsLoadingMore}
+                          className="px-4 py-2 text-sm font-exo2 text-white border border-white/20 rounded-full hover:bg-white/5 transition disabled:opacity-60"
+                        >
+                          {bidsLoadingMore ? 'Loading…' : 'Load more bids'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </Accordion>
           )}
@@ -1060,7 +1291,7 @@ if (currentNft?.nftId && currentNft?.collectionAddress && currentNft?.nonce && c
                   />
                 )
               })}
-            </div>
+          </div>
           ) : (
             <div className="text-gray-400 text-sm font-exo2">No other NFTs found in this collection.</div>
           )}
