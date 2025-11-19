@@ -11,7 +11,7 @@ function AuthLeftPanel() {
   const col3Images = cardImages.filter((_, i) => i % 3 === 2);
 
   return (
-    <div className="absolute md:relative inset-0 md:w-1/2 w-full px-5 overflow-hidden bg-black opacity-20 md:opacity-100">
+    <div className="absolute justify-center  items-center  md:relative inset-0 md:w-1/2 w-full  px-5 m-4 overflow-hidden bg-black opacity-20 md:opacity-100">
       {/* Bottom-right purple glow - very subtle effect matching Figma */}
       <div className="absolute bottom-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-purple-600/8 rounded-full blur-3xl"></div>
       {/* Header logo above cards - Hidden on mobile, shown on desktop */}
@@ -24,7 +24,7 @@ function AuthLeftPanel() {
           {[...col1Images, ...col1Images].map((src, index) => (
             <div
               key={`col1-${index}`}
-              className={`w-48 md:w-64 h-80 md:h-95 rounded-3xl flex-shrink-0 relative overflow-hidden`}
+              className={`w-40 md:w-56 h-72 md:h-80 rounded-3xl flex-shrink-0 relative overflow-hidden`}
             >
               <img src={src} alt={`Card ${index + 1}`} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20"></div>
@@ -37,7 +37,7 @@ function AuthLeftPanel() {
           {[...col2Images.slice().reverse(), ...col2Images].map((src, index) => (
             <div
               key={`col2-${index}`}
-              className={`w-48 md:w-64 h-80 md:h-94 rounded-3xl flex-shrink-0 relative overflow-hidden`}
+              className={`w-40 md:w-56 h-72 md:h-80 rounded-3xl flex-shrink-0 relative overflow-hidden`}
             >
               <img src={src} alt={`Card ${index + 1}`} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20"></div>
@@ -50,7 +50,7 @@ function AuthLeftPanel() {
           {[...col3Images, ...col3Images].map((src, index) => (
             <div
               key={`col3-${index}`}
-              className={`w-48 md:w-64 h-80 md:h-95 rounded-3xl flex-shrink-0 relative overflow-hidden`}
+              className={`w-40 md:w-56 h-72 md:h-80 rounded-3xl flex-shrink-0 relative overflow-hidden`}
             >
               <img src={src} alt={`Card ${index + 1}`} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20"></div>

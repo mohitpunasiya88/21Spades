@@ -895,7 +895,7 @@ export default function FeedPost({ post }: FeedPostProps) {
 
                     {/* Comments */}
                     <div className="w-full ">
-                      <div className={`flex-1 flex flex-col ${comments && comments.length > 0 ? 'h-[200px] overflow-y-auto' : ''} gap-8 scrollbar-hide`}>
+                      <div className={`flex-1 flex flex-col ${comments && comments.length > 0 ? 'h-[100px] overflow-y-auto' : ''} gap-8 scrollbar-hide`}>
                         {comments && comments.length > 0 ? (
                           comments.map((comment: any, idx: number) => (
                             <div key={idx} className="relative flex gap-3">
