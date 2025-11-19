@@ -41,6 +41,14 @@ export default function Navbar() {
   const mobileProfileRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  
+  // Fetch notification count on mount
+  useEffect(() => {
+    if (isAuthenticated && (!Array.isArray(notifItems) || notifItems.length === 0)) {
+      fetchNotifInitial(5) // Fetch initial notifications to get the unread count
+    }
+  }, [isAuthenticated, fetchNotifInitial, notifItems])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(event.target as Node)) {
