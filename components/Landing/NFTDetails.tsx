@@ -663,8 +663,24 @@ export default function NFTDetails({
   const [isAuctionLive, setIsAuctionLive] = useState(false)
   
   // Independent state for each accordion
-  const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
+  const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(true)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
+
+  const handleAccordionToggle = useCallback((key: 'token' | 'bids') => {
+    if (key === 'token') {
+      setIsTokenDetailOpen((prev) => {
+        const next = !prev
+        if (next) setIsBidsOpen(false)
+        return next
+      })
+    } else {
+      setIsBidsOpen((prev) => {
+        const next = !prev
+        if (next) setIsTokenDetailOpen(false)
+        return next
+      })
+    }
+  }, [])
 
   const matchNftById = useCallback(
     (nft: CollectionNFT, target: string) => {
@@ -1345,11 +1361,11 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
 
               {isAuction && (
                 <div className="text-xs sm:text-sm font-exo2 text-gray-400 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 font-semibold">
+                  <span className="inline-flex items-center gap-1 font-semibold"> 
                     {auctionTimerLabel} 
                     {/* {auctionTimerLabel === 'Auction Starts In' && !isAuctionLive && !hasAuctionEnded && ( */}
                       <span className="mx-1 w-1.5 h-1.5 rounded-full bg-[#4F01E6] animate-ping" />
-                    {/* )} */}
+                    {/* )} */} 
                   </span>
                   <span className={`text-white font-mono text-sm sm:text-base transition-all duration-200 ${!isAuctionLive && auctionTimerLabel === 'Auction Starts In' ? 'animate-pulse' : ''}`}>
                    - {auctionTimerValue || '—'}
@@ -1361,7 +1377,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         </div>
 
         {/* Conditional Accordions based on auctionType */}
-        <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
+        <div className={`grid grid-cols-1 ${isAuction ? 'md:grid-cols-2' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8 items-start`}>
           <Accordion
             key="token-detail"
             id="token-detail"
@@ -1374,7 +1390,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
               </div>
             }
             isOpen={isTokenDetailOpen}
-            onToggle={() => setIsTokenDetailOpen(!isTokenDetailOpen)}
+            onToggle={() => handleAccordionToggle('token')}
           >
             <div className="space-y-6 text-sm">
               <div className="flex items-center justify-between">
@@ -1418,7 +1434,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                 </div>
               }
               isOpen={isBidsOpen}
-              onToggle={() => setIsBidsOpen((prev) => !prev)}
+              onToggle={() => handleAccordionToggle('bids')}
             >
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1495,9 +1511,10 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         {/* More from this collection */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
-            <h2 className="text-white font-exo2 text-base sm:text-lg">More from this collection</h2>
-            <button className="px-6 sm:px-10 py-2 w-full sm:w-auto sm:max-w-[300px] text-xs sm:text-sm text-white border border-white/10 rounded-full hover:bg-[#252540] transition">
+            <h2 className="text-white font-exo2 text-2xl sm:text-3xl font-semibold">More from this collection</h2>
+            <button className="px-5 sm:px-6 py-1.5 sm:py-2 text-sm text-white border border-white/20 rounded-full inline-flex items-center gap-2 hover:border-white/40 transition">
               Explore all
+              <ChevronDown className="w-4 h-4" />
             </button>
           </div>
           {relatedNfts.length > 0 ? (
