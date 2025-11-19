@@ -2,6 +2,19 @@
 
 import { create } from 'zustand'
 
+const parseEpochTimestamp = (value: unknown): number | undefined => {
+  if (value === undefined || value === null) return undefined
+  const numericValue =
+    typeof value === 'string'
+      ? Number(value)
+      : typeof value === 'number'
+        ? value
+        : Number(value)
+  if (!Number.isFinite(numericValue)) return undefined
+  const cleaned = Number(numericValue)
+  return cleaned > 1e12 ? cleaned : cleaned * 1000
+}
+
 export interface CollectionNFT {
   id: string
   _id?: string
@@ -22,6 +35,8 @@ export interface CollectionNFT {
   auctionType?: number // 0 = None, 1 = Fixed Rate, 2 = Auction
   nftId?: string
   nftLongId?: string
+  startingTime?: number
+  endingTime?: number
   createdBy?: {
     name: string
     profilePicture: string
@@ -76,6 +91,8 @@ export const mapApiNftToCollectionNft = (nft: any): CollectionNFT => ({
   auctionType: nft?.auctionType !== undefined ? Number(nft.auctionType) : undefined,
   nftId: nft?.nftId ? String(nft.nftId) : nft?.tokenId ? String(nft.tokenId) : undefined,
   nftLongId: nft?.nftLongId ? String(nft.nftLongId) : undefined,
+  startingTime: parseEpochTimestamp(nft?.startingTime ?? nft?.startTime),
+  endingTime: parseEpochTimestamp(nft?.endingTime ?? nft?.endTime),
   createdBy: nft?.createdBy,
 })
 
