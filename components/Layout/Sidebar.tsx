@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
+
 import {
   FileText,
   ShoppingBag,
@@ -220,7 +221,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
                       {/* SpadesFI Dropdown */}
                       {isSpadesFIOpen && sidebarOpen && (
-                        <div className="border-[#2A2F4A] ml-4">
+                        <div className="border-[#2A2F4A] ml-4 px-4">
                           {spadesFIItems.map((subItem) => {
                             const isSubActive = pathname === subItem.path
                             return (

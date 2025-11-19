@@ -96,23 +96,26 @@ export default function FeedRightSidebar() {
     >
       {/* Fear & Greed Index */}
       <div className="mb-6 p-4 pb-0 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
-        <div className="flex items-center justify-between mb-2">
+        <div className=" items-center justify-between mb-2">
           <h3 className="text-white font-semibold">Fear & Greed Index</h3>
-          <div className="flex items-center justify-center ">
-            <div className="inline-flex rounded-full bg-[#FFFFFF08] font-exo2 ">
+          <div className=" ">
+            <div className="inline-flex rounded-full font-exo2 ">
               <button
                 onClick={() => setSelected('AVAX')}
-                className={` rounded-full font-[600] text-[10px] transition-all font-exo2 duration-300 px-2 py-1 ${selected === 'AVAX'
-                  ? 'bg-[#5C09FF] text-white'
+                className={` rounded-full font-[600] pl-4 pr-4 bg-[#FFFFFF1A] text-[10px] transition-all font-exo2 duration-300 m-1.5 px-2 py-1 ${selected === 'AVAX'
+                  ? 'bg-white text-black'
                   : 'text-[#FFFFFF4D] hover:text-white'
                   }`}
               >
                 AVAX
               </button>
-              <button
+             
+            </div>
+            <div className="inline-flex rounded-full bg-[#FFFFFF08] font-exo2 ">
+            <button
                 onClick={() => setSelected('BTC')}
-                className={` rounded-full font-[600] text-[10px] transition-all font-exo2 duration-300 px-2 py-1 ${selected === 'BTC'
-                  ? 'bg-[#5C09FF] text-white'
+                className={` rounded-full font-exo2 bg-[#FFFFFF1A] text-bold pl-4 pr-4  text-[10px] transition-all font-exo2 duration-300 px-2 py-1 ${selected === 'BTC'
+                  ? 'bg-white text-black'
                   : 'text-[#FFFFFF4D] hover:text-white'
                   }`}
               >
@@ -123,10 +126,15 @@ export default function FeedRightSidebar() {
         </div>
         <div className="">
           <div className="w-full h-[0.5px] bg-[#FFFFFF1A] mb-2" />
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-white font-semibold">{coinAmount}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#5C09FF] text-white border border-[#5C09FF]">{coinCurrency}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#5C09FF] text-white border border-[#5C09FF]">{coinSymbol}</span>
+          <div className="flex justify-between items-center gap-2 text-xs">
+            <div>
+            <span className="text-white font-semibold p-1">{coinAmount}</span>
+            <span className="  text-white">{coinCurrency}</span>
+            </div>
+            
+            <div>
+            <button className="px-2 py-0.5 rounded-md bg-[#FFEE99] text-black pl-4 pr-4 border">Greed</button>
+            </div>
           </div>
           <div className="relative w-full h-full">
             {/* Inner glow background */}

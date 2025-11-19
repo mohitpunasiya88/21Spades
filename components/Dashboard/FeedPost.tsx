@@ -69,7 +69,7 @@ const renderTextWithLinks = (text: string) => {
   // URL regex pattern - matches http, https, www, and common domains
   const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/gi
   
-  const parts: (string | JSX.Element)[] = []
+  const parts: (string | React.ReactNode)[] = []
   let lastIndex = 0
   let match
   
