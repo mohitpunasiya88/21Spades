@@ -3,9 +3,9 @@ import authRoutes from '@/lib/routes';
 
 
  export const apiClient = axios.create({
-    // baseURL: "http://localhost:8080/api/",
+    baseURL: "http://localhost:8080/api/",
     // baseURL: "http://18.215.86.203:8080/api/",
-    baseURL: "https://two1spades-backend.onrender.com/api/",
+    // baseURL: "https://two1spades-backend.onrender.com/api/",
 });
 
 const routes = authRoutes;
