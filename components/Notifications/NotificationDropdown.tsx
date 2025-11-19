@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { List, Avatar, Button, Spin, Empty } from 'antd'
 import { useNotificationStore } from '@/lib/store/notificationStore'
 
@@ -16,13 +16,45 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
     hasMore,
     fetchInitial,
     fetchMore,
+    markAllAsRead,
   } = useNotificationStore()
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open && (!Array.isArray(items) || items.length === 0)) {
-      fetchInitial(3)
+      fetchInitial(5)
     }
   }, [open])
+
+  // Mark all notifications as read when dropdown opens
+  useEffect(() => {
+    if (open) {
+      markAllAsRead()
+    }
+  }, [open, markAllAsRead])
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container || loading || !hasMore) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    // Load more when user is within 50px of bottom
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      fetchMore()
+    }
+  }, [loading, hasMore, fetchMore])
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    container.addEventListener('scroll', handleScroll)
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll])
 
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return ''
@@ -84,7 +116,11 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
           </Button>
         )}
         </div>
-      <div style={{ maxHeight: 320, overflow: 'auto' }} className="scrollbar-hide bg-[#090721]">
+      <div 
+        ref={scrollContainerRef}
+        style={{ maxHeight: 320, overflow: 'auto' }} 
+        className="scrollbar-hide bg-[#090721]"
+      >
         {loading && (!Array.isArray(items) || items.length === 0) && (
           <div className="px-5 py-6 flex items-center gap-2 text-white "><Spin size="small" /> <span className="font-exo2 text-sm">Loading...</span></div>
         )}
@@ -92,26 +128,26 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
           <div className="px-5 py-6"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<span className="text-gray-300 text-sm">No notifications</span>} /></div>
         )}
         {Array.isArray(items) && items.length > 0 && (
-          <List
-            itemLayout="horizontal"
-            dataSource={items}
-            renderItem={renderItem}
-            className="!px-2 !text-white"
-          />
+          <>
+            <List
+              itemLayout="horizontal"
+              dataSource={items}
+              renderItem={renderItem}
+              className="!px-2 !text-white"
+            />
+            {loading && items.length > 0 && (
+              <div className="px-5 py-3 flex items-center justify-center gap-2 text-white">
+                <Spin size="small" /> 
+                <span className="font-exo2 text-sm">Loading more...</span>
+              </div>
+            )}
+            {!hasMore && items.length > 0 && (
+              <div className="px-5 py-3 text-center text-gray-400 text-xs font-exo2">
+                No more notifications
+              </div>
+            )}
+          </>
         )}
-      </div>
-      <div className="px-5 py-3 flex items-center justify-end gap-3 !bg-[#090721]">
-        <Button
-          size="small"
-          type="default"
-          disabled={loading || !hasMore}
-          loading={loading}
-          onClick={() => fetchMore()}
-          className="!border-white/30 !text-white hover:!border-white/50 disabled:!border-white/10 disabled:!text-gray-400 !bg-[#090721]"
-        >
-          {hasMore ? 'Load more' : 'No more'}
-        </Button>
-     
       </div>
     </div>
   )
