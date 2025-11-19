@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${audiowide.variable} ${asul.variable} ${exo2.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${inter.className} ${audiowide.variable} ${asul.variable} ${exo2.variable} antialiased`}>
         <AntdConfigProvider>
           <MessageProvider>
             <PrivyAuthProvider>{children}</PrivyAuthProvider>
