@@ -15,6 +15,9 @@ import { useMarketplace } from '@/app/hooks/contracts/useMarketplace'
 import { useWallets } from '@privy-io/react-auth'
 import { ethers } from 'ethers'
 import bidIcon from '@/components/assets/image.png'
+import { useNFT } from '@/app/hooks/contracts/useNFT'
+import { CONTRACTS } from '@/app/utils/contracts/contractConfig'
+import { useNFTCollection } from '@/app/hooks/contracts/useNFTCollection'
 
 const parseNumericValue = (input: unknown): number | undefined => {
   if (input === undefined || input === null) return undefined
@@ -949,7 +952,7 @@ console.log(bidPayload,'bidPayloadbidPayload')
         overrides = { value: ethers.parseEther(bidAmount) + buyerFee };
       }
 // ------------------------------
-debugger
+
 if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && bidPayload?.sign) {
   const auction = await auctions(bidPayload?.collectionAddress, bidPayload?.nftId)
         
@@ -1002,8 +1005,11 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
   }
 
 
+  const {    isApproved,
+    setApprovalForAll,} = useNFTCollection()
  const handleBuyNow = async () => {
     try {
+      
       if (!address) {
         try {
           message.info('Wallet connected. Please click Buy Now again.')
@@ -1016,7 +1022,8 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         message.error('NFT id missing')
         return
       }
-
+      
+  
       const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
       const NFTDetails = response?.data?.nft
       if (!NFTDetails) {
@@ -1027,11 +1034,15 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
       // Build inputs for buy
       const tokenId = Number(NFTDetails?.nftId)
       const erc721 = NFTDetails?.collectionId?.collectionAddress as string
-      const priceStr = String(NFTDetails?.price ?? currentNft?.price ?? '0')
-      const nonceNum = Number(NFTDetails?.nonce)
+      const priceStr = String('0')
+      const nonceNum = Number(4)
       const sign = NFTDetails?.signature as `0x${string}`
-      const erc20Token = (NFTDetails?.erc20Token ?? NFTDetails?.ipfsHash ?? ethers.ZeroAddress) as string
-
+      const erc20Token = NFTDetails?.erc20Token === undefined ? ethers.ZeroAddress : NFTDetails?.erc20Token as string
+    const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
+     
+      if (!isApproved(address,marketplaceAddress,erc721)) { // mene market ko is erc721 collection ke approval de diya hai
+        await setApprovalForAll(marketplaceAddress, true,erc721)
+      }
       if (!tokenId || !erc721 || !sign || nonceNum === undefined || nonceNum === null) {
         message.error('Missing buy parameters')
         return
@@ -1043,8 +1054,8 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         const br = (await getBrokerage(ethers.ZeroAddress)) as { seller: bigint; buyer: bigint }
         const precision = (await decimalPrecision()) as bigint
         const base = ethers.parseEther(priceStr)
-        const buyerFee = (br.buyer * base) / (BigInt(100) * precision)
-        overrides = { value: base + buyerFee }
+        const buyerFee = (br.buyer * base) / (BigInt(100) * precision) 
+        overrides = { value: base + buyerFee }// 0.001+0.0000000015 = 0.0010000015 vale >fee+base
       }
 
       const receipt = await buy(
@@ -1053,7 +1064,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         ethers.parseEther(priceStr),
         BigInt(nonceNum),
         sign,
-        erc20Token,
+        ethers.ZeroAddress,
         address,
         overrides,
       )

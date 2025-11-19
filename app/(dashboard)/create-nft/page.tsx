@@ -386,21 +386,21 @@ debugger
   let isValid = true;
 let nonceResponse = null;
 
-while (isValid) {
-  // GET API call
-  nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
-  console.log(nonceResponse, 'nonceResponse');
+// while (isValid) {
+//   // GET API call
+//   nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
+//   console.log(nonceResponse, 'nonceResponse');
 
-  // Validate nonce
-  isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+//   // Validate nonce
+//   isValid = await auctionNonceStatus(nonceResponse.data.nonce);
 
-  // If still invalid → again call GET
-  if (isValid) {
-    console.log("Nonce invalid, retrying...");
-    await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
-  }
-}
-payload.nonce = nonceResponse.data.nonce;
+//   // If still invalid → again call GET
+//   if (isValid) {
+//     console.log("Nonce invalid, retrying...");
+//     await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+//   }
+// }
+payload.nonce = 4  //nonceResponse.data.nonce; 
       console.log("🚀 ~ handleCreateItem ~ payload:", payload)
       if(payload.putOnSale && payload.nftId){
       // Use the exact string value to avoid scientific notation issues
@@ -428,7 +428,7 @@ payload.nonce = nonceResponse.data.nonce;
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(nonceResponse.data.nonce),
+      BigInt(4),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(0),
@@ -443,7 +443,7 @@ payload.nonce = nonceResponse.data.nonce;
       BigInt(salePayload.tokenId),
       salePayload.erc721,
       ethers.parseEther(salePayload.priceEth),
-      BigInt(nonceResponse.data.nonce),
+      BigInt(4),
       salePayload.erc20Token,
       payload.auctionType,
       BigInt(payload.startingTime),
