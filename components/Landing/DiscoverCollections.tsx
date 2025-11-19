@@ -37,7 +37,7 @@ export default function DiscoverCollections() {
 
         {/* Chain Selector Dropdown */}
         <div className="flex justify-center md:justify-end mb-6 pr-2 sm:pr-4">
-          <button
+          {/* <button
             className="
           relative px-8 py-2 rounded-full font-exo2 text-white inline-flex items-center gap-2
           bg-[#111327] border border-white/10
@@ -48,7 +48,7 @@ export default function DiscoverCollections() {
           >
             Avalanche
             <RiArrowDropDownLine className="w-5 h-5 text-white" />
-          </button>
+          </button> */}
         </div>
 
         {/* NFT CARDS GRID with Background */}

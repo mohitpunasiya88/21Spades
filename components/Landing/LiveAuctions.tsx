@@ -82,7 +82,7 @@ export default function LiveAuctions() {
           </div>
 
           <div className="w-full flex justify-center md:absolute md:justify-end md:right-10 md:bottom-2 mt-6 md:mt-0">
-            <button
+            {/* <button
               className="
       relative px-8 py-2
       rounded-full font-exo2 text-white
@@ -101,7 +101,7 @@ export default function LiveAuctions() {
             >
               Avalanche
               <RiArrowDropDownLine className="w-5 h-5 text-white" />
-            </button>
+            </button> */}
           </div>
         </div>
 

@@ -52,8 +52,8 @@ export default function Trending() {
           </p>
         </div>
 
-        <div className="mb-8 md:mb-12 w-full max-w-6xl mx-auto font-exo2">
-          <div className="flex items-center justify-center gap-0 overflow-x-auto rounded-full px-2 py-2 bg-[#0E0E1F]/90 backdrop-blur-sm border border-white/10 w-full">
+        <div className="mb-8 md:mb-12  max-w-6xl mx-auto font-exo2">
+          <div className="flex items-center justify-center gap-0 overflow-x-auto rounded-full  py-2 bg-[#0E0E1F]/90 backdrop-blur-sm border border-white/10 w-full">
             {categories.map((category, index) => (
               <div key={index} className="flex items-center">
                 <button
