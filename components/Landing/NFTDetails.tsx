@@ -1500,7 +1500,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                 <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#7E6BEF]/15 text-[#7E6BEF]">
                   <Image src={bidIcon} alt="detail" className="w-3.5 h-3.5 object-contain" />
                 </span>
-                <span>Token Detail</span>
+                <span className="text-white font-bold font-exo2 text-[20px]">Token Detail</span>
               </div>
             }
             isOpen={isTokenDetailOpen}
@@ -1544,7 +1544,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                   <div className="w-8 h-8 rounded-md bg-white/5 border border-white/10 flex items-center justify-center">
                     <Image src={bidIcon} alt="Bids icon" className="w-4 h-4 object-contain" />
                   </div>
-                  <span className="text-base font-semibold">Bids</span>
+                  <span className="text-white font-bold font-exo2 text-[20px]">Bids</span>
                 </div>
               }
               isOpen={isBidsOpen}
@@ -1626,7 +1626,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         {/* More from this collection */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
-            <h2 className="text-white font-exo2 text-2xl sm:text-3xl font-semibold">More from this collection</h2>
+            <h2 className="text-white font-audiowide text-2xl sm:text-3xl">More from this collection</h2>
             <button className="px-5 sm:px-6 py-1.5 sm:py-2 text-sm text-white border border-white/20 rounded-full inline-flex items-center gap-2 hover:border-white/40 transition" style={{ cursor: 'pointer' }}>
               Explore all
               <ChevronDown className="w-4 h-4" />

@@ -3,8 +3,10 @@ import { BsSuitSpade } from 'react-icons/bs';
 import { CiHeart } from 'react-icons/ci';
 import { PiArrowBendUpRightBold } from 'react-icons/pi';
 import { RiArrowDropDownLine } from 'react-icons/ri';
+import { useRouter } from 'next/navigation';
 
 export default function DiscoverCollections() {
+  const router = useRouter();
   return (
     <section
       className="mt-10 flex flex-col justify-center items-center overflow-hidden"
@@ -119,7 +121,8 @@ export default function DiscoverCollections() {
         {/* View All Button */}
         <div className="flex justify-center mt-14">
           <button
-            className="relative px-12 py-2 w-[220px] text-white rounded-full font-exo2 inline-flex items-center justify-center gap-3 text-lg hover:scale-105"
+            onClick={() => router.push('/marketplace')}
+            className="relative px-12 py-2 w-[220px] text-white rounded-full font-exo2 inline-flex items-center justify-center gap-3 text-lg hover:scale-105 transition-transform"
             style={{
               background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
             }}

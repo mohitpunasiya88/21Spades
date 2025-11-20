@@ -5,8 +5,10 @@ import { ArrowRight } from 'lucide-react';
 import { PiArrowBendUpRightBold } from 'react-icons/pi';
 import { RiArrowDropDownLine } from 'react-icons/ri';
 import { BsSuitSpade } from 'react-icons/bs';
+import { useRouter } from 'next/navigation';
 
 export default function LiveAuctions() {
+  const router = useRouter();
   const auctions = [
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '3.5 ETH', edition: '1 of 321', timeLeft: '3h 50m 2s left' },
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '3.5 ETH', edition: '1 of 321', timeLeft: '3h 50m 2s left' },
@@ -177,7 +179,11 @@ export default function LiveAuctions() {
             ))}
           </div>
           <div className="flex justify-center items-center mt-6 ">
-            <button className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center hover:scale-105 gap-4" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+            <button 
+              onClick={() => router.push('/marketplace')}
+              className="relative px-12 py-2  w-[200px] text-white rounded-full font-exo2 inline-flex items-center hover:scale-105 gap-4 transition-transform" 
+              style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
+            >
               View All
               <PiArrowBendUpRightBold className="w-5 h-5" />
             </button>
