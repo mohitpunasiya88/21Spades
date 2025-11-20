@@ -3,10 +3,10 @@ import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-t h-[100vh] mb-5 w-[100%] md:w-[97%] mx-auto from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
+    <footer className="h-[100vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
 
       {/* Background pattern overlay */}
-      <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[10%]" style={{}} >
+      <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[15%]" style={{}} >
         <div className="absolute  h-[200vh] md:w-[20%] w-[30%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
         <div className="absolute h-[200vh] md:w-[40%] w-[80%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
         <div className="absolute h-[200vh] md:w-[60%] w-[120%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
@@ -14,11 +14,6 @@ export default function Footer() {
         <div className="absolute h-[200vh] md:w-[100%] w-[200%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
         <div className="absolute h-[200vh] md:w-[120%] w-[240%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
       </div>
-
-      {/* <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
-
-
-      </div> */}
 
       <div className="container h-full mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
 
@@ -44,7 +39,7 @@ export default function Footer() {
 
 
         {/* CTA Section */}
-        <div className="mx-auto text-center mb-8 sm:mb-16">
+        <div className="mx-auto text-center mt-15 mb-8 sm:mb-16">
           <h2 className="text-[#FFB600] font-audiowide text-xl sm:text-[42px] md:text-[48px] mb-6 sm:mb-8 leading-tight">
             JOIN THE WORLD<br className="md:hidden" /> OF WEB3 TODAY
           </h2>
