@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import FeedPost from '@/components/Dashboard/FeedPost'
 import { Image as ImageIcon, Laugh, LayoutGrid, ChevronDown, X, SidebarIcon } from 'lucide-react'
 import FeedRightSidebar from '@/components/Layout/FeedRightSidebar'
@@ -123,8 +123,10 @@ function transformPost(post: Post) {
 }
 
 
+const POSTS_PER_PAGE = 10
+
 export default function FeedPage() {
-  const { posts, isLoading, getPosts, createPost } = useFeedStore()
+  const { posts, isLoading, isLoadingMore, hasMore, getPosts, createPost, prependPost } = useFeedStore()
   const { categories, getCategories } = useCategoriesStore()
   const { user } = useAuthStore()
   const { message } = useMessage()
@@ -155,6 +157,7 @@ export default function FeedPage() {
 
   // Mobile right sidebar state
   const [isMobileRightSidebarOpen, setIsMobileRightSidebarOpen] = useState(false)
+  const [page, setPage] = useState(1)
   
   // Post creation state
   const [postText, setPostText] = useState('')
@@ -168,6 +171,7 @@ export default function FeedPage() {
   const emojiPickerRef = useRef<HTMLDivElement>(null)
   const textInputRef = useRef<HTMLInputElement>(null)
   const postsSectionRef = useRef<HTMLDivElement>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   // Prepare categories list with "All" option at the beginning
   const categoriesList = useMemo(() => {
@@ -191,6 +195,12 @@ export default function FeedPage() {
   const hh = Math.floor((remaining / (60 * 60 * 1000)) % 24)
   const mm = Math.floor((remaining / (60 * 1000)) % 60)
 
+  const activeCategoryId = useMemo(() => {
+    return selectedCategory === 'All'
+      ? undefined
+      : categories.find(cat => cat.name === selectedCategory)?._id
+  }, [selectedCategory, categories])
+
   // Fetch categories on mount
   useEffect(() => {
     getCategories()
@@ -198,16 +208,43 @@ export default function FeedPage() {
 
   // Fetch posts when category changes
   useEffect(() => {
-    const categoryId = selectedCategory === 'All' 
-      ? undefined 
-      : categories.find(cat => cat.name === selectedCategory)?._id
-    
+    setPage(1)
     getPosts({ 
-      categoryId,
+      categoryId: activeCategoryId,
       page: 1,
-      limit: 20
+      limit: POSTS_PER_PAGE,
+      forceRefresh: true
     })
-  }, [selectedCategory, categories, getPosts])
+  }, [activeCategoryId, getPosts])
+
+  const loadMorePosts = useCallback(() => {
+    if (isLoading || isLoadingMore || !hasMore) return
+    const nextPage = page + 1
+    setPage(nextPage)
+    getPosts({
+      categoryId: activeCategoryId,
+      page: nextPage,
+      limit: POSTS_PER_PAGE,
+      append: true
+    })
+  }, [activeCategoryId, getPosts, hasMore, isLoading, isLoadingMore, page])
+
+  useEffect(() => {
+    const currentRef = loadMoreRef.current
+    if (!currentRef) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMorePosts()
+        }
+      },
+      { root: null, rootMargin: '200px', threshold: 0 }
+    )
+    observer.observe(currentRef)
+    return () => {
+      observer.unobserve(currentRef)
+    }
+  }, [loadMorePosts, posts.length, hasMore])
 
   // Close filter categories dropdown and emoji picker on outside click
   useEffect(() => {
@@ -336,11 +373,23 @@ export default function FeedPage() {
       // In production, you'd upload to S3 first and get the URL
       const postUrl = imagePreviews.length > 0 ? imagePreviews[0] : undefined
 
-      await createPost({
+      const createdPost = await createPost({
         text: postText.trim() || undefined,
         postUrl: postUrl,
         categoryId: categoryId,
       })
+      
+      if (createdPost) {
+        const createdCategoryName = createdPost.category?.name
+        if (
+          selectedCategory === 'All' ||
+          !createdCategoryName ||
+          createdCategoryName === selectedCategory ||
+          createdPost.category?._id === activeCategoryId
+        ) {
+          prependPost(createdPost)
+        }
+      }
 
       // Complete progress
       clearInterval(progressInterval)
@@ -353,18 +402,7 @@ export default function FeedPage() {
       setImagePreviews([])
       setPostCategory(undefined)
       
-      // Refresh posts to show the new post - fetch all posts regardless of category
-      const currentCategoryId = selectedCategory === 'All' 
-        ? undefined 
-        : categories.find(cat => cat.name === selectedCategory)?._id
-      
-      await getPosts({ 
-        categoryId: currentCategoryId,
-        page: 1,
-        limit: 20
-      })
-
-      // Scroll to posts section after posts are loaded
+      // Scroll to posts section after posts are updated
       setTimeout(() => {
         if (postsSectionRef.current) {
           postsSectionRef.current.scrollIntoView({ 
@@ -657,6 +695,15 @@ export default function FeedPage() {
                   .map((post) => (
                     <FeedPost key={post._id} post={transformPost(post)} />
                   ))
+              )}
+              <div ref={loadMoreRef} className="h-1" />
+              {isLoadingMore && (
+                <div className="text-center text-gray-400 py-4 text-sm">Loading more posts...</div>
+              )}
+              {!hasMore && posts.length > 0 && (
+                <div className="text-center text-gray-500 py-4 text-xs uppercase tracking-wide">
+                  You&apos;re all caught up
+                </div>
               )}
             </div>
           </div>

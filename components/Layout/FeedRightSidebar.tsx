@@ -105,7 +105,7 @@ export default function FeedRightSidebar() {
         <div className="flex items-center gap-2.5 mb-4">
           <button
             onClick={() => setSelected('AVAX')}
-            className={`rounded-full font-exo2 font-bold text-[16px] transition-all duration-300 px-8 py-1.5 ${selected === 'AVAX'
+            className={`rounded-full font-exo2 font-bold text-[14px] transition-all duration-300 px-6 py-1.5 ${selected === 'AVAX'
               ? 'bg-white text-black'
               : 'bg-[#FFFFFF1A] text-[#FFFFFF4D] hover:text-white'
               }`}
@@ -114,7 +114,7 @@ export default function FeedRightSidebar() {
           </button>
           <button
             onClick={() => setSelected('BTC')}
-            className={`rounded-full font-exo2 font-bold text-[16px] transition-all duration-300 px-8 py-1.5 ${selected === 'BTC'
+            className={`rounded-full font-exo2 font-bold text-[14px] transition-all duration-300 px-6 py-1.5 ${selected === 'BTC'
               ? 'bg-white text-black'
               : 'bg-[#FFFFFF1A] text-white hover:text-white'
               }`}
@@ -124,20 +124,20 @@ export default function FeedRightSidebar() {
         </div>
 
         {/* Line 3: Price and Greed Badge */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center ">
           <div className="flex items-baseline gap-1">
             <span className="text-white font-bold font-exo2 text-[20px]">
               {coinAmount ? parseFloat(String(coinAmount)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
             </span>
             <span className="text-white font-exo2 text-sm ml-1">{coinCurrency}</span>
           </div>
-          <button className="px-8 py-1.5 rounded bg-[#FFEE99] text-black font-exo2 font-semibold text-[16px]">
+          {/* <button className="px-8 py-1.5 rounded bg-[#FFEE99] text-black font-exo2 font-semibold text-[16px]">
             Greed
-          </button>
+          </button> */}
         </div>
 
         {/* Gauge Container */}
-        <div className="relative w-full h-[180px] flex items-end justify-center">
+        <div className="relative w-full h-[120px] flex items-end justify-center">
           {/* Inner glow background */}
           <div
             className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[260px] h-[140px] rounded-t-[140px] bottom-0"

@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/lib/store/authStore"
 import { Button, Form, Input, Select, Tabs, Dropdown, Spin } from "antd"
@@ -85,7 +85,7 @@ export default function ProfilePage() {
     bio: "",
     interests: [] as string[],
     cover: defaultCoverImage.src,
-    avatar: "/assets/avatar.jpg",
+    avatar: "/post/card-21.png",
   })
 
   // Close dropdown when clicking outside
@@ -163,7 +163,7 @@ export default function ProfilePage() {
             ? userData.interests
             : userData.interests ? [userData.interests] : [],
           cover: userData.cover || defaultCoverImage.src,
-          avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/assets/avatar.jpg",
+          avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/post/card-21.png",
         })
 
         // Set country code from user data
@@ -218,13 +218,18 @@ export default function ProfilePage() {
             ? user.interests
             : user?.interests ? [user.interests] : [],
           cover: defaultCoverImage.src,
-          avatar: user.avatar || user.profilePicture || "/assets/avatar.jpg",
+          avatar: user.avatar || user.profilePicture || "/post/card-21.png",
         })
       }
     } finally {
       setProfileLoading(false)
     }
   }
+
+  const existingPhoneNormalizedMemo = useMemo(() => {
+    const existingPhoneRaw = profile.phone || user?.phoneNumber || user?.phone || ''
+    return existingPhoneRaw.replace(/\D/g, '')
+  }, [profile.phone, user?.phoneNumber, user?.phone])
 
   const onSave = async () => {
     try {
@@ -234,6 +239,8 @@ export default function ProfilePage() {
       // Extract phone number - use countryCode from state (selected from dropdown)
       let phoneNumber = ""
       const selectedCountryCode = countryCode || user?.countryCode || "+1"
+
+      const existingPhoneNormalized = existingPhoneNormalizedMemo
 
       if (values.phone) {
         // Remove any non-digit characters from phone number
@@ -253,12 +260,53 @@ export default function ProfilePage() {
         interestsArray = Array.isArray(user?.interests) ? user.interests : []
       }
 
+      const currentValues = {
+        name: profile.name || user?.name || "",
+        username: profile.username || user?.username || "",
+        email: profile.email || user?.email || "",
+        country: profile.country || user?.country || "",
+        phone: existingPhoneNormalized,
+        profession: profile.profession || "",
+        bio: profile.bio || user?.bio || "",
+        interests: Array.isArray(profile.interests) ? profile.interests : (profile.interests ? [profile.interests] : []),
+      }
+
+      const normalizedNewPhone = phoneNumber
+      const normalizedInterests = interestsArray
+
+      const arraysEqual = (a: string[], b: string[]) => {
+        if (a.length !== b.length) return false
+        const sortedA = [...a].sort()
+        const sortedB = [...b].sort()
+        return sortedA.every((value, index) => value === sortedB[index])
+      }
+
+      const fieldsChanged: string[] = []
+      if ((values.name || "") !== currentValues.name) fieldsChanged.push('name')
+      if ((values.username || "") !== currentValues.username) fieldsChanged.push('username')
+      if ((values.email || "") !== currentValues.email) fieldsChanged.push('email')
+      if ((values.country || "") !== currentValues.country) fieldsChanged.push('country')
+      if ((values.profession || "") !== currentValues.profession) fieldsChanged.push('profession')
+      if ((values.bio || "") !== currentValues.bio) fieldsChanged.push('bio')
+      if (!arraysEqual(normalizedInterests, currentValues.interests)) fieldsChanged.push('interests')
+      const isPhoneCleared = values.phone === undefined || values.phone === null || values.phone === ''
+      if (isPhoneCleared) {
+        if (currentValues.phone !== '') fieldsChanged.push('phoneNumber')
+      } else if (normalizedNewPhone !== currentValues.phone) {
+        fieldsChanged.push('phoneNumber')
+      }
+
+      if (fieldsChanged.length === 0) {
+        message.info("You haven't changed anything yet.")
+        setSaving(false)
+        return
+      }
+
       // Prepare profile update payload as per API requirements
-      const updatePayload = {
+      const updatePayload: Record<string, any> = {
         email: values.email || user?.email || "",
         name: values.name || "",
         username: values.username || "",
-        phoneNumber: phoneNumber || user?.phoneNumber || "",
         countryCode: selectedCountryCode || user?.countryCode || "+1",
         country: values.country || user?.country || "",
         interests: interestsArray.length > 0 ? interestsArray : (user?.interests || []),
@@ -272,6 +320,12 @@ export default function ProfilePage() {
         projects: user?.projects || profile.stats.projects || 0,
         contributions: user?.contributions || profile.stats.contributions || 0,
         profileView: user?.profileView || profile.stats.posts || 0,
+      }
+
+      if (isPhoneCleared) {
+        updatePayload.phoneNumber = ''
+      } else if (phoneNumber && phoneNumber !== existingPhoneNormalized) {
+        updatePayload.phoneNumber = phoneNumber
       }
 
       // Call profile update API
@@ -443,6 +497,14 @@ export default function ProfilePage() {
       if (coverInputRef.current) {
         coverInputRef.current.value = ''
       }
+    }
+  }
+
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value || ''
+    const normalized = value.replace(/\D/g, '')
+    if (normalized && normalized === existingPhoneNormalizedMemo) {
+      message.warning('This phone number is already saved on your profile.')
     }
   }
 
@@ -624,7 +686,7 @@ export default function ProfilePage() {
         {/* Profile Picture - Far Left, Overlapping Banner */}
         <div className="relative px-1 md:px-2 -mt-24 md:-mt-28">
           <div className="relative flex-shrink-0 w-[120px] h-[120px] md:w-[160px] md:h-[160px]">
-            <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] bg-gradient-to-br from-[#8D5AFE] to-[#B98CFF] shadow-xl">
+            <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] shadow-xl" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
               {(() => {
                 const hasAvatarImage = Boolean((avatarPreview || profile.avatar)?.trim())
                 const fallbackSrc = '/post/card-21.png'
@@ -1008,6 +1070,7 @@ export default function ProfilePage() {
                         className="flex-1 !bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
                         type="tel"
                         maxLength={15}
+                        onBlur={handlePhoneBlur}
                       />
                     </Form.Item>
                   </div>
