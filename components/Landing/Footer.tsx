@@ -3,7 +3,7 @@ import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="h-[100vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
+    <footer className="h-[80vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
 
       {/* Background pattern overlay */}
       <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[15%]" style={{}} >
@@ -39,7 +39,7 @@ export default function Footer() {
 
 
         {/* CTA Section */}
-        <div className="mx-auto text-center mt-15 mb-8 sm:mb-16">
+        <div className="mx-auto text-center md:mt-10 mb-8 sm:mb-16">
           <h2 className="text-[#FFB600] font-audiowide text-xl sm:text-[42px] md:text-[48px] mb-6 sm:mb-8 leading-tight">
             JOIN THE WORLD<br className="md:hidden" /> OF WEB3 TODAY
           </h2>
