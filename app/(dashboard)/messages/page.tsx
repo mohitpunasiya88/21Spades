@@ -225,7 +225,7 @@ export default function MessagesPage() {
       }`}>
         <div>
           <div className="flex items-center justify-between p-2 my-2">
-            <h2 className="text-white text-[24px] font-[700]">Chats</h2>
+            <h2 className="text-white text-[24px] font-[700] font-audiowide">Chats</h2>
             <div className='gap-2 flex relative'>
               <button 
                 onClick={() => setShowEditMenu(!showEditMenu)}

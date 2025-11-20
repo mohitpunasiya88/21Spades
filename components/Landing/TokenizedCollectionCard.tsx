@@ -392,7 +392,7 @@ const TokenizedCollectionCard: React.FC = () => {
  
       <div className='w-full h-full mt-6 sm:mt-8 md:mt-10'>
         <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0'>
-          <h1 className='text-white text-lg sm:text-xl md:text-2xl font-exo2'>Discover all the Tokenized collections</h1>
+          <h1 className='text-white text-lg sm:text-xl md:text-2xl font-audiowide'>Discover all the Tokenized collections</h1>
           <Dropdown menu={{ items, onClick: handleMenuClick }} trigger={['click']} placement="bottomRight" className='border border-gray-800 rounded-full'>
             <a onClick={(e) => e.preventDefault()}>
               <Space 

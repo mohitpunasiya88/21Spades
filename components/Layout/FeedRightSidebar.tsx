@@ -95,114 +95,117 @@ export default function FeedRightSidebar() {
       className="h-full p-2 mt-5 mb-5 font-exo2 "
     >
       {/* Fear & Greed Index */}
-      <div className="mb-6 p-4 pb-0 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
-        <div className=" items-center justify-between mb-2">
-          <h3 className="text-white font-semibold">Fear & Greed Index</h3>
-          <div className=" ">
-            <div className="inline-flex rounded-full font-exo2 ">
-              <button
-                onClick={() => setSelected('AVAX')}
-                className={` rounded-full font-[600] pl-4 pr-4 bg-[#FFFFFF1A] text-[10px] transition-all font-exo2 duration-300 m-1.5 px-2 py-1 ${selected === 'AVAX'
-                  ? 'bg-white text-black'
-                  : 'text-[#FFFFFF4D] hover:text-white'
-                  }`}
-              >
-                AVAX
-              </button>
-             
-            </div>
-            <div className="inline-flex rounded-full bg-[#FFFFFF08] font-exo2 ">
-            <button
-                onClick={() => setSelected('BTC')}
-                className={` rounded-full font-exo2 bg-[#FFFFFF1A] text-bold pl-4 pr-4  text-[10px] transition-all font-exo2 duration-300 px-2 py-1 ${selected === 'BTC'
-                  ? 'bg-white text-black'
-                  : 'text-[#FFFFFF4D] hover:text-white'
-                  }`}
-              >
-                BTC
-              </button>
-            </div>
-          </div>
+      <div className="mb-6 p-4 pb-4 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
+        {/* Line 1: Title */}
+        <div className="mb-4">
+          <h3 className="text-white font-audiowide text-[25px]">Fear & Greed Index</h3>
         </div>
-        <div className="">
-          <div className="w-full h-[0.5px] bg-[#FFFFFF1A] mb-2" />
-          <div className="flex justify-between items-center gap-2 text-xs">
-            <div>
-            <span className="text-white font-semibold p-1">{coinAmount}</span>
-            <span className="  text-white">{coinCurrency}</span>
-            </div>
-            
-            <div>
-            <button className="px-2 py-0.5 rounded-md bg-[#FFEE99] text-black pl-4 pr-4 border">Greed</button>
-            </div>
+
+        {/* Line 2: AVAX and BTC Buttons */}
+        <div className="flex items-center gap-2.5 mb-4">
+          <button
+            onClick={() => setSelected('AVAX')}
+            className={`rounded-full font-exo2 font-bold text-[16px] transition-all duration-300 px-8 py-1.5 ${selected === 'AVAX'
+              ? 'bg-white text-black'
+              : 'bg-[#FFFFFF1A] text-[#FFFFFF4D] hover:text-white'
+              }`}
+          >
+            AVAX
+          </button>
+          <button
+            onClick={() => setSelected('BTC')}
+            className={`rounded-full font-exo2 font-bold text-[16px] transition-all duration-300 px-8 py-1.5 ${selected === 'BTC'
+              ? 'bg-white text-black'
+              : 'bg-[#FFFFFF1A] text-white hover:text-white'
+              }`}
+          >
+            BTC
+          </button>
+        </div>
+
+        {/* Line 3: Price and Greed Badge */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-baseline gap-1">
+            <span className="text-white font-bold font-exo2 text-[20px]">
+              {coinAmount ? parseFloat(String(coinAmount)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+            </span>
+            <span className="text-white font-exo2 text-sm ml-1">{coinCurrency}</span>
           </div>
-          <div className="relative w-full h-full">
-            {/* Inner glow background */}
-            <div
-              className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[260px] h-[14 0px] rounded-t-[140px]"
-              style={{
-                background:
-                  'radial-gradient(circle at 50% 100%, rgba(92,9,255,0.45) 0%, rgba(92,9,255,0.20) 35%, rgba(11,15,30,0.00) 65%)',
-                filter: 'blur(14px)'
-              }}
-            />
-            
-            <GaugeComponent
-              type="semicircle"
-              arc={{
-                width: 0.2,
-                padding: 0.03,
-                cornerRadius: 1,
-                subArcs: [
-                  { limit: 20, color: '#EA4228' },
-                  { limit: 40, color: '#F87171' },
-                  { limit: 50, color: '#FBBF24' },
-                  { limit: 60, color: '#FDE047' },
-                  { limit: 80, color: '#A3E635' },
-                  { limit: 90, color: '#4ADE80' },
-                  { limit: 100, color: '#22C55E' }
-                ]
-              }}
-              pointer={{
-                color: '#5C09FF',
-                length: 0.75,
-                width: 12,
-                elastic: false
-              }}
-              labels={{
-                valueLabel: { hide: true },
-                tickLabels: { hideMinMax: true, ticks: [] }
-              }}
-              value={value}
-              minValue={0}
-              maxValue={100}
-            />
+          <button className="px-8 py-1.5 rounded bg-[#FFEE99] text-black font-exo2 font-semibold text-[16px]">
+            Greed
+          </button>
+        </div>
 
-            {/* White hub at center */}
-            <div className="pointer-events-none absolute left-1/2 bottom-2 -translate-x-1/2 w-5 h-5 rounded-full bg-white" />
+        {/* Gauge Container */}
+        <div className="relative w-full h-[180px] flex items-center justify-center">
+          {/* Inner glow background */}
+          <div
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[260px] h-[140px] rounded-t-[140px]"
+            style={{
+              background:
+                'radial-gradient(circle at 50% 100%, rgba(92,9,255,0.45) 0%, rgba(92,9,255,0.20) 35%, rgba(11,15,30,0.00) 65%)',
+              filter: 'blur(14px)'
+            }}
+          />
+          
+          <GaugeComponent
+            type="semicircle"
+            arc={{
+              width: 0.2,
+              padding: 0.03,
+              cornerRadius: 1,
+              subArcs: [
+                { limit: 20, color: '#EA4228' },
+                { limit: 40, color: '#F87171' },
+                { limit: 50, color: '#FBBF24' },
+                { limit: 60, color: '#FDE047' },
+                { limit: 80, color: '#A3E635' },
+                { limit: 90, color: '#4ADE80' },
+                { limit: 100, color: '#22C55E' }
+              ]
+            }}
+            pointer={{
+              color: '#D4A574',
+              length: 0.75,
+              width: 12,
+              elastic: false
+            }}
+            labels={{
+              valueLabel: { hide: true },
+              tickLabels: { hideMinMax: true, ticks: [] }
+            }}
+            value={value}
+            minValue={0}
+            maxValue={100}
+          />
 
-            {/* Centered percentage */}
-            <div className="pointer-events-none absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/3 text-white text-2xl font-bold">
+          {/* White circle with percentage at exact center of gauge */}
+          <div className="pointer-events-none absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg z-10">
+            <span className="text-black font-exo2 font-bold text-lg">
               {Math.round(Number(value))}%
-            </div>
+            </span>
           </div>
         </div>
       </div>
 
       {/* Market Cap */}
       <div className="mb-6 font-exo2">
-
         <div className="rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
-          <div className="flex items-center justify-between mb-2 ">
-            <h3 className="text-white font-semibold">Market Cap <span className="text-gray-500">›</span></h3>
-            <button className="text-purple-400 text-sm">See All &gt;</button>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-white font-semibold font-exo2">Market Cap <span className="text-gray-500">›</span></h3>
+            <button className="text-purple-400 text-sm font-exo2 hover:text-purple-300 transition-colors">See All &gt;</button>
           </div>
-          <div className="w-full h-[0.5px] bg-[#FFFFFF33] mb-2" />
-          <div className="flex items-end justify-between mb-1">
-            <p className="text-white text-2xl font-bold">{marketCapFormatted}</p>
-            <p className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-              {isPositive ? '^' : '↓'} {isPositive ? '+' : ''}{dummyPriceChange.toFixed(2)}%
-            </p>
+          <div className="w-full h-[0.5px] bg-[#FFFFFF33] mb-3" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-white text-2xl font-bold font-exo2">{marketCapFormatted}</p>
+            <div className="flex items-center gap-1">
+              <span className={`text-sm font-exo2 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                {isPositive ? '^' : '↓'}
+              </span>
+              <p className={`text-sm font-exo2 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                {isPositive ? '+' : ''}{dummyPriceChange.toFixed(2)}%
+              </p>
+            </div>
           </div>
           <svg viewBox="0 0 240 70" className="w-full h-[70px]">
             <defs>

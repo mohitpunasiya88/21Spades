@@ -432,10 +432,10 @@ export default function FeedPage() {
         <FeedRightSidebar />
       </Drawer>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 md:gap-6 font-exo2">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 md:gap-6 font-audiowide">
         {/* Left column */}
         <div className="p-2 sm:p-3 md:p-4">
-          <h1 className="text-white text-xl sm:text-2xl font-semibold font-exo2 mb-3 md:mb-4 flex items-center gap-2">
+          <h1 className="text-white text-xl sm:text-2xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
             <span className="text-2xl sm:text-3xl" aria-hidden="true">
               {greeting.icon}
             </span>
@@ -583,7 +583,7 @@ export default function FeedPage() {
                       <button 
                         onClick={handlePostSubmit}
                         disabled={isDisabled}
-                        className="bg-white text-[#020019] text-sm sm:text-base md:text-[18px] font-[600] px-3 sm:px-4 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                        className="bg-white text-black text-[16px] sm:text-base md:text-[18px] font-[600] px-8 sm:px-8 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
                       >
                         {isPosting ? 'Posting...' : 'Post'}
                       </button>
@@ -620,7 +620,7 @@ export default function FeedPage() {
           {/* Explore Feed Section */}
           <div ref={postsSectionRef} className="mb-4 sm:mb-6">
             <div className="mb-2 sm:mb-3">
-              <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 font-exo2" style={{
+              <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 font-audiowide" style={{
                 textShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)',
                 letterSpacing: '0.5px'
               }}>

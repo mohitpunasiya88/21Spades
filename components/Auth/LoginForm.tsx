@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
-import { Eye, XIcon } from 'lucide-react'
+import { Eye, XIcon, Loader2 } from 'lucide-react'
 import { useMessage } from '@/lib/hooks/useMessage'
 import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
 import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
@@ -18,6 +18,7 @@ export default function LoginForm() {
   const { initOAuth, state: oauthState } = useLoginWithOAuth()
   const { ready: privyReady, authenticated: privyAuthenticated, user: privyUser, getAccessToken } = usePrivy()
   const hasCompletedPrivyLoginRef = useRef(false)
+  const [isCompletingLogin, setIsCompletingLogin] = useState(false)
 
   // Redirect to feed when authenticated
   useEffect(() => {
@@ -53,13 +54,15 @@ export default function LoginForm() {
 
     const completePrivyLogin = async () => {
       try {
+        setIsCompletingLogin(true)
         const accessToken = await getAccessToken()
         await loginWithPrivy(privyUser, accessToken ?? null)
-        message.success('Logged in successfully with Privy!')
+        message.success('Logged in successfully!')
         router.replace('/feed')
       } catch (error: any) {
         console.error('Privy login completion error:', error)
         hasCompletedPrivyLoginRef.current = false
+        setIsCompletingLogin(false)
         const errorMessage = error?.message || 'Unable to complete Privy login. Please try again.'
         message.error(errorMessage)
       }
@@ -309,6 +312,63 @@ export default function LoginForm() {
           </div>
         </div>
       </div>
+
+      {/* OAuth Loading Overlay */}
+      {(oauthLoading || isCompletingLogin) && (
+        <>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-[#0F0F23] via-[#1a1a2e] to-[#0F0F23] rounded-2xl p-8 md:p-12 max-w-md mx-4 border border-[#2A2F4A] shadow-2xl">
+              <div className="text-center">
+                {/* Animated Spinner */}
+                <div className="flex justify-center mb-6">
+                  <div className="relative">
+                    <Loader2 className="w-16 h-16 text-[#8B5CF6] animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-8 h-8 bg-[#8B5CF6] rounded-full animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Loading Message */}
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 font-exo2">
+                  {isCompletingLogin 
+                    ? 'Completing Login...' 
+                    : oauthProvider === 'google' 
+                    ? 'Connecting to Google' 
+                    : oauthProvider === 'twitter' 
+                    ? 'Connecting to X' 
+                    : 'Logging in...'}
+                </h3>
+                <p className="text-gray-300 text-base md:text-lg mb-6 font-exo2">
+                  {isCompletingLogin
+                    ? 'Please wait while we complete your authentication...'
+                    : oauthProvider === 'google' 
+                    ? 'Please wait while we redirect you to Google for authentication...'
+                    : oauthProvider === 'twitter'
+                    ? 'Please wait while we redirect you to X for authentication...'
+                    : 'Please wait...'}
+                </p>
+
+                {/* Progress Indicator */}
+                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#8B5CF6] to-[#FFD700] rounded-full animate-pulse" style={{ width: '70%' }}></div>
+                </div>
+
+                {/* Provider Icon */}
+                {!isCompletingLogin && (
+                  <div className="mt-6 flex justify-center">
+                    {oauthProvider === 'google' ? (
+                      <GoogleIcon className="w-12 h-12" />
+                    ) : oauthProvider === 'twitter' ? (
+                      <XIcon className="w-12 h-12 text-white" />
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       
     </div>
   )

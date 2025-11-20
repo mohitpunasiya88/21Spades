@@ -1,22 +1,71 @@
 import { ArrowRight } from "lucide-react";
 import NFTCard from "./NFTcard";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PiArrowBendUpRightBold } from "react-icons/pi";
 import { BsSuitSpade } from "react-icons/bs";
+import { useRouter } from "next/navigation";
+import { useAuthStore, useCategoriesStore } from '@/lib/store/authStore';
+
+// Icon mapping for categories
+const categoryIconMap: Record<string, string> = {
+  'CRYPTO': '💰',
+  'GAMING': '🎮',
+  'TICKETING': '🎫',
+  'FASHION': '👗',
+  'ART': '🎨',
+  'REAL ESTATE': '🏢',
+  'A.I.': '🤖',
+  'AI': '🤖',
+  'A I': '🤖'
+};
+
+// Static categories for non-authenticated users
+const staticCategories = [
+  { name: 'ALL', icon: null },
+  { name: 'CRYPTO', icon: '💰' },
+  { name: 'GAMING', icon: '🎮' },
+  { name: 'TICKETING', icon: '🎫' },
+  { name: 'FASHION', icon: '👗' },
+  { name: 'ART', icon: '🎨' },
+  { name: 'REAL ESTATE', icon: '🏢' },
+  { name: 'A.I.', icon: '🤖' }
+];
 
 export default function Trending() {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('ALL');
+  const { isAuthenticated } = useAuthStore();
+  const { categories: apiCategories, getCategories, isLoading: categoriesLoading } = useCategoriesStore();
 
-  const categories = [
-    { name: 'ALL' },
-    { name: 'Crypto', icon: '💰' },
-    { name: 'GAMING', icon: '🎮' },
-    { name: 'Ticketing', icon: '🎫' },
-    { name: 'FASHION', icon: '👗' },
-    { name: 'ART', icon: '🎨' },
-    { name: 'Real Estate', icon: '🏢' },
-    { name: 'A I', icon: '🤖' }
-  ];
+  // Fetch categories when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      getCategories().catch(error => {
+        console.error('Error fetching categories:', error);
+      });
+    }
+  }, [isAuthenticated, getCategories]);
+
+  // Map API categories to include icons and format
+  const categories = useMemo(() => {
+    if (!isAuthenticated || !apiCategories || apiCategories.length === 0) {
+      return staticCategories;
+    }
+
+    // Map API categories to include icons
+    const mappedCategories = apiCategories
+      .filter(cat => cat.isActive)
+      .map(cat => {
+        const categoryName = cat.name.toUpperCase();
+        return {
+          name: categoryName,
+          icon: categoryIconMap[categoryName] || null
+        };
+      });
+
+    // Add 'ALL' at the beginning
+    return [{ name: 'ALL', icon: null }, ...mappedCategories];
+  }, [isAuthenticated, apiCategories]);
 
   const allNfts = [
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '3.5 ETH', edition: '1 of 321', category: 'Crypto' },
@@ -52,23 +101,38 @@ export default function Trending() {
           </p>
         </div>
 
-        <div className="mb-8 md:mb-12  max-w-6xl mx-auto font-exo2">
-          <div className="flex items-center justify-center gap-0 overflow-x-auto rounded-full  py-2 bg-[#0E0E1F]/90 backdrop-blur-sm border border-white/10 w-full">
+        <div className="mb-8 md:mb-12 max-w-6xl mx-auto font-exo2">
+          <div 
+            className="flex items-center justify-center gap-0 overflow-x-auto rounded-full py-2.5 px-4 w-full backdrop-blur-sm"
+            style={{
+              background: 'linear-gradient(to right, rgba(79, 1, 30, 0.1) 0%, rgba(20, 25, 45, 0.1) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}
+          >
             {categories.map((category, index) => (
               <div key={index} className="flex items-center">
                 <button
                   onClick={() => setActiveCategory(category.name)}
-                  className={`h-9 md:h-10 px-4 md:px-5 rounded-full font-semibold transition-all flex items-center text-xs md:text-sm whitespace-nowrap ${activeCategory === category.name
-                    ? 'text-white shadow-[0_0_12px_rgba(79,1,230,0.35)]'
-                    : 'text-white/85 hover:text-white'
-                    }`}
-                  style={activeCategory === category.name ? { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' } : { background: 'transparent' }}
+                  className={`h-9 md:h-10 px-4 md:px-6 rounded-full font-semibold transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm whitespace-nowrap ${
+                    activeCategory === category.name
+                      ? 'text-white'
+                      : 'text-white hover:text-white'
+                  }`}
+                  style={
+                    activeCategory === category.name
+                      ? {
+                          background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
+                          border: '2px solid #25016E',
+                          boxShadow: '0 0 12px rgba(79, 1, 230, 0.35)'
+                        }
+                      : { background: 'transparent', border: 'none' }
+                  }
                 >
-                  {category.icon && <span className="mr-1.5 md:mr-2">{category.icon}</span>}
-                  {category.name}
+                  {category.icon && <span className="text-base md:text-lg">{category.icon}</span>}
+                  <span>{category.name}</span>
                 </button>
                 {index !== categories.length - 1 && (
-                  <span className="mx-2 md:mx-3 h-4 md:h-5 w-px bg-white/20 rounded-full hidden sm:block" />
+                  <span className="mx-2 md:mx-3 h-4 md:h-5 w-px bg-gray-400/30" />
                 )}
               </div>
             ))}
@@ -92,7 +156,11 @@ export default function Trending() {
         </div>
 
         <div className="text-center px-4">
-          <button className="inline-flex md:inline-flex items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
+          <button 
+            onClick={() => router.push('/marketplace')}
+            className="inline-flex md:inline-flex items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white" 
+            style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
+          >
             <span>Explore All</span>
             <PiArrowBendUpRightBold className="w-5 h-5" />
           </button>
