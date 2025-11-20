@@ -3,10 +3,10 @@ import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-t w-[100%] md:w-[97%] mx-auto from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-48 sm:py-48">
+    <footer className="h-[80vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
 
       {/* Background pattern overlay */}
-      <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[10%]" style={{}} >
+      <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[15%]" style={{}} >
         <div className="absolute  h-[200vh] md:w-[20%] w-[30%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
         <div className="absolute h-[200vh] md:w-[40%] w-[80%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
         <div className="absolute h-[200vh] md:w-[60%] w-[120%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
@@ -15,12 +15,7 @@ export default function Footer() {
         <div className="absolute h-[200vh] md:w-[120%] w-[240%] rounded-[50%] bottom-0 border-1 border-white/40" ></div>
       </div>
 
-      {/* <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
-
-
-      </div> */}
-
-      <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
+      <div className="container h-full mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col">
 
         {/* Logo Section */}
         <div className="flex md:hidden items-center justify-center md:justify-start mb-6 sm:mb-8">
@@ -44,7 +39,7 @@ export default function Footer() {
 
 
         {/* CTA Section */}
-        <div className="mx-auto text-center mb-8 sm:mb-16">
+        <div className="mx-auto text-center md:mt-10 mb-8 sm:mb-16">
           <h2 className="text-[#FFB600] font-audiowide text-xl sm:text-[42px] md:text-[48px] mb-6 sm:mb-8 leading-tight">
             JOIN THE WORLD<br className="md:hidden" /> OF WEB3 TODAY
           </h2>
@@ -53,44 +48,46 @@ export default function Footer() {
           </button>
         </div>
 
-        <div className='hidden md:flex items-center justify-between w-full mt-16 sm:mt-16 md:mt-8'>
-
-          <div className="flex items-center justify-start md:justify-start">
-            <img src="/assets/logo.png" alt="Logo" className="h-8 sm:h-auto" />
-          </div>
-
-          <div className="flex justify-center md:justify-start items-center gap-4 sm:gap-8 flex-wrap font-exo2">
-            <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-              Platform
-            </a>
-            <span className="text-white">|</span>
-            <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-              Resource
-            </a>
-            <span className="text-white">|</span>
-            <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-              Company
-            </a>
-          </div>
-
-          {/* Social Media Icons - Desktop Only */}
-          <div className="hidden md:flex items-center justify-end gap-4">
-            <a href="https://www.instagram.com/21spades.io" target="_blank" aria-label="Instagram" className="text-white hover:text-purple-400 transition-colors">
-              <Instagram className="w-5 h-5" />
-            </a>
-            <a href="https://twitter.com/@21SpadesDPR" target="_blank" aria-label="X (Twitter)" className="text-white hover:text-purple-400 transition-colors">
-              <Twitter className="w-5 h-5" />
-            </a>
-            <a href="https://t.me/+XyKl3RHYu-QxNWMx" target="_blank" aria-label="Telegram" className="text-white hover:text-purple-400 transition-colors">
-              <FaTelegram className="w-5 h-5" />
-            </a>
-          </div>
-        </div>
+        
 
         {/* Bottom Section - Copyright and Legal */}
-        <div className="border-t border-purple-800/30 font-exo2 mt-16 sm:mt-16 md:mt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
-            <div className="text-center md:text-left order-2 md:order-1">
+        <div className=" flex flex-col w-[98%] absolute bottom-0  font-exo2 ">
+          <div className='hidden md:flex items-center justify-between w-full mb-5'>
+
+            <div className="flex items-center justify-start md:justify-start">
+              <img src="/assets/logo.png" alt="Logo" className="h-8 sm:h-auto" />
+            </div>
+
+            <div className="flex justify-center md:justify-start items-center gap-4 sm:gap-8 flex-wrap font-exo2">
+              <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
+                Platform
+              </a>
+              <span className="text-white">|</span>
+              <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
+                Resource
+              </a>
+              <span className="text-white">|</span>
+              <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
+                Company
+              </a>
+            </div>
+
+            {/* Social Media Icons - Desktop Only */}
+            <div className="hidden md:flex items-center justify-end gap-4">
+              <a href="https://www.instagram.com/21spades.io" target="_blank" aria-label="Instagram" className="text-white hover:text-purple-400 transition-colors">
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a href="https://twitter.com/@21SpadesDPR" target="_blank" aria-label="X (Twitter)" className="text-white hover:text-purple-400 transition-colors">
+                <Twitter className="w-5 h-5" />
+              </a>
+              <a href="https://t.me/+XyKl3RHYu-QxNWMx" target="_blank" aria-label="Telegram" className="text-white hover:text-purple-400 transition-colors">
+                <FaTelegram className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+
+          <div className="flex  flex-col md:flex-row border-t border-purple-800/30 items-center justify-between gap-4 md:gap-0">
+            <div className="text-center md:text-left order-2 md:order-1 mt-5">
               <p className="text-[11px] sm:text-[12px] md:text-[14px] font-exo2 text-[#ACACAC]">
                 &copy; Copyright 2025. All Rights Reserved
               </p>

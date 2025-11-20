@@ -213,15 +213,30 @@ export default function Header() {
                     margin: '4px',
                   }}
                 >
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-600 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-purple-500/50 transition-all ">
-                    {user?.profilePicture || user?.avatar ? (
+                  <div
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden flex items-center justify-center ring-2 ring-transparent hover:ring-purple-500/50 transition-all"
+                    style={
+                      user?.profilePicture
+                        ? undefined
+                        : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                    }
+                  >
+                    {user?.profilePicture ? (
                       <img
-                        src={user.profilePicture || user.avatar}
+                        src={user.profilePicture}
                         alt={getUserDisplayName()}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/post/card-21.png'
+                          e.currentTarget.className = 'w-full h-full object-contain'
+                        }}
                       />
                     ) : (
-                      <span className="text-white text-sm font-semibold">{getUserInitial()}</span>
+                      <img
+                        src="/post/card-21.png"
+                        alt="Avatar"
+                        className="w-[32px] h-[32px] md:w-[40px] md:h-[40px] object-contain"
+                      />
                     )}
                   </div>
                   <span className="hidden lg:inline text-sm font-medium">{getUserDisplayName()}</span>
@@ -250,15 +265,30 @@ export default function Header() {
                       style={{ borderColor: 'rgba(139, 92, 246, 0.2)' }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-600 flex items-center justify-center overflow-hidden">
-                          {user?.profilePicture || user?.avatar ? (
+                        <div
+                          className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center"
+                          style={
+                            user?.profilePicture
+                              ? undefined
+                              : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                          }
+                        >
+                          {user?.profilePicture ? (
                             <img
-                              src={user.profilePicture || user.avatar}
+                              src={user.profilePicture}
                               alt={getUserDisplayName()}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = '/post/card-21.png'
+                                e.currentTarget.className = 'w-full h-full object-contain'
+                              }}
                             />
                           ) : (
-                            <span className="text-white font-semibold">{getUserInitial()}</span>
+                            <img
+                              src="/post/card-21.png"
+                              alt="Avatar"
+                              className="w-full h-full object-contain"
+                            />
                           )}
                         </div>
                         <div>

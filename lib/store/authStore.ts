@@ -138,11 +138,16 @@ interface PostCache {
 interface FeedState {
   posts: Post[]
   isLoading: boolean
+  isLoadingMore: boolean
+  hasMore: boolean
+  currentPage: number
+  limit: number
   pagination: Pagination | null
   postsCache: Map<string, PostCache>
-  getPosts: (params?: { categoryId?: string; page?: number; limit?: number; forceRefresh?: boolean }) => Promise<void>
+  getPosts: (params?: { categoryId?: string; page?: number; limit?: number; forceRefresh?: boolean; append?: boolean }) => Promise<void>
   getPost: (id: string) => Promise<Post | null>
-  createPost: (data: CreatePostData) => Promise<void>
+  createPost: (data: CreatePostData) => Promise<Post | null>
+  prependPost: (post: Post) => void
   updatePost: (id: string, data: CreatePostData) => Promise<void>
   deletePost: (id: string) => Promise<void>
   likePost: (id: string) => Promise<void>
@@ -250,7 +255,7 @@ const mapPrivyUserToUser = (privyUser: unknown): User => {
     name: displayName,
     username: derivedUsername,
     email: ensuredEmail,
-    profilePicture: privyUserAny.twitter?.profileImageUrl || privyUserAny.avatar,
+    profilePicture: privyUserAny.twitter?.profileImageUrl || privyUserAny.avatar ,
     twitter: privyUserAny.twitter?.username,
     isVerified: Boolean(privyUserAny.twitter?.verified || privyUserAny.email?.verified),
     privyId, // Store Privy ID separately for backend lookup
@@ -647,20 +652,39 @@ export const useFeedStore = create<FeedState>()(
   (set, get) => ({
       posts: [],
       isLoading: false,
+      isLoadingMore: false,
+      hasMore: true,
+      currentPage: 1,
+      limit: 10,
       pagination: null,
       postsCache: new Map<string, PostCache>(),
 
-      getPosts: async (params?: { categoryId?: string; page?: number; limit?: number; forceRefresh?: boolean }) => {
+      getPosts: async (params?: { categoryId?: string; page?: number; limit?: number; forceRefresh?: boolean; append?: boolean }) => {
         const CACHE_DURATION = 60000 // 60 seconds cache duration
+        const resolveHasMore = (paginationData: Pagination | null, receivedLength: number, currentPageValue: number, limValue: number) => {
+          if (paginationData) {
+            const paginationAny = paginationData as Pagination & { totalPages?: number; totalItems?: number }
+            const totalPages = paginationAny.totalPages ?? paginationAny.pages
+            if (typeof totalPages === 'number') {
+              return currentPageValue < totalPages
+            }
+            const totalItems = paginationAny.totalItems ?? paginationAny.total
+            if (typeof totalItems === 'number') {
+              return currentPageValue * limValue < totalItems
+            }
+          }
+          return receivedLength === limValue
+        }
         const categoryId = params?.categoryId || 'all'
-        const page = params?.page || 1
-        const limit = params?.limit || 20
+        const append = params?.append || false
+        const limit = params?.limit || get().limit || 10
+        const page = params?.page || (append ? get().currentPage + 1 : 1)
         
         // Create cache key from params
         const cacheKey = `${categoryId}_${page}_${limit}`
         
         // Check cache if not forcing refresh
-        if (!params?.forceRefresh) {
+        if (!append && !params?.forceRefresh) {
           const cache = get().postsCache.get(cacheKey)
           const now = Date.now()
           
@@ -669,18 +693,25 @@ export const useFeedStore = create<FeedState>()(
             set({ 
               posts: cache.posts,
               pagination: cache.pagination,
-              isLoading: false 
+              isLoading: false,
+              hasMore: resolveHasMore(cache.pagination, cache.posts.length, page, limit),
+              currentPage: page,
+              limit
             })
             return
           }
         }
         
-        set({ isLoading: true })
+        if (append) {
+          set({ isLoadingMore: true })
+        } else {
+          set({ isLoading: true })
+        }
         try {
           const queryParams = new URLSearchParams()
           if (params?.categoryId) queryParams.append('categoryId', params.categoryId)
           if (params?.page) queryParams.append('page', params.page.toString())
-          if (params?.limit) queryParams.append('limit', params.limit.toString())
+          if (params?.limit || limit) queryParams.append('limit', (params?.limit || limit).toString())
           
           const url = queryParams.toString() 
             ? `${authRoutes.getPosts}?${queryParams.toString()}`
@@ -688,30 +719,44 @@ export const useFeedStore = create<FeedState>()(
 
           const response = await apiCaller('GET', url)
           if (response.success) {
-            const posts = response.data.posts || []
+            const posts = (response.data.posts || []) as Post[]
             const pagination = response.data.pagination || null
+            const existingPosts = append ? get().posts : []
+            const existingIds = new Set(existingPosts.map(post => post._id))
+            const mergedPosts = append 
+              ? [...existingPosts, ...posts.filter(post => !existingIds.has(post._id))]
+              : posts
             
-            // Update cache
-            const newCache = new Map(get().postsCache)
-            newCache.set(cacheKey, {
-              posts,
-              pagination,
-              timestamp: Date.now(),
-              categoryId: params?.categoryId,
-              page,
-              limit
-            })
+            const hasMore = resolveHasMore(pagination, posts.length, page, limit)
+                        
+            // Update cache only for non-append requests
+            let newCache = get().postsCache
+            if (!append) {
+              newCache = new Map(get().postsCache)
+              newCache.set(cacheKey, {
+                posts,
+                pagination,
+                timestamp: Date.now(),
+                categoryId: params?.categoryId,
+                page,
+                limit
+              })
+            }
             
             set({ 
-              posts,
+              posts: mergedPosts,
               pagination,
               isLoading: false,
-              postsCache: newCache
+              isLoadingMore: false,
+              postsCache: newCache,
+              hasMore,
+              currentPage: page,
+              limit
             })
           }
         } catch (error) {
           console.error('Error fetching posts:', error)
-          set({ isLoading: false })
+          set({ isLoading: false, isLoadingMore: false })
           throw error
         }
       },
@@ -730,19 +775,41 @@ export const useFeedStore = create<FeedState>()(
       },
 
       createPost: async (data: CreatePostData) => {
-        set({ isLoading: true })
         try {
           const response = await apiCaller('POST', authRoutes.createPost, data)
           if (response.success) {
-            // Clear cache and force refresh posts after creating
+            const newPost = response.data?.post as Post | undefined
+            // Clear cache so future fetches get fresh data
             set({ postsCache: new Map() })
-            await get().getPosts({ forceRefresh: true })
+            return newPost || null
           }
+          return null
         } catch (error) {
           console.error('Error creating post:', error)
-          set({ isLoading: false })
           throw error
         }
+      },
+
+      prependPost: (post: Post) => {
+        if (!post?._id) return
+        set(state => {
+          const existingIds = new Set<string>()
+          const filteredPosts = state.posts.filter(existingPost => {
+            if (existingPost?._id) {
+              if (existingPost._id === post._id) {
+                return false
+              }
+              if (existingIds.has(existingPost._id)) {
+                return false
+              }
+              existingIds.add(existingPost._id)
+            }
+            return true
+          })
+          return {
+            posts: [post, ...filteredPosts],
+          }
+        })
       },
 
       updatePost: async (id: string, data: CreatePostData) => {
