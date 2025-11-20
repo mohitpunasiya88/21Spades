@@ -1,20 +1,23 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon } from 'lucide-react'
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon, MoreVertical, Edit, Trash2, X, Image as ImageIcon } from 'lucide-react'
 import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
-import { Avatar, Button, Collapse, Tooltip, Steps } from 'antd'
+import { Avatar, Button, Collapse, Tooltip as AntTooltip, Steps } from 'antd'
 import EmojiPicker from 'emoji-picker-react'
 import { useChatStore } from '@/lib/store/chatStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
 import RepostModal from '@/components/Common/RepostModal'
 import SharefeedModal from '@/app/(dashboard)/feed/Sharefeed'
+import { useMessage } from '@/lib/hooks/useMessage'
+import Tooltip from '@/components/Common/Tooltip'
 
 interface FeedPostProps {
   post: {
     id: string
     originalPostId?: string // For reposts, this is the original post ID
+    authorId?: string // Author ID for ownership check
     username: string
     verified: boolean
     timeAgo: string
@@ -118,11 +121,75 @@ const renderTextWithLinks = (text: string) => {
 }
 
 export default function FeedPost({ post }: FeedPostProps) {
-  const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes } = useFeedStore()
+  const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes, updatePost, deletePost } = useFeedStore()
   const { searchUsers, searchedUsers, clearSearchedUsers } = useChatStore()
   const { user: currentUser } = useAuthStore()
+  const { message } = useMessage()
   const isAuthenticated = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [updateText, setUpdateText] = useState(post.content)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [newImageFile, setNewImageFile] = useState<File | null>(null)
+  const [newImagePreview, setNewImagePreview] = useState<string | null>(null)
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false)
+  const updateImageInputRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  
+  // Check if current user is the owner - handle both id and _id formats
+  const currentUserId = currentUser?.id || (currentUser as any)?._id
+  const postAuthorId = post.authorId
+  
+  // Also try to get authorId from store if not in props
+  const storePost = useFeedStore((state) => state.posts.find((p) => p._id === post.id))
+  const authorIdFromStore = storePost?.author?._id
+  
+  const finalAuthorId = postAuthorId || authorIdFromStore
+  const isOwner = currentUserId && finalAuthorId && String(currentUserId) === String(finalAuthorId)
+
+  // Sync updateText and reset image when modal opens/closes
+  useEffect(() => {
+    if (showUpdateModal) {
+      setUpdateText(post.content)
+      setNewImageFile(null)
+      setNewImagePreview(null)
+      setRemoveCurrentImage(false)
+    }
+  }, [showUpdateModal, post.content])
+
+  // Handle image selection for update
+  const handleUpdateImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setNewImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setNewImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+    // Reset input to allow selecting same file again
+    if (updateImageInputRef.current) {
+      updateImageInputRef.current.value = ''
+    }
+  }
+
+  // Handle remove image
+  const handleRemoveUpdateImage = () => {
+    setNewImageFile(null)
+    setNewImagePreview(null)
+    setRemoveCurrentImage(false)
+  }
+
+  // Handle remove current image
+  const handleRemoveCurrentImage = () => {
+    setRemoveCurrentImage(true)
+    setNewImageFile(null)
+    setNewImagePreview(null)
+  }
   const [liked, setLiked] = useState(post.isLiked || false)
   const [saved, setSaved] = useState(post.isSaved || false)
   const [localLikes, setLocalLikes] = useState(post.likes)
@@ -545,12 +612,70 @@ export default function FeedPost({ post }: FeedPostProps) {
         setMentionQuery('')
         setMentionStartPos(null)
       }
+      
+      // Handle menu dropdown
+      if (showMenu && menuRef.current && !menuRef.current.contains(target)) {
+        setShowMenu(false)
+      }
     }
     document.addEventListener('mousedown', handleDocClick)
     return () => {
       document.removeEventListener('mousedown', handleDocClick)
     }
-  }, [isEmojiPickerOpen, showMentionSuggestions])
+  }, [isEmojiPickerOpen, showMentionSuggestions, showMenu])
+
+  const handleUpdatePost = async () => {
+    if (!updateText.trim() && !post.image && !newImagePreview && !removeCurrentImage) {
+      message.error('Post cannot be empty')
+      return
+    }
+    
+    setIsUpdating(true)
+    try {
+      // Determine image URL:
+      // - If new image selected, use new image preview
+      // - If removeCurrentImage is true, set to undefined (remove image)
+      // - Otherwise, keep existing image
+      let imageUrl: string | undefined
+      if (newImagePreview) {
+        imageUrl = newImagePreview
+      } else if (removeCurrentImage) {
+        imageUrl = undefined
+      } else {
+        imageUrl = post.image || undefined
+      }
+      
+      await updatePost(post.id, {
+        text: updateText.trim() || undefined,
+        postUrl: imageUrl,
+      })
+      message.success('Post updated successfully')
+      setShowUpdateModal(false)
+      setUpdateText(post.content)
+      setNewImageFile(null)
+      setNewImagePreview(null)
+      setRemoveCurrentImage(false)
+    } catch (error: any) {
+      console.error('Error updating post:', error)
+      message.error(error?.response?.data?.message || 'Failed to update post')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleDeletePost = async () => {
+    setIsDeleting(true)
+    try {
+      await deletePost(post.id)
+      message.success('Post deleted successfully')
+      setShowDeleteModal(false)
+    } catch (error: any) {
+      console.error('Error deleting post:', error)
+      message.error(error?.response?.data?.message || 'Failed to delete post')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
   // Format relative time from ISO date string (e.g., 1h, 2d)
   const formatRelativeTime = (isoDate?: string) => {
     if (!isoDate) return ''
@@ -697,6 +822,60 @@ export default function FeedPost({ post }: FeedPostProps) {
           </div>
           <p className="text-gray-500 text-[10px] sm:text-xs truncate">{post.walletAddress}</p>
         </div>
+        
+        {/* Three-dot menu - Show for all posts, disabled for non-owners */}
+        <Tooltip 
+          message={!isOwner ? "You can only edit or delete your own posts" : ""} 
+          disabled={isOwner}
+        >
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (isOwner) {
+                  setShowMenu(!showMenu)
+                }
+              }}
+              disabled={!isOwner}
+              className={`p-1.5 flex flex-col items-center gap-0.5 transition-opacity ${
+                isOwner 
+                  ? 'hover:opacity-80 cursor-pointer' 
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
+              aria-label="Post options"
+            >
+              <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+              <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+              <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+            </button>
+            
+            {showMenu && isOwner && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a2e] border border-[#FFFFFF33] rounded-lg shadow-lg z-50 overflow-hidden">
+                <button
+                  onClick={() => {
+                    setUpdateText(post.content)
+                    setShowUpdateModal(true)
+                    setShowMenu(false)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-white/10 transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Update this post</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(true)
+                    setShowMenu(false)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-red-500/10 transition-colors border-t border-[#FFFFFF33]"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </Tooltip>
       </div>
 
       {/* Repost Caption - Only show if it's a repost and has caption */}
@@ -1218,6 +1397,196 @@ export default function FeedPost({ post }: FeedPostProps) {
       />
       {/* Share Modal */}
       <SharefeedModal open={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
+
+      {/* Update Post Modal */}
+      {showUpdateModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={(e) => {
+            // Prevent closing modal when clicking outside during update
+            if (!isUpdating && e.target === e.currentTarget) {
+              setShowUpdateModal(false)
+              setUpdateText(post.content)
+              setNewImageFile(null)
+              setNewImagePreview(null)
+              setRemoveCurrentImage(false)
+            }
+          }}
+        >
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-[#090721] to-[#090721] rounded-2xl shadow-2xl overflow-hidden border border-gray-700/50">
+            <button
+              onClick={() => {
+                if (!isUpdating) {
+                  setShowUpdateModal(false)
+                  setUpdateText(post.content)
+                  setNewImageFile(null)
+                  setNewImagePreview(null)
+                  setRemoveCurrentImage(false)
+                }
+              }}
+              disabled={isUpdating}
+              className={`absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${
+                isUpdating ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            
+            <div className="p-6 sm:p-8">
+              <h2 className="text-white text-2xl sm:text-3xl font-exo2 font-bold mb-4 text-center">
+                Update Post
+              </h2>
+              
+              <textarea
+                value={updateText}
+                onChange={(e) => setUpdateText(e.target.value)}
+                placeholder="What's on your mind?"
+                className="w-full bg-black/40 border border-gray-600 rounded-lg px-4 py-3 text-white font-exo2 text-base focus:outline-none focus:ring-1 focus:ring-[#7E6BEF] focus:border-[#7E6BEF] resize-none min-h-[120px]"
+                disabled={isUpdating}
+              />
+              
+              {/* Image Upload Section */}
+              <div className="mt-4 space-y-3">
+                {/* New Image Preview */}
+                {newImagePreview && (
+                  <div className="relative">
+                    <img
+                      src={newImagePreview}
+                      alt="New post image"
+                      className="w-full h-auto rounded-lg max-h-[300px] object-contain"
+                    />
+                    <button
+                      onClick={handleRemoveUpdateImage}
+                      disabled={isUpdating}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 transition-colors"
+                      aria-label="Remove image"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                )}
+                
+                {/* Current Image (if no new image selected and not removed) */}
+                {!newImagePreview && !removeCurrentImage && post.image && (
+                  <div className="relative">
+                    <img
+                      src={post.image}
+                      alt="Current post image"
+                      className="w-full h-auto rounded-lg max-h-[300px] object-contain"
+                    />
+                    <button
+                      onClick={handleRemoveCurrentImage}
+                      disabled={isUpdating}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 transition-colors"
+                      aria-label="Remove image"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                    <p className="text-gray-400 text-xs mt-2 text-center">Click remove to delete or upload new to replace</p>
+                  </div>
+                )}
+                
+                {/* Upload Image Button */}
+                {!newImagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => updateImageInputRef.current?.click()}
+                    disabled={isUpdating}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-600 rounded-lg bg-black/40 text-white hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span className="text-sm font-exo2">
+                      {(post.image && !removeCurrentImage) ? 'Change Image' : 'Add Image'}
+                    </span>
+                  </button>
+                )}
+                
+                {/* Hidden File Input */}
+                <input
+                  ref={updateImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpdateImageSelect}
+                  className="hidden"
+                  disabled={isUpdating}
+                />
+              </div>
+              
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    if (!isUpdating) {
+                      setShowUpdateModal(false)
+                      setUpdateText(post.content)
+                      setNewImageFile(null)
+                      setNewImagePreview(null)
+                      setRemoveCurrentImage(false)
+                    }
+                  }}
+                  disabled={isUpdating}
+                  className="flex-1 py-3 rounded-full border border-gray-600 bg-[#1A1A2E] text-white font-exo2 font-semibold text-sm hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdatePost}
+                  disabled={isUpdating || (!updateText.trim() && !post.image && !newImagePreview && !removeCurrentImage)}
+                  className="flex-1 py-3 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isUpdating && (
+                    <span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {isUpdating ? 'Updating...' : 'Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-[#090721] to-[#090721] rounded-2xl shadow-2xl overflow-hidden border border-gray-700/50">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            
+            <div className="p-6 sm:p-8">
+              <h2 className="text-white text-2xl sm:text-3xl font-exo2 font-bold mb-2 text-center">
+                Delete Post
+              </h2>
+              
+              <p className="text-white/90 text-sm text-center sm:text-base font-exo2 mb-6">
+                Are you sure you want to delete this post? This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 rounded-full border border-gray-600 bg-[#1A1A2E] text-white font-exo2 font-semibold text-sm hover:bg-white/5 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePost}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white font-exo2 font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isDeleting && (
+                    <span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )

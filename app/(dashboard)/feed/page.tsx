@@ -8,7 +8,9 @@ import { Badge, Drawer, Select } from 'antd'
 import { useCategoriesStore, useFeedStore, useAuthStore, type Post } from '@/lib/store/authStore'
 import EmojiPicker from 'emoji-picker-react'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useMessage } from '@/lib/hooks/useMessage'
 import LoginRequiredModal from '@/components/Common/LoginRequiredModal'
+import Tooltip from '@/components/Common/Tooltip'
 import "@/components/Dashboard/style.css"
 import { Ddrop } from '@/components/Ddrop'
 
@@ -94,6 +96,7 @@ function transformPost(post: Post) {
   return {
     id: post._id, // Keep repost post ID for tracking
     originalPostId: isRepost && originalPost ? originalPost._id : undefined, // Store original post ID for likes
+    authorId: repostAuthor._id, // Add author ID for ownership check
     username: repostAuthor.username || repostAuthor.name || 'Unknown User',
     verified: true, // You can add verified field to user model later
     timeAgo: formatTimeAgo(post.createdAt || new Date().toISOString()),
@@ -124,10 +127,11 @@ export default function FeedPage() {
   const { posts, isLoading, getPosts, createPost } = useFeedStore()
   const { categories, getCategories } = useCategoriesStore()
   const { user } = useAuthStore()
+  const { message } = useMessage()
   const isAuthenticated = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('All') // For filtering posts
-  const [postCategory, setPostCategory] = useState('All') // For post creation
+  const [postCategory, setPostCategory] = useState<string | undefined>(undefined) // For post creation
   const [isFilterCategoriesOpen, setIsFilterCategoriesOpen] = useState(false) // For filtering
   const filterCategoriesRef = useRef<HTMLDivElement>(null)
   
@@ -169,6 +173,11 @@ export default function FeedPage() {
   const categoriesList = useMemo(() => {
     const allCategories = categories.filter(cat => cat.isActive).map(cat => cat.name)
     return ['All', ...allCategories]
+  }, [categories])
+
+  // Categories list for post creation (without 'All' option)
+  const postCategoriesList = useMemo(() => {
+    return categories.filter(cat => cat.isActive).map(cat => cat.name)
   }, [categories])
 
   // Countdown (dummy target ~ 3 days later)
@@ -290,7 +299,13 @@ export default function FeedPage() {
 
     // Validate: must have text or image
     if (!postText.trim() && imagePreviews.length === 0) {
-      alert('Please add text or an image to post')
+      message.error('Please add text or an image to post')
+      return
+    }
+
+    // Validate: must select a category
+    if (!postCategory) {
+      message.warning('Please select a category before posting')
       return
     }
 
@@ -313,9 +328,9 @@ export default function FeedPage() {
 
     try {
       // Get category ID if a category is selected for post creation
-      const categoryId = postCategory === 'All' 
-        ? undefined 
-        : categories.find(cat => cat.name === postCategory)?._id
+      const categoryId = postCategory 
+        ? categories.find(cat => cat.name === postCategory)?._id
+        : undefined
 
       // Use first image preview URL if available (for now using data URL)
       // In production, you'd upload to S3 first and get the URL
@@ -336,7 +351,7 @@ export default function FeedPage() {
       setPostText('')
       setSelectedImages([])
       setImagePreviews([])
-      setPostCategory('All')
+      setPostCategory(undefined)
       
       // Refresh posts to show the new post - fetch all posts regardless of category
       const currentCategoryId = selectedCategory === 'All' 
@@ -544,20 +559,37 @@ export default function FeedPage() {
                           )}
                         </div>
                       )}
-                      options={categoriesList.map((cat) => ({
+                      options={postCategoriesList.map((cat) => ({
                         label: cat, // Simple label for trigger display (no checkmark)
                         value: cat,
                       }))}
                     />
                   </div>
                 </div>
-                <button 
-                  onClick={handlePostSubmit}
-                  disabled={isPosting || (!postText.trim() && imagePreviews.length === 0)}
-                  className="bg-white text-[#020019] text-sm sm:text-base md:text-[18px] font-[600] px-3 sm:px-4 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
-                >
-                  {isPosting ? 'Posting...' : 'Post'}
-                </button>
+                {(() => {
+                  const isDisabled = isPosting || (!postText.trim() && imagePreviews.length === 0) || !postCategory
+                  let tooltipMessage = ''
+                  
+                  if (isDisabled && !isPosting) {
+                    if (!postCategory) {
+                      tooltipMessage = 'Please select a category'
+                    } else if (!postText.trim() && imagePreviews.length === 0) {
+                      tooltipMessage = 'Please add text or an image to post'
+                    }
+                  }
+                  
+                  return (
+                    <Tooltip message={tooltipMessage} disabled={!tooltipMessage || isPosting}>
+                      <button 
+                        onClick={handlePostSubmit}
+                        disabled={isDisabled}
+                        className="bg-white text-[#020019] text-sm sm:text-base md:text-[18px] font-[600] px-3 sm:px-4 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      >
+                        {isPosting ? 'Posting...' : 'Post'}
+                      </button>
+                    </Tooltip>
+                  )
+                })()}
               </div>
               
               {/* Progress Indicator */}
@@ -588,8 +620,13 @@ export default function FeedPage() {
           {/* Explore Feed Section */}
           <div ref={postsSectionRef} className="mb-4 sm:mb-6">
             <div className="mb-2 sm:mb-3">
-              <h2 className="text-white text-lg sm:text-xl font-bold mb-1">Explore Feed</h2>
-              <p className="text-gray-400 text-sm sm:text-base">Explore Feed, the premier Web3 marketplace for securely buying, selling, and trading digital assets.</p>
+              <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 font-exo2" style={{
+                textShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)',
+                letterSpacing: '0.5px'
+              }}>
+                Explore Feed
+              </h2>
+              <p className="text-gray-300 text-sm sm:text-base font-exo2 leading-relaxed">Explore Feed, the premier Web3 marketplace for securely buying, selling, and trading digital assets.</p>
             </div>
 
             {/* Category Filter Tabs */}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins } from 'lucide-react'
+import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins, ArrowLeft } from 'lucide-react'
 import spadesImage from '../assets/21spades.png'
 import { Avatar, Spin } from 'antd'
 import { MessageSquareText, Share } from "lucide-react";
@@ -668,7 +668,7 @@ export default function NFTDetails({
   const [isAuctionLive, setIsAuctionLive] = useState(false)
   
   // Independent state for each accordion
-  const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(true)
+  const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const [isBidsOpen, setIsBidsOpen] = useState(false)
 
   const handleAccordionToggle = useCallback((key: 'token' | 'bids') => {
@@ -1291,9 +1291,26 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
     )
   }
 
+  // Get collectionId for back navigation
+  const targetCollectionId = collectionId || (currentNft?.collectionId && typeof currentNft.collectionId === 'string' 
+    ? currentNft.collectionId 
+    : (currentNft?.collectionId as any)?._id || (currentNft?.collectionId as any)?.id)
+
   return (
     <div className="w-full min-h-screen font-exo2 mt-2 sm:mt-4 md:mt-6">
       <div className="w-full mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        {/* Back Button */}
+        {targetCollectionId && (
+          <button
+            onClick={() => router.push(`/marketplace/collection/${targetCollectionId}`)}
+            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition-opacity shadow-lg mb-4 sm:mb-6"
+            style={{ cursor: 'pointer' }}
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm sm:text-base">Back</span>
+          </button>
+        )}
+        
         {/* Top section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           {/* Media */}
@@ -1534,12 +1551,12 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
               onToggle={() => handleAccordionToggle('bids')}
             >
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer">
                   <div className="relative inline-flex items-center rounded-full border border-white/10 px-4 py-1.5">
                     <select
                       value={bidsOrder}
                       onChange={(event) => setBidsOrder(event.target.value as BidOrder)}
-                      className="bg-transparent pr-6 text-sm font-semibold text-white focus:outline-none appearance-none"
+                      className="bg-transparent pr-6 text-sm font-semibold text-white focus:outline-none appearance-none cursor-pointer"
                     >
                       <option value="high">High to Low</option>
                       <option value="low">Low to High</option>

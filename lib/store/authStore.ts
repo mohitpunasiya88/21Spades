@@ -753,7 +753,12 @@ export const useFeedStore = create<FeedState>()(
             // Update the post in the list
             const posts = get().posts
             const updatedPosts = posts.map(post => 
-              post._id === id ? { ...post, ...response.data.post } : post
+              post._id === id ? { 
+                ...post, 
+                ...response.data.post,
+                text: response.data.post?.text || data.text || post.text,
+                postUrl: response.data.post?.postUrl || data.postUrl || post.postUrl,
+              } : post
             )
             set({ posts: updatedPosts, isLoading: false })
           }
