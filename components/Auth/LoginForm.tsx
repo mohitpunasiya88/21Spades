@@ -6,9 +6,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import type { LoginData, SignUpData } from '@/types/auth'
-import { Eye, XIcon, Loader2 } from 'lucide-react'
+import { Eye, Loader2 } from 'lucide-react'
 import { useMessage } from '@/lib/hooks/useMessage'
-import { FacebookIcon, GoogleIcon } from '@/app/icon/svg'
+import { FacebookIcon, GoogleIcon, XIcon } from '@/app/icon/svg'
 import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
 
 export default function LoginForm() {
