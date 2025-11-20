@@ -3,9 +3,9 @@ import authRoutes from '@/lib/routes';
 
 
  export const apiClient = axios.create({
-    baseURL: "http://localhost:8080/api/",
+    // baseURL: "http://localhost:8080/api/",
     // baseURL: "http://18.215.86.203:8080/api/",
-    // baseURL: "https://two1spades-backend.onrender.com/api/",
+    baseURL: "https://two1spades-backend.onrender.com/api/",
 });
 
 const routes = authRoutes;
@@ -54,9 +54,9 @@ apiClient.interceptors.response.use(
 
             if (status === 401 || status === 403) {
                 errorMessage = data?.message || 'Unauthorized access. Please log in again.';
-                // localStorage.removeItem('token');
+                localStorage.removeItem('token');
                 // Redirect to frontend login page, not API route
-                // window.location.href = '/login';
+                window.location.href = '/login';
             }
             else if (status === 400) {
                 errorMessage = data?.message || 'Bad request. Please check the input.';
