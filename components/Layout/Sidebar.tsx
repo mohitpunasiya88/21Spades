@@ -324,7 +324,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   ]
 
   return (
-    <aside className={`${sidebarOpen ? 'w-85' : 'w-36'} h-full overflow-y-auto scrollbar-hide bg-transparent transition-all duration-300 mt-25 md:mt-6 ${!sidebarOpen ? 'overflow-x-visible' : ''}`}>
+    <aside className={`${sidebarOpen ? 'w-72' : 'w-32'} h-full overflow-y-auto scrollbar-hide bg-transparent transition-all duration-300 mt-25 md:mt-6 ${!sidebarOpen ? 'overflow-x-visible' : ''}`}>
       {/* Combined Container */}
       <div className={`${sidebarOpen ? 'px-4' : 'px-2'} pt-4 pb-4 ${!sidebarOpen ? 'overflow-visible' : ''}`}>
         <div className={`rounded-lg bg-[#090721] border border-[#2A2F4A] ${!sidebarOpen ? 'overflow-visible' : ''}`}>
