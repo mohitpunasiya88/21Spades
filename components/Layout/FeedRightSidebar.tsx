@@ -95,7 +95,7 @@ export default function FeedRightSidebar() {
       className="h-full p-2 mt-5 mb-5 font-exo2 "
     >
       {/* Fear & Greed Index */}
-      <div className="mb-6 p-4 pb-4 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A]">
+      <div className="mb-6 p-4 pb-4 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] overflow-hidden">
         {/* Line 1: Title */}
         <div className="mb-4">
           <h3 className="text-white font-audiowide text-[25px]">Fear & Greed Index</h3>
@@ -137,10 +137,10 @@ export default function FeedRightSidebar() {
         </div>
 
         {/* Gauge Container */}
-        <div className="relative w-full h-[180px] flex items-center justify-center">
+        <div className="relative w-full h-[180px] flex items-end justify-center">
           {/* Inner glow background */}
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[260px] h-[140px] rounded-t-[140px]"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[260px] h-[140px] rounded-t-[140px] bottom-0"
             style={{
               background:
                 'radial-gradient(circle at 50% 100%, rgba(92,9,255,0.45) 0%, rgba(92,9,255,0.20) 35%, rgba(11,15,30,0.00) 65%)',
@@ -148,42 +148,44 @@ export default function FeedRightSidebar() {
             }}
           />
           
-          <GaugeComponent
-            type="semicircle"
-            arc={{
-              width: 0.2,
-              padding: 0.03,
-              cornerRadius: 1,
-              subArcs: [
-                { limit: 20, color: '#EA4228' },
-                { limit: 40, color: '#F87171' },
-                { limit: 50, color: '#FBBF24' },
-                { limit: 60, color: '#FDE047' },
-                { limit: 80, color: '#A3E635' },
-                { limit: 90, color: '#4ADE80' },
-                { limit: 100, color: '#22C55E' }
-              ]
-            }}
-            pointer={{
-              color: '#D4A574',
-              length: 0.75,
-              width: 12,
-              elastic: false
-            }}
-            labels={{
-              valueLabel: { hide: true },
-              tickLabels: { hideMinMax: true, ticks: [] }
-            }}
-            value={value}
-            minValue={0}
-            maxValue={100}
-          />
+          <div className="relative w-full h-[140px] overflow-hidden">
+            <GaugeComponent
+              type="semicircle"
+              arc={{
+                width: 0.2,
+                padding: 0.03,
+                cornerRadius: 1,
+                subArcs: [
+                  { limit: 20, color: '#EA4228' },
+                  { limit: 40, color: '#F87171' },
+                  { limit: 50, color: '#FBBF24' },
+                  { limit: 60, color: '#FDE047' },
+                  { limit: 80, color: '#A3E635' },
+                  { limit: 90, color: '#4ADE80' },
+                  { limit: 100, color: '#22C55E' }
+                ]
+              }}
+              pointer={{
+                color: '#D4A574',
+                length: 0.75,
+                width: 12,
+                elastic: false
+              }}
+              labels={{
+                valueLabel: { hide: true },
+                tickLabels: { hideMinMax: true, ticks: [] }
+              }}
+              value={value}
+              minValue={0}
+              maxValue={100}
+            />
 
-          {/* White circle with percentage at exact center of gauge */}
-          <div className="pointer-events-none absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg z-10">
-            <span className="text-black font-exo2 font-bold text-lg">
-              {Math.round(Number(value))}%
-            </span>
+            {/* White circle with percentage at exact bottom center of semicircle gauge - appears as half-circle */}
+            <div className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-18 h-18 rounded-full bg-white flex items-center justify-center shadow-lg z-10" style={{ clipPath: 'inset(0 0 50% 0)' }}>
+              <span className="text-black font-exo2 font-bold text-base" style={{ transform: 'translateY(-35%)' }}>
+                {Math.round(Number(value))}%
+              </span>
+            </div>
           </div>
         </div>
       </div>
