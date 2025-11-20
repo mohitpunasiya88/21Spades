@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Heart, Check, LayoutGrid, LayoutList } from 'lucide-react'
+import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, ArrowLeft } from 'lucide-react'
 import { Dropdown, Space, Avatar, Spin } from 'antd'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -21,6 +21,9 @@ interface NFT {
   itemName?: string
   _id?: string
   nftId?: string
+  auctionType?: number
+  startingTime?: number | string
+  endingTime?: number | string
 }
 
 interface CollectionProfileProps {
@@ -36,6 +39,13 @@ interface CollectionProfileProps {
   nftCount2?: string
 }
 
+// Helper function to get auction type display text
+function getAuctionTypeText(auctionType?: number): string {
+  if (auctionType === 1) return 'Fixed Rate'
+  if (auctionType === 2) return 'Auction'
+  return 'N/A'
+}
+
 // NFT Card Component for the grid
 function NFTCard({
   name,
@@ -48,14 +58,69 @@ function NFTCard({
   itemName,
   nftId: propNftId,
   collectionId,
+  auctionType,
+  startingTime,
+  endingTime,
 }: NFT & { collectionId?: string }) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [isAuctionLive, setIsAuctionLive] = useState(false)
   const router = useRouter()
   
   const nftId = _id || propNftId || id || name
   const displayName = name || itemName || 'Unnamed NFT'
   const nftImage = imageUrl || image
+  const auctionTypeText = getAuctionTypeText(auctionType)
+  const isAuction = auctionType === 2
+  
+  // Determine if auction is live or scheduled
+  useEffect(() => {
+    if (!isAuction) {
+      setIsAuctionLive(false)
+      return
+    }
+    
+    const checkAuctionStatus = () => {
+      const now = Date.now()
+      const startTime = startingTime ? (typeof startingTime === 'string' ? new Date(startingTime).getTime() : startingTime) : null
+      const endTime = endingTime ? (typeof endingTime === 'string' ? new Date(endingTime).getTime() : endingTime) : null
+      
+      // If no start/end times, consider it live
+      if (!startTime && !endTime) {
+        setIsAuctionLive(true)
+        return
+      }
+      
+      // If current time is before start time, it's scheduled
+      if (startTime && now < startTime) {
+        setIsAuctionLive(false)
+        return
+      }
+      
+      // If current time is after end time, it's ended (not live)
+      if (endTime && now >= endTime) {
+        setIsAuctionLive(false)
+        return
+      }
+      
+      // If current time is between start and end (or after start if no end), it's live
+      if ((!startTime || now >= startTime) && (!endTime || now < endTime)) {
+        setIsAuctionLive(true)
+        return
+      }
+      
+      setIsAuctionLive(false)
+    }
+    
+    checkAuctionStatus()
+    const intervalId = setInterval(checkAuctionStatus, 1000)
+    return () => clearInterval(intervalId)
+  }, [isAuction, startingTime, endingTime])
+  
+  // Debug log
+  if (process.env.NODE_ENV === 'development') {
+    console.log('NFTCard auctionType:', { auctionType, auctionTypeText, displayName, isAuctionLive })
+  }
 
   return (
     <div 
@@ -65,12 +130,12 @@ function NFTCard({
       <div 
         className="relative rounded-2xl overflow-hidden transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
         style={{
-          height: '325px',
+          height: '380px',
           boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
         }}
       >
         {/* Media box */}
-        <div className="relative h-[214px] p-3">
+        <div className="relative h-[250px] p-3">
           {/* Heart Icon */}
           <button
             onClick={(e) => {
@@ -130,6 +195,34 @@ function NFTCard({
             {displayName}
           </h3>
           
+          {/* Auction Type Badge and Live/Scheduled Status */}
+          <div className="mb-2.5 flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold font-exo2 ${
+              auctionType === 1 
+                ? 'bg-[#7E6BEF] text-white' 
+                : auctionType === 2
+                ? 'bg-[#3B82F6] text-white'
+                : 'bg-gray-600 text-white'
+            }`}>
+              {auctionTypeText}
+            </span>
+            
+            {/* Live/Scheduled Badge - Only show for Auctions */}
+            {isAuction && (
+              isAuctionLive ? (
+                <span className="inline-flex items-center gap-1 text-[#33E030] text-[11px] font-semibold uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#33E030] animate-pulse" />
+                  Live
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/40 text-[11px] font-semibold uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
+                  Scheduled
+                </span>
+              )
+            )}
+          </div>
+          
           {/* Price */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -158,6 +251,7 @@ export default function CollectionProfile({
   items = '700K',
   owners = '725',
 }: CollectionProfileProps) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('Items')
   const [selectedSort, setSelectedSort] = useState('Price High to Low')
   const [layoutView, setLayoutView] = useState<'grid' | 'list'>('grid')
@@ -213,16 +307,26 @@ export default function CollectionProfile({
           : (response.data.items || response.data.nfts || response.data.data || [])
         
         // Map API response to NFT interface
-        const mappedNFTs: NFT[] = nftsData.map((nft: any) => ({
-          id: nft._id || nft.id || '',
-          _id: nft._id || nft.id,
-          name: nft.itemName || nft.name || 'Unnamed NFT',
-          itemName: nft.itemName || nft.name,
-          price: nft.price ? `${nft.price}` : '0',
-          floorPrice: nft.floorPrice ? `${nft.floorPrice} AVAX` : '0.01 AVAX',
-          imageUrl: nft.imageUrl || nft.image || null,
-          image: nft.imageUrl || nft.image || null,
-        }))
+        const mappedNFTs: NFT[] = nftsData.map((nft: any) => {
+          const mapped = {
+            id: nft._id || nft.id || '',
+            _id: nft._id || nft.id,
+            name: nft.itemName || nft.name || 'Unnamed NFT',
+            itemName: nft.itemName || nft.name,
+            price: nft.price ? `${nft.price}` : '0',
+            floorPrice: nft.floorPrice ? `${nft.floorPrice} AVAX` : '0.01 AVAX',
+            imageUrl: nft.imageUrl || nft.image || null,
+            image: nft.imageUrl || nft.image || null,
+            auctionType: nft.auctionType !== undefined && nft.auctionType !== null ? Number(nft.auctionType) : undefined,
+            startingTime: nft.startingTime ? (typeof nft.startingTime === 'string' ? new Date(nft.startingTime).getTime() : Number(nft.startingTime)) : undefined,
+            endingTime: nft.endingTime ? (typeof nft.endingTime === 'string' ? new Date(nft.endingTime).getTime() : Number(nft.endingTime)) : undefined,
+          }
+          // Debug log
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Mapping NFT:', { original: nft.auctionType, mapped: mapped.auctionType, name: mapped.name })
+          }
+          return mapped
+        })
         
         setNfts(mappedNFTs)
       } else {
@@ -271,6 +375,18 @@ export default function CollectionProfile({
 
   return (
     <div className="w-full min-h-screen font-exo2 ">
+      {/* Back Button */}
+      <div className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 mt-5">
+        <button
+          onClick={() => router.push('/marketplace')}
+          className="flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition-opacity shadow-lg"
+          style={{ cursor: 'pointer' }}
+        >
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-sm sm:text-base">Back</span>
+        </button>
+      </div>
+
       {/* Header Section with Radial Gradient */}
       <div 
         className="relative w-full h-auto min-h-[350px] sm:min-h-[400px] overflow-hidden"
@@ -392,15 +508,15 @@ export default function CollectionProfile({
       <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 ">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           {/* Tabs */}
-          <div className="flex justify-center items-center gap-8 sm:gap-6 md:gap-8 w-full sm:w-auto overflow-x-auto">
+          <div className="flex justify-center items-center gap-8 sm:gap-8 md:gap-10 w-full sm:w-auto overflow-x-auto">
             {['Items', 'Live', 'Activity'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${
+                className={`text-sm sm:text-base transition-colors font-exo2 whitespace-nowrap font-bold cursor-pointer ${
                   activeTab === tab
-                    ? 'text-[#7E6BEF] border-b-2 border-[#7E6BEF] pb-2'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-[#7E6BEF] font-bold border-b border-[#7E6BEF] pb-2'
+                    : 'text-[#9CA3AF] hover:text-[#D1D5DB] font-medium'
                 }`}
               >
                 {tab}
@@ -466,6 +582,9 @@ export default function CollectionProfile({
                   image={nft.image}
                   imageUrl={nft.imageUrl}
                   collectionId={collectionId}
+                  auctionType={nft.auctionType}
+                  startingTime={nft.startingTime}
+                  endingTime={nft.endingTime}
                 />
               </div>
             ))}
