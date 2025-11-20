@@ -1,10 +1,12 @@
 import { ArrowRight } from "lucide-react";
 import NFTCard from "./NFTcard";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { PiArrowBendUpRightBold } from "react-icons/pi";
 import { BsSuitSpade } from "react-icons/bs";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useCategoriesStore } from '@/lib/store/authStore';
+import { apiCaller } from '@/app/interceptors/apicall/apicall';
+import authRoutes from '@/lib/routes';
 
 // Icon mapping for categories
 const categoryIconMap: Record<string, string> = {
@@ -36,6 +38,8 @@ export default function Trending() {
   const [activeCategory, setActiveCategory] = useState('ALL');
   const { isAuthenticated } = useAuthStore();
   const { categories: apiCategories, getCategories, isLoading: categoriesLoading } = useCategoriesStore();
+  const [apiNfts, setApiNfts] = useState<any[]>([]);
+  const [isLoadingNfts, setIsLoadingNfts] = useState(false);
 
   // Fetch categories when user is authenticated
   useEffect(() => {
@@ -45,6 +49,58 @@ export default function Trending() {
       });
     }
   }, [isAuthenticated, getCategories]);
+
+  const fetchNFTs = useCallback(async () => {
+    try {
+      setIsLoadingNfts(true);
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', '1');
+      queryParams.append('limit', '100'); // Fetch more to filter by category
+      queryParams.append('blocked', 'false');
+      
+      // Fetch all NFTs (without collectionId to get all NFTs)
+      const url = `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`;
+      
+      const response = await apiCaller('GET', url, null, true);
+      
+      if (response.success && response.data) {
+        const nftsData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.items || response.data.nfts || response.data.data || []);
+        
+        if (nftsData.length === 0) {
+          setApiNfts([]);
+          return;
+        }
+        
+        // Sort by createdAt (latest first) and take latest 6
+        const sortedNfts = nftsData
+          .sort((a: any, b: any) => {
+            const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+            const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+            return dateB - dateA; // Latest first
+          })
+          .slice(0, 6);
+        
+        setApiNfts(sortedNfts);
+      } else {
+        console.warn("⚠️ No NFTs found or invalid response:", response);
+        setApiNfts([]);
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching NFTs:", error);
+      setApiNfts([]);
+    } finally {
+      setIsLoadingNfts(false);
+    }
+  }, []);
+
+  // Fetch NFTs from API when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNFTs();
+    }
+  }, [isAuthenticated, fetchNFTs]);
 
   // Map API categories to include icons and format
   const categories = useMemo(() => {
@@ -67,7 +123,8 @@ export default function Trending() {
     return [{ name: 'ALL', icon: null }, ...mappedCategories];
   }, [isAuthenticated, apiCategories]);
 
-  const allNfts = [
+  // Static NFTs for non-authenticated users
+  const staticNfts = [
     { title: 'Aether Guardian', creator: '21Spades NFTs', price: '3.5 ETH', edition: '1 of 321', category: 'Crypto' },
     { title: 'Cyber Warrior', creator: 'GameVerse', price: '2.8 ETH', edition: '1 of 500', category: 'GAMING' },
     { title: 'VIP Concert Pass', creator: 'EventChain', price: '1.2 ETH', edition: '1 of 1000', category: 'Ticketing' },
@@ -82,9 +139,41 @@ export default function Trending() {
     { title: 'Renaissance Redux', creator: 'ClassicArts', price: '8.1 ETH', edition: '1 of 75', category: 'ART' }
   ];
 
+  // Map API NFTs to the format expected by NFTCard
+  const mappedApiNfts = useMemo(() => {
+    if (!isAuthenticated || apiNfts.length === 0) {
+      return [];
+    }
+
+    return apiNfts.map((nft: any) => {
+      const categoryName = nft.category?.name || nft.category || nft.collectionCategory || 'ALL';
+      const creatorName = nft.createdBy?.name || nft.creator?.name || nft.owner?.name || '21Spades NFTs';
+      const price = nft.price ? `${nft.price} AVAX` : nft.floorPrice ? `${nft.floorPrice} AVAX` : '0.01 AVAX';
+      const title = nft.itemName || nft.name || 'Unnamed NFT';
+      const edition = nft.nftId ? `#${nft.nftId}` : '1 of 1';
+
+      return {
+        title,
+        creator: creatorName,
+        price,
+        edition,
+        category: categoryName.toUpperCase(),
+        imageUrl: nft.imageUrl || nft.image,
+        nftId: nft._id || nft.id
+      };
+    });
+  }, [apiNfts, isAuthenticated]);
+
+  // Use API NFTs if authenticated, otherwise use static
+  const allNfts = isAuthenticated && mappedApiNfts.length > 0 ? mappedApiNfts : staticNfts;
+
+  // Filter by category
   const filteredNfts = activeCategory === 'ALL'
     ? allNfts
-    : allNfts.filter(nft => nft.category === activeCategory);
+    : allNfts.filter(nft => {
+        const nftCategory = nft.category?.toUpperCase() || '';
+        return nftCategory === activeCategory || nftCategory.includes(activeCategory);
+      });
 
   return (
     <section className="relative w-[100%] mx-auto mt-10">
@@ -142,9 +231,21 @@ export default function Trending() {
         <div className="w-full max-w-6xl mx-auto mb-12 relative z-10">
           <img src="/assets/bg-ball.png" alt="Background" className="absolute top-0 left-0 opacity-70 blur-md z-0 w-170 h-170 -translate-x-1/2 translate-y-1/3" />
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-            {filteredNfts.length > 0 ? (
+            {isLoadingNfts ? (
+              // Loading skeletons
+              [1, 2, 3, 4, 5, 6].map((n) => (
+                <div key={n} className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full animate-pulse">
+                  <div className="w-full h-[160px] sm:h-[280px] md:h-[300px] rounded-t-[10px] bg-gray-300"></div>
+                  <div className="px-3 py-3 sm:px-4 sm:py-4">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-6 bg-gray-300 rounded mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))
+            ) : filteredNfts.length > 0 ? (
               filteredNfts.slice(0, 6).map((nft, index) => (
-                <NFTCard key={index} {...nft} />
+                <NFTCard key={(nft as any).nftId || `nft-${index}`} {...nft} />
               ))
             ) : (
               <div className="col-span-full text-center text-gray-400 py-12">
