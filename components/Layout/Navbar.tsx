@@ -170,7 +170,7 @@ export default function Navbar() {
                   <div className="w-px h-4 bg-[#787486]" />
                   <input
                     type="text"
-                    placeholder="No Search Found"
+                    placeholder="Search"
                     className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm w-0 min-w-0"
                   />
                 </div>
@@ -245,7 +245,7 @@ export default function Navbar() {
             <div className="w-px h-3.5 md:h-4 lg:h-[19px] bg-[#787486]" />
             <input
               type="text"
-              placeholder="No Search Found"
+              placeholder="Search"
               className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-xs md:text-sm w-0 min-w-0"
             />
           </div>
