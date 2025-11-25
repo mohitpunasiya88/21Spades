@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
+import { useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/lib/store/authStore"
 import { Button, Form, Input, Select, Tabs, Dropdown, Spin } from "antd"
 import { useMessage } from "@/lib/hooks/useMessage"
@@ -45,9 +46,12 @@ const countryCodes = [
 ]
 
 export default function ProfilePage() {
-  const { user, getProfile, updateProfile, incrementProfileView } = useAuthStore()
+  const searchParams = useSearchParams()
+  const userId = searchParams.get('userId')
+  const { user, getProfile, getProfileByUserId, updateProfile, incrementProfileView } = useAuthStore()
   const { message } = useMessage()
   const [editing, setEditing] = useState(false)
+  const isViewingOtherUser = userId && userId !== user?.id && userId !== (user as any)?._id
   const [activeTab, setActiveTab] = useState('Items')
   const [form] = Form.useForm()
   const [profileLoading, setProfileLoading] = useState(true)
@@ -106,12 +110,12 @@ export default function ProfilePage() {
     }
   }, [showCountryDropdown])
 
-  // Fetch profile data on component mount
+  // Fetch profile data on component mount and when userId changes
   useEffect(() => {
     fetchProfileData()
     // incrementProfileView()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [userId])
 
   // Update form phone field when profile.phone changes and editing is active
   useEffect(() => {
@@ -126,7 +130,14 @@ export default function ProfilePage() {
   const fetchProfileData = async () => {
     try {
       setProfileLoading(true)
-      const profileData = await getProfile()
+      
+      // If userId is provided and different from logged-in user, fetch that user's profile
+      let profileData
+      if (isViewingOtherUser && userId) {
+        profileData = await getProfileByUserId(userId)
+      } else {
+        profileData = await getProfile()
+      }
 
       if (profileData && profileData.user) {
         const userData = profileData.user
@@ -625,22 +636,26 @@ export default function ProfilePage() {
       <div className="relative rounded-xl overflow-hidden ">
         {/* Header / Cover Banner */}
         <div className="relative h-40 md:h-48 w-full bg-gradient-to-r from-purple-800/30 to-yellow-500/10">
-          {/* Cover image upload button */}
-          <button
-            onClick={() => coverInputRef.current?.click()}
-            className="absolute top-4 right-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-sm text-white rounded-lg hover:bg-black/70 transition-colors flex items-center gap-2 text-sm"
-            disabled={uploadingCover}
-          >
-            <Camera size={16} />
-            {uploadingCover ? 'Uploading...' : 'Change Cover'}
-          </button>
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleCoverUpload}
-            className="hidden"
-          />
+          {/* Cover image upload button - Only show for own profile */}
+          {!isViewingOtherUser && (
+            <>
+              <button
+                onClick={() => coverInputRef.current?.click()}
+                className="absolute top-4 right-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-sm text-white rounded-lg hover:bg-black/70 transition-colors flex items-center gap-2 text-sm"
+                disabled={uploadingCover}
+              >
+                <Camera size={16} />
+                {uploadingCover ? 'Uploading...' : 'Change Cover'}
+              </button>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCoverUpload}
+                className="hidden"
+              />
+            </>
+          )}
           {/* Fallback cover image */}
           <Image
             src={coverPreview || profile.cover}
@@ -712,25 +727,30 @@ export default function ProfilePage() {
                 )
               })()}
             </div>
-            <button
-              onClick={() => avatarInputRef.current?.click()}
-              aria-label="Change avatar"
-              className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF] hover:bg-[#7A3FEF] transition-colors disabled:opacity-50"
-              disabled={uploadingAvatar}
-            >
-              {uploadingAvatar ? (
-                <Spin size="small" />
-              ) : (
-                <Camera size={16} />
-              )}
-            </button>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
+            {/* Avatar upload button - Only show for own profile */}
+            {!isViewingOtherUser && (
+              <>
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  aria-label="Change avatar"
+                  className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF] hover:bg-[#7A3FEF] transition-colors disabled:opacity-50"
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? (
+                    <Spin size="small" />
+                  ) : (
+                    <Camera size={16} />
+                  )}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </>
+            )}
           </div>
         </div>
 
@@ -757,37 +777,13 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex items-center gap-2 ml-2">
-              {!editing ? (
-                <>
-                  <Button
-                    className="!text-white !border-white !bg-[#FFFFFF1A] hover:!bg-[#FFFFFF1A] !rounded-full !px-4 !h-10 flex items-center gap-2  "
-                    onClick={handleEditClick}
-                  >
-                    <span className="md:inline">Edit Profile</span>
-                  </Button>
-                  {/* <Button
-                    className="!w-10 !h-10 !rounded-full !bg-[#0F0F23] !text-white hover:!bg-[#1a1938]"
-                    icon={<MoreHorizontal size={16} />}
-                    aria-label="More options"
-                  /> */}
-                </>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    className="!text-white !bg-[#FFFFFF1A]   !rounded-full !px-5 !h-10"
-                    onClick={() => setEditing(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="!bg-[#FFFFFF1A] !text-white border border-white !rounded-full !px-6 !h-10"
-                    onClick={onSave}
-                    loading={saving}
-                    disabled={saving}
-                  >
-                    {saving ? 'Saving...' : 'Save'}
-                  </Button>
-                </div>
+              {!editing && !isViewingOtherUser && (
+                <Button
+                  className="!text-white !border-white !bg-[#FFFFFF1A] hover:!bg-[#FFFFFF1A] !rounded-full !px-4 !h-10 flex items-center gap-2"
+                  onClick={handleEditClick}
+                >
+                  <span className="md:inline">Edit Profile</span>
+                </Button>
               )}
             </div>
           </div>
@@ -918,7 +914,7 @@ export default function ProfilePage() {
                 >
                   <Input
                     placeholder="Display Name"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
                   />
                 </Form.Item>
                 <Form.Item
@@ -928,18 +924,18 @@ export default function ProfilePage() {
                 >
                   <Input
                     placeholder="User Name"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="text-white text-sm">Email-ID</span>}
+                  label={<span className="text-white text-sm ">Email-ID</span>}
                   name="email"
                   rules={[{ type: "email", required: true }]}
                 >
                   <Input
                     placeholder="Email-ID"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !h-12 !px-4 placeholder:!text-[#6B7280]"
                   />
                 </Form.Item>
                 <Form.Item
@@ -951,7 +947,7 @@ export default function ProfilePage() {
                     suffixIcon={<span className="text-white">▼</span>}
                     options={countries.map((c) => ({ value: c, label: c }))}
                     placeholder="Select Country"
-                    className="!bg-[#0B0926] !text-white !rounded-lg !h-12 !border !border-none !outline-none [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!text-white [&_.ant-select-selector]:!placeholder-[#6B7280] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!block  [&_.ant-select-selection-placeholder]:!z-10 [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-placeholder]:!text-white/60 [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
+                    className="!bg-[#0B0926] !text-white !rounded-lg !h-12 !border !border-none !outline-none [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border !border-none [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!text-white [&_.ant-select-selector]:!placeholder-[#6B7280] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!block  [&_.ant-select-selection-placeholder]:!z-10 [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-placeholder]:!text-white/60 [&_.ant-select-arrow]:!text-white [&_.ant-select-selection-item]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
                       // border: "1px solid #FFFFFF1A",
@@ -1086,7 +1082,7 @@ export default function ProfilePage() {
                     showSearch
                     suffixIcon={<span className="text-white">▼</span>}
                     placeholder="Select Categories"
-                    className="!bg-[#0B0926] !border-none text-white !text-white !rounded-xl placeholder:text-[#6B7280] !outline-none [&_.ant-select-selector]:!border-none [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selector]:!border-[#FFFFFF1A] [&_.ant-select-selection-item]:!bg-[#1A183A] [&_.ant-select-selection-item]:!text-white [&_.ant-select-selection-item]:!border-none [&_.ant-select-arrow]:!text-white"
+                    className="!bg-[#0B0926] !border !border-[#FFFFFF1A] text-white !text-white !rounded-xl placeholder:text-[#6B7280] !outline-none [&_.ant-select-selector]:!border !border-[#FFFFFF1A] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!justify-center [&_.ant-select-selector]:!flex [&_.ant-select-selector]:!align-center [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selector]:!bg-[#0B0926] [&_.ant-select-selection-item]:!bg-[#1A183A] [&_.ant-select-selection-item]:!text-white [&_.ant-select-selection-item]:!border-none [&_.ant-select-selection-item]:!flex [&_.ant-select-selection-item]:!items-center [&_.ant-select-selection-item]:!my-1 [&_.ant-select-selection-item-remove]:!text-white [&_.ant-select-selection-item-remove:hover]:!text-white [&_.ant-select-arrow]:!text-white"
                     dropdownStyle={{
                       backgroundColor: "#0B0926",
                       // border: "1px solid #FFFFFF1A",
@@ -1095,7 +1091,7 @@ export default function ProfilePage() {
                     }}
                     dropdownRender={(menu) => (
                       <div
-                        className="bg-[#0B0926] text-white"
+                        className="bg-[#0B0926] text-white "
                       >
                         {/* Override each dropdown item */}
                         <div className="[&_.ant-select-item]:!bg-[#0B0926] [&_.ant-select-item]:!text-white [&_.ant-select-item-option-active]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!bg-[#1A183A] [&_.ant-select-item-option-selected]:!text-white">
@@ -1125,7 +1121,7 @@ export default function ProfilePage() {
                   <Input.TextArea
                     rows={6}
                     placeholder="Bio"
-                    className="!bg-[#0B0926] !border-none !text-white !rounded-xl !p-4 [&_.ant-input]:!placeholder-[#6B7280] [&_.ant-input]:!text-white [&_.ant-input::placeholder]:!text-[#6B7280]"
+                    className="!bg-[#0B0926] !border !border-[#FFFFFF1A] !text-white !rounded-xl !p-4 [&_.ant-input]:!placeholder-[#6B7280] [&_.ant-input]:!text-white [&_.ant-input::placeholder]:!text-[#6B7280]"
                     maxLength={325}
                     showCount={{
                       formatter: ({ count }) => (
@@ -1138,6 +1134,24 @@ export default function ProfilePage() {
                 </Form.Item>
               </div>
             </Form>
+            <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3">
+              <Button
+                className="!text-white !bg-[#FFFFFF1A] !rounded-full !px-6 !h-11"
+                onClick={() => setEditing(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="!text-white !rounded-full !px-8 !h-11"
+                onClick={onSave}
+                loading={saving}
+                disabled={saving}
+                style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

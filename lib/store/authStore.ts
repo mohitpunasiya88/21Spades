@@ -29,6 +29,7 @@ interface AuthState {
   
   // Profile management methods
   getProfile: () => Promise<any>
+  getProfileByUserId: (userId: string) => Promise<any>
   updateProfile: (data: any) => Promise<void>
   incrementProfileView: () => Promise<void>
 }
@@ -607,6 +608,19 @@ export const useAuthStore = create<AuthState>()(
           return null
         } catch (error) {
           console.error('Error fetching profile:', error)
+          throw error
+        }
+      },
+
+      getProfileByUserId: async (userId: string) => {
+        try {
+          const response = await apiCaller('GET', `profile/${userId}`)
+          if (response.success && response.data) {
+            return response.data
+          }
+          return null
+        } catch (error) {
+          console.error('Error fetching profile by userId:', error)
           throw error
         }
       },

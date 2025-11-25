@@ -315,6 +315,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
     }
   }
 
+  const handleSpadesFIClick = () => {
+    if (!sidebarOpen) {
+      setSidebarOpen(true)
+      setTimeout(() => setIsSpadesFIOpen(true), 0)
+      return
+    }
+    setIsSpadesFIOpen((prev) => !prev)
+  }
+
   // SpadesFI dropdown items
   const spadesFIItems = [
     { icon: CoinbaseIcon, label: 'CoinBase', path: '/spadesfi/coinbase' },
@@ -368,7 +377,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           setHoveredItem(null)
                           setTooltipPosition(null)
                         }}
-                        onClick={() => setIsSpadesFIOpen(!isSpadesFIOpen)}
+                        onClick={handleSpadesFIClick}
                         className={`relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
                           isActive
                             ? 'text-[#FFB600] bg-[#7E6BEF0A]'
