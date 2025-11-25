@@ -742,7 +742,6 @@ const currentNftIdentifier = useMemo(() => {
           null,
           true,
         )
-        console.log('Submitting bid...1111111111111111111', listResponse)
         if (listResponse.success && listResponse.data) {
           const listData = normalizeListData(listResponse.data)
           const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
@@ -946,7 +945,6 @@ const currentNftIdentifier = useMemo(() => {
       
         // If still invalid → again call GET
         if (isValid) {
-            console.log("Nonce invalid, retrying...");
           await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
         }
       }
@@ -960,7 +958,6 @@ const currentNftIdentifier = useMemo(() => {
         nonce: Number(nonceResponse.data.nonce),
         sign: NFTDetails?.signature,
       }
-console.log(bidPayload,'bidPayloadbidPayload')
     if (!bidAmount || Number(bidAmount) <= 0) {
       message.error('Enter a valid bid amount')
       return

@@ -54,7 +54,7 @@ export default function ProfilePage() {
   const isViewingOtherUser = userId && userId !== user?.id && userId !== (user as any)?._id
   const [activeTab, setActiveTab] = useState('Items')
   const [form] = Form.useForm()
-  const [profileLoading, setProfileLoading] = useState(true)
+  // const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
@@ -88,7 +88,7 @@ export default function ProfilePage() {
     },
     bio: "",
     interests: [] as string[],
-    cover: defaultCoverImage.src,
+    coverPicture: defaultCoverImage.src,
     avatar: "/post/card-21.png",
   })
 
@@ -129,7 +129,7 @@ export default function ProfilePage() {
   // Fetch profile data from API
   const fetchProfileData = async () => {
     try {
-      setProfileLoading(true)
+      // setProfileLoading(true)
       
       // If userId is provided and different from logged-in user, fetch that user's profile
       let profileData
@@ -173,7 +173,7 @@ export default function ProfilePage() {
           interests: Array.isArray(userData.interests)
             ? userData.interests
             : userData.interests ? [userData.interests] : [],
-          cover: userData.cover || defaultCoverImage.src,
+          coverPicture: userData.coverPicture || defaultCoverImage.src,
           avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/post/card-21.png",
         })
 
@@ -228,12 +228,13 @@ export default function ProfilePage() {
           interests: Array.isArray(user?.interests)
             ? user.interests
             : user?.interests ? [user.interests] : [],
-          cover: defaultCoverImage.src,
+          coverPicture: defaultCoverImage.src,
           avatar: user.avatar || user.profilePicture || "/post/card-21.png",
         })
       }
     } finally {
-      setProfileLoading(false)
+      // setProfileLoading(false)
+      console.log('Profile data fetched successfully')
     }
   }
 
@@ -472,9 +473,6 @@ export default function ProfilePage() {
       setCoverPreview(base64)
 
       // Update profile with new cover
-      // Note: Cover image might need a separate endpoint or field
-      // For now, we'll update it in local state
-      // In production, you may need to add a 'cover' field to the updateProfile API
       await updateProfile({
         email: profile.email || user?.email || "",
         name: profile.name || user?.name || "",
@@ -490,14 +488,14 @@ export default function ProfilePage() {
         twitter: profile.links.x || user?.twitter || "",
         bio: profile.bio || user?.bio || "",
         profilePicture: user?.profilePicture || user?.avatar || profile.avatar || "",
+        coverPicture: base64,
         projects: profile.stats.projects || user?.projects || 0,
         contributions: profile.stats.contributions || user?.contributions || 0,
         profileView: profile.stats.posts || user?.profileView || 0,
-        // cover: base64, // Add this if backend supports cover image field
       })
 
       // Update local state
-      setProfile(prev => ({ ...prev, cover: base64 }))
+      setProfile(prev => ({ ...prev, coverPicture: base64 }))
       message.success('Cover image updated successfully!')
     } catch (error: any) {
       console.error('Error uploading cover:', error)
@@ -622,13 +620,13 @@ export default function ProfilePage() {
     }
   }
 
-  if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#020019]">
-        <Spin size="large" />
-      </div>
-    )
-  }
+  // if (profileLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen bg-[#020019]">
+  //       <Spin size="large" />
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="px-4 md:px-6 py-6 mt-4 space-y-4 md:space-y-6 bg-[#020019] font-exo2">
@@ -657,14 +655,26 @@ export default function ProfilePage() {
             </>
           )}
           {/* Fallback cover image */}
-          <Image
-            src={coverPreview || profile.cover}
-            alt="Cover"
-            fill
-            priority
-            className="object-cover opacity-90 rounded-xl"
-            sizes="100vw"
-          />
+          {!uploadingCover && (coverPreview || profile.coverPicture) ? (
+            <img
+              src={coverPreview || profile.coverPicture}
+              alt="Cover"
+              className="absolute inset-0 w-full h-full object-cover opacity-90 rounded-xl"
+              onError={(e) => {
+                console.error('Cover image error, using fallback:', e)
+                e.currentTarget.src = defaultCoverImage.src
+              }}
+            />
+          ) : !uploadingCover ? (
+            <Image
+              src={defaultCoverImage.src}
+              alt="Cover"
+              fill
+              priority
+              className="object-cover opacity-90 rounded-xl"
+              sizes="100vw"
+            />
+          ) : null}
 
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
@@ -675,7 +685,7 @@ export default function ProfilePage() {
               className="w-10 h-10 rounded-full border border-white/30 bg-black/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="Instagram"
             >
-              <FaInstagram className="text-xl text-black" />
+              <FaInstagram className="text-xl text-white" />
             </a>
             <a
               href={profile.links.x || "#"}
@@ -684,7 +694,7 @@ export default function ProfilePage() {
               className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="X (Twitter)"
             >
-              <FaXTwitter className="text-xl text-black" />
+              <FaXTwitter className="text-xl text-white" />
             </a>
             <a
               href={profile.links.facebook || "#"}
@@ -693,7 +703,7 @@ export default function ProfilePage() {
               className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="Facebook"
             >
-              <FaFacebookF className="text-xl text-black" />
+              <FaFacebookF className="text-xl text-white" />
             </a>
           </div>
         </div>
@@ -736,11 +746,11 @@ export default function ProfilePage() {
                   className="absolute bottom-3 right-1 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#884DFF] text-white shadow-lg border-2 border-[#884DFF] hover:bg-[#7A3FEF] transition-colors disabled:opacity-50"
                   disabled={uploadingAvatar}
                 >
-                  {uploadingAvatar ? (
+                  {/* {uploadingAvatar ? (
                     <Spin size="small" />
-                  ) : (
+                  ) : ( */}
                     <Camera size={16} />
-                  )}
+                  {/* )} */}
                 </button>
                 <input
                   ref={avatarInputRef}

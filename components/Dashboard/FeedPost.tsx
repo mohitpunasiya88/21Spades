@@ -122,7 +122,6 @@ const renderTextWithLinks = (text: string) => {
 }
 
 export default function FeedPost({ post }: FeedPostProps) {
-  console.log(post, 'post')
   const router = useRouter()
   const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes, updatePost, deletePost } = useFeedStore()
   const { searchUsers, searchedUsers, clearSearchedUsers } = useChatStore()
