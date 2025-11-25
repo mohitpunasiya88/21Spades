@@ -480,7 +480,7 @@ export default function FeedPage() {
             <span>
               {isAuthenticated && user
                 ? `${greeting.label}, ${user.name || user.username || ''}`.trim()
-                : greeting.label}
+                : greeting.label} 👋🏼
             </span>
           </h1>
 

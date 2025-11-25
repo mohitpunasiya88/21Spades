@@ -64,6 +64,9 @@ const authRoutes = {
 
     // NFT BUY
     buyNow: 'nft/items',
+
+    // Search
+    search: 'search',
 }
 
 export default authRoutes;

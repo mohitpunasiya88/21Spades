@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins, ArrowLeft } from 'lucide-react'
 import spadesImage from '../assets/21spades.png'
-import { Avatar, Spin } from 'antd'
+import { Avatar, Spin, Tooltip } from 'antd'
 import { MessageSquareText, Share } from "lucide-react";
 import { useCollectionStore, mapApiNftToCollectionNft, type CollectionNFT } from '@/lib/store/collectionStore'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
@@ -18,6 +18,7 @@ import bidIcon from '@/components/assets/image.png'
 import { useNFT } from '@/app/hooks/contracts/useNFT'
 import { CONTRACTS } from '@/app/utils/contracts/contractConfig'
 import { useNFTCollection } from '@/app/hooks/contracts/useNFTCollection'
+import { useAuthStore } from '@/lib/store/authStore'
 
 const parseNumericValue = (input: unknown): number | undefined => {
   if (input === undefined || input === null) return undefined
@@ -645,6 +646,7 @@ export default function NFTDetails({
 }: NFTDetailsProps) {
   const router = useRouter()
   const { message } = useMessage()
+  const { user } = useAuthStore()
   const { nfts: cachedNfts, setCollectionData } = useCollectionStore()
   const [currentNft, setCurrentNft] = useState<CollectionNFT | null>(null)
   const [relatedNfts, setRelatedNfts] = useState<CollectionNFT[]>([])
@@ -746,6 +748,14 @@ const currentNftIdentifier = useMemo(() => {
           const mappedList: CollectionNFT[] = listData.map(mapApiNftToCollectionNft)
           const match = mappedList.find((nft) => matchNftById(nft, id)) || mappedList[0] || null
           if (match) {
+            // Find raw NFT data for creator check
+            const rawMatch = listData.find((nft: any) => {
+              const possibleIds = [nft._id, nft.id, nft.nftId, nft.nftLongId]
+              return possibleIds.filter(Boolean).map((val) => val!.toString()).includes(id)
+            })
+            if (rawMatch) {
+              setRawNftData(rawMatch)
+            }
             setCurrentNft(match)
           }
           setRelatedNfts(mappedList.filter((nft) => !matchNftById(nft, id)))
@@ -761,6 +771,8 @@ const currentNftIdentifier = useMemo(() => {
       const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
       if (response.success && response.data) {
         const rawNft = response.data.nft || response.data
+        // Store raw NFT data for creator check
+        setRawNftData(rawNft)
         const mappedNft = mapApiNftToCollectionNft(rawNft)
         setCurrentNft(mappedNft)
 
@@ -914,6 +926,13 @@ const currentNftIdentifier = useMemo(() => {
   }, [isPlaceBidOpen, currentNftIdentifier, bids.length, bidsOrder, fetchBids])
 
   const handleBidConfirm = async (bidAmount: string) => {
+      // Prevent creator from bidding on their own NFT
+      if (isCreator) {
+        message.error('You cannot bid on your own NFT')
+        setIsPlaceBidOpen(false)
+        return
+      }
+      
       const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
       let isValid = true;
       let nonceResponse = null;
@@ -1024,6 +1043,12 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
     setApprovalForAll,} = useNFTCollection()
  const handleBuyNow = async () => {
     try {
+      // Prevent creator from buying their own NFT
+      if (isCreator) {
+        message.error('You cannot buy your own NFT')
+        return
+      }
+      
       debugger;
       if (!address) {
         try {
@@ -1211,7 +1236,59 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
   const isFixedRate = auctionType === 1
   const isNone = auctionType === 0 || auctionType === undefined
 
+  // Check if current user is the creator of the NFT
+  // API response: createdBy can be string (user ID like "691580fec577cfc0d946990d") or object
+  // We need to check the raw API response since currentOwner is not mapped to CollectionNFT
+  const [rawNftData, setRawNftData] = useState<any>(null)
+  
+  const isCreator = useMemo(() => {
+    if (!user) return false
+    const userId = user.id || (user as any)?._id
+    if (!userId) return false
+    
+    // First check from raw API data (most reliable)
+    if (rawNftData) {
+      // Check createdBy - can be string (user ID) or object
+      const createdBy = rawNftData.createdBy
+      if (typeof createdBy === 'string' && String(userId) === String(createdBy)) {
+        return true
+      }
+      if (createdBy && typeof createdBy === 'object') {
+        const createdById = createdBy._id || createdBy.id
+        if (createdById && String(userId) === String(createdById)) {
+          return true
+        }
+      }
+      
+      // Also check currentOwner._id
+      const currentOwnerId = rawNftData?.currentOwner?._id || rawNftData?.currentOwner?.id
+      if (currentOwnerId && String(userId) === String(currentOwnerId)) {
+        return true
+      }
+    }
+    
+    // Fallback: check from mapped currentNft
+    if (currentNft) {
+      // Check createdBy - can be string or object
+      if (typeof currentNft.createdBy === 'string') {
+        if (String(userId) === String(currentNft.createdBy)) {
+          return true
+        }
+      } else if (currentNft.createdBy && typeof currentNft.createdBy === 'object') {
+        const createdById = (currentNft.createdBy as any)?._id || (currentNft.createdBy as any)?.id
+        if (createdById && String(userId) === String(createdById)) {
+          return true
+        }
+      }
+    }
+    
+    return false
+  }, [user, currentNft, rawNftData])
+
   const bidDisabledReason = useMemo(() => {
+    if (isCreator) {
+      return 'You cannot bid on your own NFT'
+    }
     if (!isAuction || hasAuctionEnded || isAuctionLive) {
       return undefined
     }
@@ -1220,7 +1297,14 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
       return `Auction starts on ${startDate.toLocaleString()}`
     }
     return 'Auction not live yet'
-  }, [isAuction, hasAuctionEnded, isAuctionLive, hasAuctionStarted, auctionStartTime])
+  }, [isCreator, isAuction, hasAuctionEnded, isAuctionLive, hasAuctionStarted, auctionStartTime])
+
+  const buyDisabledReason = useMemo(() => {
+    if (isCreator) {
+      return 'You cannot buy your own NFT'
+    }
+    return undefined
+  }, [isCreator])
 
   useEffect(() => {
     if (!isAuction) {
@@ -1432,15 +1516,22 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                         Collect
                       </button>
                     ) : (
-                      <button
-                        onClick={() => setIsPlaceBidOpen(true)}
-                        disabled={!isAuctionLive}
-                        title={bidDisabledReason}
-                        className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ cursor: 'pointer' }}
-                      >
-                        Bid Now
-                      </button>
+                      <Tooltip title={bidDisabledReason || (isCreator ? 'You cannot bid on your own NFT' : undefined)}>
+                        <button
+                          onClick={() => {
+                            if (isCreator) {
+                              message.error('You cannot bid on your own NFT')
+                              return
+                            }
+                            setIsPlaceBidOpen(true)
+                          }}
+                          disabled={!isAuctionLive || isCreator}
+                          className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ cursor: isCreator ? 'not-allowed' : 'pointer' }}
+                        >
+                          Bid Now
+                        </button>
+                      </Tooltip>
                     )}
                     <button
                       onClick={() => setIsMakeOfferOpen(true)}
@@ -1453,13 +1544,22 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
                   </>
                 ) : isFixedRate ? (
                   // Fixed Rate (auctionType = 1): Only Buy Now button
-                  <button 
-                    onClick={handleBuyNow}
-                    className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    Buy Now
-                  </button>
+                  <Tooltip title={buyDisabledReason || (isCreator ? 'You cannot buy your own NFT' : undefined)}>
+                    <button 
+                      onClick={() => {
+                        if (isCreator) {
+                          message.error('You cannot buy your own NFT')
+                          return
+                        }
+                        handleBuyNow()
+                      }}
+                      disabled={isCreator}
+                      className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:w-[200px] lg:w-[300px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ cursor: isCreator ? 'not-allowed' : 'pointer' }}
+                    >
+                      Buy Now
+                    </button>
+                  </Tooltip>
                 ) : (
                   // None (auctionType = 0 or undefined): Only Make an Offer button
                   <button

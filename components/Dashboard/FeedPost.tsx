@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon, MoreVertical, Edit, Trash2, X, Image as ImageIcon } from 'lucide-react'
 import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
 import { Avatar, Button, Collapse, Tooltip as AntTooltip, Steps } from 'antd'
@@ -121,6 +122,8 @@ const renderTextWithLinks = (text: string) => {
 }
 
 export default function FeedPost({ post }: FeedPostProps) {
+  console.log(post, 'post')
+  const router = useRouter()
   const { likePost, sharePost, savePost, commentPost, getComments, repostPost, likeComment, postLikes, updatePost, deletePost } = useFeedStore()
   const { searchUsers, searchedUsers, clearSearchedUsers } = useChatStore()
   const { user: currentUser } = useAuthStore()
@@ -795,7 +798,12 @@ export default function FeedPost({ post }: FeedPostProps) {
       {/* Top Header - Show repost author if it's a repost */}
       <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div
-          className="flex items-center justify-center w-[40px] h-[40px] sm:w-[48px] sm:h-[48px] rounded-full overflow-hidden p-1.5 sm:p-2 flex-shrink-0"
+          onClick={() => {
+            if (post.authorId) {
+              router.push(`/profile?userId=${post.authorId}`)
+            }
+          }}
+          className="flex items-center justify-center w-[40px] h-[40px] sm:w-[48px] sm:h-[48px] rounded-full overflow-hidden p-1.5 sm:p-2 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
           style={
             post.profilePicture
               ? undefined
@@ -813,7 +821,11 @@ export default function FeedPost({ post }: FeedPostProps) {
             <img src="/post/card-21.png" alt="Avatar" className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] object-contain" />
           )}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => {
+            if (post.authorId) {
+              router.push(`/profile?userId=${post.authorId}`)
+            }
+          }}>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span className="text-white font-semibold truncate text-sm sm:text-base">{post.username}</span>
             {/* {post.verified && <CheckCircle2 className="w-4 h-4 text-blue-500" />} */}

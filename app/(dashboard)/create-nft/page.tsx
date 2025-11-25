@@ -154,7 +154,42 @@ export default function CreateNFTPage() {
     return categoryOptions.find((option) => option.id === category)?.raw
   }, [categoryOptions, category])
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const convertedUsdtValue = useMemo(() => {
+    const avaxValue = parseFloat(fixedPrice)
+    const avaxRate = Number(coinAmount)
+
+    if (!fixedPrice || isNaN(avaxValue) || !avaxRate) {
+      return ""
+    }
+
+    return (avaxValue * avaxRate).toFixed(2)
+  }, [fixedPrice, coinAmount])
+
+  const getImageDimensions = (file: File): Promise<{ width: number; height: number } | null> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image/")) {
+        resolve(null)
+        return
+      }
+
+      const img = document.createElement('img')
+      const url = URL.createObjectURL(file)
+
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        resolve({ width: img.naturalWidth, height: img.naturalHeight })
+      }
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        resolve(null)
+      }
+
+      img.src = url
+    })
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Check file size (500MB max)
@@ -173,6 +208,19 @@ export default function CreateNFTPage() {
       setUploadedFile(file)
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
+
+      // Get image dimensions if it's an image
+      if (file.type.startsWith("image/")) {
+        const dimensions = await getImageDimensions(file)
+        if (dimensions) {
+          setSize(`${dimensions.width} x ${dimensions.height}`)
+        } else {
+          setSize("")
+        }
+      } else {
+        // For non-image files, clear the size
+        setSize("")
+      }
     }
   }
 
@@ -181,7 +229,7 @@ export default function CreateNFTPage() {
     e.stopPropagation()
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -201,6 +249,19 @@ export default function CreateNFTPage() {
       setUploadedFile(file)
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
+
+      // Get image dimensions if it's an image
+      if (file.type.startsWith("image/")) {
+        const dimensions = await getImageDimensions(file)
+        if (dimensions) {
+          setSize(`${dimensions.width} x ${dimensions.height}`)
+        } else {
+          setSize("")
+        }
+      } else {
+        // For non-image files, clear the size
+        setSize("")
+      }
     }
   }
 
@@ -1054,13 +1115,13 @@ payload.nonce = nonceResponse.data.nonce;
         {/* Size (Instead) */}
         <div className="p-4 sm:p-6 font-exo2">
           <h2 className="text-white text-sm font-medium mb-2">
-            Size (Optional)
+            Size
           </h2>
           <Input
             placeholder="e.g: Width x height"
             value={size}
-            onChange={(e) => setSize(e.target.value)}
-            className="!bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !h-12 !rounded-lg placeholder:!text-[#6B7280]"
+            disabled={true}
+            className="!bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !h-12 !rounded-lg placeholder:!text-[#6B7280] !cursor-not-allowed"
           />
         </div>
 
@@ -1105,7 +1166,7 @@ payload.nonce = nonceResponse.data.nonce;
         </div>
 
         {/* Redeem Code */}
-        <div className="p-4 sm:p-6 font-exo2">
+        {/* <div className="p-4 sm:p-6 font-exo2">
           <h2 className="text-white text-sm font-medium mb-2">
             Redeem Code
           </h2>
@@ -1115,7 +1176,7 @@ payload.nonce = nonceResponse.data.nonce;
             onChange={(e) => setRedeemCode(e.target.value)}
             className="!bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !h-12 !rounded-lg placeholder:!text-[#6B7280]"
           />
-        </div>
+        </div> */}
 
         {/* Select Method */}
         <div className="p-4 sm:p-6 font-exo2 w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
@@ -1161,49 +1222,42 @@ payload.nonce = nonceResponse.data.nonce;
           <h2 className="text-white text-sm font-medium mb-2">
             Price (AVAX)
           </h2>
-          <div className="relative">
-            <Input
-              value={fixedPrice}
-              onChange={(e) => {
-                const value = e.target.value
-                // Allow empty, numbers, and decimal point
-                if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                  setFixedPrice(value)
-                  // Validate it's a valid number
-                  const numValue = parseFloat(value)
-                  if (value === "" || (!isNaN(numValue) && numValue >= 0)) {
-                    lastValidFixedPriceRef.current = value
-                  }
-                }
-              }}
-              onBlur={(e) => {
-                const value = e.target.value.trim()
-                if (value === "") {
-                  setFixedPrice("")
-                  lastValidFixedPriceRef.current = ""
-                  return
-                }
-                // Validate it's a valid number
-                const numValue = parseFloat(value)
-                if (!isNaN(numValue) && numValue >= 0) {
-                  // Preserve exact string value as user typed
-                  setFixedPrice(value)
-                  lastValidFixedPriceRef.current = value
-                } else {
-                  // If invalid, restore last valid value
-                  if (lastValidFixedPriceRef.current) {
-                    setFixedPrice(lastValidFixedPriceRef.current)
-                  } else {
-                    setFixedPrice("")
-                  }
-                }
-              }}
-              placeholder="Enter the price"
-              className="!w-full !h-12 !bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg !text-white placeholder:!text-[#6B7280] !pr-16"
-              type="text"
-              inputMode="decimal"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm">AVAX</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-[#9BA3AF] text-xs font-semibold mb-2">Enter AVAX Price</p>
+              <div className="relative">
+                <InputNumber
+                  value={fixedPrice ? parseFloat(fixedPrice) : null}
+                  onChange={(v) => {
+                    if (typeof v === "number") {
+                      setFixedPrice(v.toString())
+                      lastValidFixedPriceRef.current = v.toString()
+                    } else if (v === null) {
+                      setFixedPrice("")
+                      lastValidFixedPriceRef.current = ""
+                    }
+                  }}
+                  placeholder="Enter the price"
+                  className="!w-full !h-12 !bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg [&_.ant-input-number-input]:!text-white [&_.ant-input-number-input::placeholder]:!text-[#6B7280] [&_.ant-input-number-input]:!pr-16"
+                  min={0}
+                  step={0.1}
+                  precision={2}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm pointer-events-none">AVAX</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-[#9BA3AF] text-xs font-semibold mb-2">USDT Equivalent</p>
+              <div className="h-12 bg-[#090721] border border-[#A3AED033] rounded-lg flex items-center justify-between px-4">
+                <span className="text-white text-base font-semibold">
+                  {convertedUsdtValue ? convertedUsdtValue : "--"}
+                </span>
+                <span className="text-[#6B7280] text-sm">USDT</span>
+              </div>
+              {/* <p className="text-[#6B7280] text-[11px] mt-2">
+                Live AVAX price: {coinAmount ? `$${Number(coinAmount).toFixed(2)} USD / AVAX` : "Fetching..."}
+              </p> */}
+            </div>
           </div>
         </div>
 
