@@ -455,7 +455,6 @@ while (isValid) {
 
   // If still invalid → again call GET
   if (isValid) {
-    console.log("Nonce invalid, retrying...");
     await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
   }
 }
@@ -952,6 +951,53 @@ payload.nonce = nonceResponse.data.nonce;
     }
   }
 
+  const checkSymbolAvailability = async (symbol: string) => {
+    if (!symbol || !symbol.trim()) {
+      setSymbolError("")
+      return
+    }
+
+    try {
+      // Generate slug from token symbol
+      const collectionSlug = symbol
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+
+      // Check if collection with this slug/symbol exists
+      const response = await apiCaller('GET', `${authRoutes.getCollections}?slug=${collectionSlug}`, null, true)
+      
+      if (response.success && response.data) {
+        const collections = Array.isArray(response.data) ? response.data : (response.data.collections || response.data.data || [])
+        const existingCollection = collections.find((col: any) => 
+          col.collectionSlug?.toLowerCase() === collectionSlug.toLowerCase() ||
+          col.symbol?.toLowerCase() === symbol.toLowerCase()
+        )
+        
+        if (existingCollection) {
+          setSymbolError("Symbol already exists. Please use a unique symbol.")
+        } else {
+          setSymbolError("")
+        }
+      } else {
+        setSymbolError("")
+      }
+    } catch (error: any) {
+      // If error checking, don't show error - let it be validated on submit
+      console.error("Error checking symbol availability:", error)
+      setSymbolError("")
+    }
+  }
+
+  const handleSymbolBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const symbol = e.target.value.trim()
+    if (symbol) {
+      await checkSymbolAvailability(symbol)
+    } else {
+      setSymbolError("")
+    }
+  }
+
   return (
     <div className="px-2 sm:px-3 md:px-4 py-2 sm:py-4 mt-4 sm:mt-6 md:mt-8 mx-2 sm:mx-4 bg-[#090721] font-exo2 min-h-screen rounded-xl">
       {/* Banner */}
@@ -1125,43 +1171,84 @@ payload.nonce = nonceResponse.data.nonce;
           />
         </div>
 
-        {/* Category */}
+        {/* Category and Royalties */}
         <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">Category</h2>
-          <Select
-            placeholder={categoriesLoading ? "Loading categories..." : "Select Category"}
-            value={category || undefined}
-            onChange={(v) => setCategory(v)}
-            loading={categoriesLoading}
-            className="!w-full category-select [&_.ant-select-selector]:!bg-[#090721] [&_.ant-select-selector]:!border-[#A3AED033] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selection-item]:!text-white [&_.ant-select-arrow]:!text-white"
-            classNames={{
-              popup: {
-                root: "category-select-dropdown",
-              },
-            }}
-            suffixIcon={<span className="text-white">▼</span>}
-            options={categoryOptions.map((option) => ({
-              label: option.label,
-              value: option.id,
-            }))}
-            notFoundContent={categoriesLoading ? "Fetching..." : "No categories"}
-            getPopupContainer={(trigger) => trigger.parentElement || document.body}
-          />
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Category */}
+            <div>
+              <h2 className="text-white text-sm font-medium mb-2">Category</h2>
+              <Select
+                placeholder={categoriesLoading ? "Loading categories..." : "Select Category"}
+                value={category || undefined}
+                onChange={(v) => setCategory(v)}
+                loading={categoriesLoading}
+                className="!w-full category-select [&_.ant-select-selector]:!bg-[#090721] [&_.ant-select-selector]:!border-[#A3AED033] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selection-item]:!text-white [&_.ant-select-arrow]:!text-white"
+                classNames={{
+                  popup: {
+                    root: "category-select-dropdown",
+                  },
+                }}
+                suffixIcon={<span className="text-white">▼</span>}
+                options={categoryOptions.map((option) => ({
+                  label: option.label,
+                  value: option.id,
+                }))}
+                notFoundContent={categoriesLoading ? "Fetching..." : "No categories"}
+                getPopupContainer={(trigger) => trigger.parentElement || document.body}
+              />
+            </div>
 
-        {/* Royalties */}
-        <div className="p-4 sm:p-6 font-exo2">
-          <h2 className="text-white text-sm font-medium mb-2">Royalties</h2>
-          <div className="relative">
-            <InputNumber
-              value={royalties as number | null}
-              onChange={(v) => setRoyalties(typeof v === "number" ? v : null)}
-              placeholder="Enter Royalties"
-              className="!w-full !h-12 !bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg [&_.ant-input-number-input]:!text-white [&_.ant-input-number-input::placeholder]:!text-[#6B7280] [&_.ant-input-number-input]:!pr-8"
-              min={0}
-              max={50}
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white text-sm">%</span>
+            {/* Royalties */}
+            <div>
+              <h2 className="text-white text-sm font-medium mb-2">Royalties</h2>
+              <div className="h-12 bg-[#090721] border border-[#A3AED033] rounded-lg flex items-center px-4">
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={royalties !== null ? royalties.toString() : ""}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      // Only allow numbers and one decimal point
+                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                        if (value === "") {
+                          setRoyalties(null)
+                        } else {
+                          const numValue = parseFloat(value)
+                          if (!isNaN(numValue) && numValue >= 0 && numValue <= 50) {
+                            setRoyalties(numValue)
+                          } else if (value === "." || value === "0.") {
+                            // Allow typing decimal point
+                            setRoyalties(null)
+                          }
+                        }
+                      }
+                    }}
+                    onKeyPress={(e) => {
+                      // Only allow numbers, decimal point, and control keys
+                      const char = String.fromCharCode(e.which || e.keyCode)
+                      if (!/[0-9.]/.test(char) && !e.ctrlKey && !e.metaKey && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab' && e.key !== 'Enter') {
+                        e.preventDefault()
+                      }
+                      // Prevent multiple decimal points
+                      if (char === '.' && (e.currentTarget.value.includes('.') || e.currentTarget.value === '')) {
+                        e.preventDefault()
+                      }
+                    }}
+                    placeholder="Enter Royalties"
+                    className="bg-transparent border-none outline-none text-white text-base font-semibold font-exo2 placeholder:text-[#6B7280]"
+                    style={{ 
+                      width: royalties !== null && royalties.toString() && royalties.toString().length > 0
+                        ? `${Math.max(18, royalties.toString().length * 7 + 4)}px` 
+                        : '120px',
+                      minWidth: '18px',
+                      maxWidth: royalties !== null && royalties.toString() && royalties.toString().length > 0 ? '50px' : '120px'
+                    }}
+                  />
+                  <span className="text-white text-sm ml-1">%</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1225,32 +1312,45 @@ payload.nonce = nonceResponse.data.nonce;
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-[#9BA3AF] text-xs font-semibold mb-2">Enter AVAX Price</p>
-              <div className="relative">
-                <InputNumber
-                  value={fixedPrice ? parseFloat(fixedPrice) : null}
-                  onChange={(v) => {
-                    if (typeof v === "number") {
-                      setFixedPrice(v.toString())
-                      lastValidFixedPriceRef.current = v.toString()
-                    } else if (v === null) {
-                      setFixedPrice("")
-                      lastValidFixedPriceRef.current = ""
+              <div className="h-12 bg-[#090721] border border-[#A3AED033] rounded-lg flex items-center justify-between px-4">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={fixedPrice || ""}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    // Only allow numbers and one decimal point
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setFixedPrice(value)
+                      if (value && !isNaN(parseFloat(value)) && parseFloat(value) >= 0) {
+                        lastValidFixedPriceRef.current = value
+                      } else if (value === "") {
+                        lastValidFixedPriceRef.current = ""
+                      }
+                    }
+                  }}
+                  onKeyPress={(e) => {
+                    // Only allow numbers, decimal point, and control keys
+                    const char = String.fromCharCode(e.which || e.keyCode)
+                    if (!/[0-9.]/.test(char) && !e.ctrlKey && !e.metaKey && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab' && e.key !== 'Enter') {
+                      e.preventDefault()
+                    }
+                    // Prevent multiple decimal points
+                    if (char === '.' && (e.currentTarget.value.includes('.') || e.currentTarget.value === '')) {
+                      e.preventDefault()
                     }
                   }}
                   placeholder="Enter the price"
-                  className="!w-full !h-12 !bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg [&_.ant-input-number-input]:!text-white [&_.ant-input-number-input::placeholder]:!text-[#6B7280] [&_.ant-input-number-input]:!pr-16"
-                  min={0}
-                  step={0.1}
-                  precision={2}
+                  className="flex-1 bg-transparent border-none outline-none text-white text-base font-semibold font-exo2 placeholder:text-[#6B7280] pr-2"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm pointer-events-none">AVAX</span>
+                <span className="text-[#6B7280] text-sm">AVAX</span>
               </div>
             </div>
             <div>
               <p className="text-[#9BA3AF] text-xs font-semibold mb-2">USDT Equivalent</p>
               <div className="h-12 bg-[#090721] border border-[#A3AED033] rounded-lg flex items-center justify-between px-4">
                 <span className="text-white text-base font-semibold">
-                  {convertedUsdtValue ? convertedUsdtValue : "--"}
+                  {convertedUsdtValue ? convertedUsdtValue : "0.00"}
                 </span>
                 <span className="text-[#6B7280] text-sm">USDT</span>
               </div>
@@ -1684,6 +1784,7 @@ payload.nonce = nonceResponse.data.nonce;
               placeholder="Enter Token Symbol"
               value={tokenSymbol}
               onChange={handleTokenSymbolChange}
+              onBlur={handleSymbolBlur}
               className={`!bg-[#0B0926] !text-white !h-12 !rounded-xl placeholder:!text-[#6B7280] ${symbolError
                   ? "!border-red-500"
                   : "!border-[#6B7280]"

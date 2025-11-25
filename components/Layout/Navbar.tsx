@@ -11,12 +11,14 @@ import NotificationDropdown from '@/components/Notifications/NotificationDropdow
 import SkeletonBox from '../Common/SkeletonBox'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
+import { useMessage } from '@/lib/hooks/useMessage'
 
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { logout, user, getUser, isAuthenticated, checkAuth } = useAuthStore()
   const { logout: privyLogout } = usePrivy()
+  const { message } = useMessage()
   const {
     items: notifItems,
     unreadCount,
@@ -196,13 +198,20 @@ export default function Navbar() {
       setIsMobileProfileOpen(false)
 
       // First, log out of Privy session if available
-      try { await privyLogout?.() } catch { }
+      try { 
+        await privyLogout?.() 
+      } catch (privyError) {
+        console.error('Privy logout error:', privyError)
+      }
 
       // Then clear app auth state
       await logout()
+      
+      // Show success toast
+      message.success('Logged out successfully')
 
-      // Small delay to ensure state is cleared before redirect
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Delay to ensure toast is visible before redirect
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       // Redirect to login to avoid accidental auto-login flows
       router.replace('/feed')

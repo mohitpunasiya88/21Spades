@@ -393,20 +393,9 @@ const TokenizedCollectionCard: React.FC = () => {
       <div className='w-full h-full mt-6 sm:mt-8 md:mt-10'>
         <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0'>
           <h1 className='text-white text-lg sm:text-xl md:text-2xl font-audiowide'>Discover all the Tokenized collections</h1>
-          <Dropdown menu={{ items, onClick: handleMenuClick }} trigger={['click']} placement="bottomRight" className='border border-gray-800 rounded-full'>
-            <a onClick={(e) => e.preventDefault()}>
-              <Space 
-                className='text-white font-exo2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full cursor-pointer transition-colors text-sm sm:text-base'
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
-              >
-                {selectedNetwork}
-                <DownOutlined />
-              </Space>
-            </a>
-          </Dropdown>
+          <div className='text-white font-exo2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-sm sm:text-base inline-flex items-center border border-gray-800'>
+            Avalanche
+          </div>
         </div>
 
         <div className="mt-6 sm:mt-8 md:mt-10 mb-8 sm:mb-10 md:mb-12">

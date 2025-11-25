@@ -5,11 +5,13 @@ import { useRouter,usePathname } from 'next/navigation'
 import { Search, ChevronDown, Bell, Settings, Languages, Menu, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/authStore'
 import { usePrivy } from '@privy-io/react-auth'
+import { useMessage } from '@/lib/hooks/useMessage'
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const { isAuthenticated, user, logout } = useAuthStore()
+  const { message } = useMessage()
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -44,7 +46,7 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
+  // const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']
   const handleLogout = async () => {
     try {
 
@@ -61,7 +63,11 @@ export default function Header() {
       // Clear state
       await logout()
       setIsProfileOpen(false)
-      // Small delay to ensure state is cleared before redirect
+      
+      // Show success toast
+      message.success('Logged out successfully')
+      
+      // Delay to ensure toast is visible before redirect
       await new Promise(resolve => setTimeout(resolve, 100))
       // If already on landing page, stay there. Otherwise redirect to landing
       if (pathname === '/landing') {
