@@ -5,13 +5,17 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Badge } from 'antd'
 import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet, User, Image as ImageIcon, FileText, Folder } from 'lucide-react'
-import { usePrivy } from '@privy-io/react-auth'
+
 import { useNotificationStore } from '@/lib/store/notificationStore'
 import NotificationDropdown from '@/components/Notifications/NotificationDropdown'
 import SkeletonBox from '../Common/SkeletonBox'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
 import { useMessage } from '@/lib/hooks/useMessage'
+import { useWallet } from '@/app/hooks/useWallet'
+import { usePrivy } from '@privy-io/react-auth'
+
+
 
 export default function Navbar() {
   const router = useRouter()
@@ -51,6 +55,8 @@ export default function Navbar() {
   const mobileSearchRef = useRef<HTMLDivElement>(null)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const hasFetchedNotificationsRef = useRef(false)
+  const {isConnected,address,balance,walletAddresses } = useWallet()
+
 
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<{
@@ -994,15 +1000,15 @@ export default function Navbar() {
                 >
                   <button
                     onClick={() => {
-                      setSelectedWalletOption('Connect Wallet')
+                      setSelectedWalletOption('Wallet')
                       setIsWalletOpen(false)
                       setIsWalletHovered(false)
                     }}
                     className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group"
                   >
                     <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                    <span className="group-hover:text-purple-300 transition-colors">Connect Wallet</span>
-                    {selectedWalletOption === 'Connect Wallet' && (
+                    <span className="group-hover:text-purple-300 transition-colors">{shortAddress(address as string) } Balance: {Number(balance).toFixed(4)}</span>
+                    {selectedWalletOption === 'Wallet' && (
                       <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
                     )}
                   </button>
@@ -1019,6 +1025,7 @@ export default function Navbar() {
                     {selectedWalletOption === 'My Wallets' && (
                       <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
                     )}
+                  
                   </button>
                   <button
                     onClick={() => {
@@ -1030,6 +1037,7 @@ export default function Navbar() {
                   >
                     <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                     <span className="group-hover:text-purple-300 transition-colors">Transaction History</span>
+                    {/* get the tx history using api  save the tx of user when he do tx of blockchain , save user wallet and tx hash and chain id , */}
                     {selectedWalletOption === 'Transaction History' && (
                       <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
                     )}
@@ -1316,3 +1324,6 @@ export default function Navbar() {
     </div>
   )
 }
+
+export const shortAddress = (address: string, chars = 4) =>
+  `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
