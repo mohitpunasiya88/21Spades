@@ -90,8 +90,8 @@ export default function FeedRightSidebar() {
         queryParams.append('limit', '50') // Fetch more to ensure we get the latest ones
         queryParams.append('blocked', 'false')
 
-        const url = `${authRoutes.getCollectionsPublic}?${queryParams.toString()}`
-        const response = await apiCaller('GET', url, null, false)
+        const url = `${authRoutes.getCollections}?${queryParams.toString()}`
+        const response = await apiCaller('GET', url, null, true)
 
         if (response.success && response.data) {
           const collectionsData = Array.isArray(response.data)
@@ -190,6 +190,8 @@ export default function FeedRightSidebar() {
   const dummyPriceChange = marketCap?.priceChange24h || 0
   const isPositive = dummyPriceChange >= 0
   const marketCapFormatted = formatMarketCap(marketCap?.marketCap || 0)
+
+  console.log(newCollections,'newCollections')
 
   return (
     <aside
