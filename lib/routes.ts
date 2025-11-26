@@ -62,6 +62,10 @@ const authRoutes = {
     // nonce
     getNonce: 'nonce',
 
+    // Password reset
+    forgotPasswordRequest: 'auth/forgot-password/request',
+    forgotPasswordReset: 'auth/forgot-password/reset',
+
     // NFT BUY
     buyNow: 'nft/items',
 

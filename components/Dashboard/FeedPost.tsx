@@ -77,36 +77,139 @@ function PostMediaCarousel({
   maxHeight?: number
 }) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState<number | null>(null)
+  const [dragOffset, setDragOffset] = useState(0)
 
   if (!images || images.length === 0) return null
 
-  const handlePrev = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  // Minimum swipe distance (in pixels)
+  const minSwipeDistance = 50
+
+  const handlePrev = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
     setActiveIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleNext = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
     setActiveIndex((prev) => (prev + 1) % images.length)
+  }
+
+  // Touch handlers for mobile swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation()
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation()
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation()
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe) {
+      handleNext()
+    } else if (isRightSwipe) {
+      handlePrev()
+    }
+    
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
+  // Mouse handlers for desktop drag
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsDragging(true)
+    setDragStart(e.clientX)
+    setDragOffset(0)
+  }
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isDragging || dragStart === null) return
+    const offset = e.clientX - dragStart
+    setDragOffset(offset)
+  }
+
+  const onMouseUp = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isDragging || dragStart === null) return
+    
+    const distance = dragOffset
+    const isLeftSwipe = distance < -minSwipeDistance
+    const isRightSwipe = distance > minSwipeDistance
+
+    if (isLeftSwipe) {
+      handleNext()
+    } else if (isRightSwipe) {
+      handlePrev()
+    }
+    
+    setIsDragging(false)
+    setDragStart(null)
+    setDragOffset(0)
+  }
+
+  const onMouseLeave = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isDragging) {
+      setIsDragging(false)
+      setDragStart(null)
+      setDragOffset(0)
+    }
   }
 
   const currentImage = images[activeIndex]
 
   return (
-    <div className="relative flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4 bg-black/40">
-      <img
-        src={currentImage}
-        alt={`Post image ${activeIndex + 1}`}
-        className="max-w-full h-auto object-contain"
-        style={{ maxHeight }}
-      />
+    <div 
+      className="relative flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4 bg-black/40 cursor-grab active:cursor-grabbing select-none"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
+      style={{
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}
+    >
+      <div 
+        className="flex transition-transform duration-300 ease-out"
+        style={{
+          transform: `translateX(${dragOffset}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+        }}
+      >
+        <img
+          src={currentImage}
+          alt={`Post image ${activeIndex + 1}`}
+          className="max-w-full h-auto object-contain"
+          style={{ maxHeight }}
+          draggable={false}
+        />
+      </div>
 
       {images.length > 1 && (
         <>
           {/* Left arrow */}
           <button
             onClick={handlePrev}
-            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-10"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -114,13 +217,13 @@ function PostMediaCarousel({
           {/* Right arrow */}
           <button
             onClick={handleNext}
-            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-10"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Dots indicator */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
             {images.map((_, index) => (
               <span
                 key={index}
@@ -133,7 +236,7 @@ function PostMediaCarousel({
             ))}
           </div>
           {/* Counter top-right (like Instagram) */}
-          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] sm:text-xs font-medium">
+          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] sm:text-xs font-medium z-10">
             {activeIndex + 1}/{images.length}
           </div>
         </>

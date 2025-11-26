@@ -11,6 +11,7 @@ import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-r
 import defaultCoverImage from "@/components/assets/profile-bg.jpg"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
+import { countryCodes } from '@/lib/constants/countryCodes'
 
 const countries = [
   "United States",
@@ -19,30 +20,6 @@ const countries = [
   "Germany",
   "France",
   "Japan",
-]
-
-// Common country codes
-const countryCodes = [
-  { code: '+1', country: 'US', flag: '🇺🇸' },
-  { code: '+91', country: 'IN', flag: '🇮🇳' },
-  { code: '+44', country: 'GB', flag: '🇬🇧' },
-  { code: '+86', country: 'CN', flag: '🇨🇳' },
-  { code: '+81', country: 'JP', flag: '🇯🇵' },
-  { code: '+49', country: 'DE', flag: '🇩🇪' },
-  { code: '+33', country: 'FR', flag: '🇫🇷' },
-  { code: '+61', country: 'AU', flag: '🇦🇺' },
-  { code: '+7', country: 'RU', flag: '🇷🇺' },
-  { code: '+55', country: 'BR', flag: '🇧🇷' },
-  { code: '+52', country: 'MX', flag: '🇲🇽' },
-  { code: '+39', country: 'IT', flag: '🇮🇹' },
-  { code: '+34', country: 'ES', flag: '🇪🇸' },
-  { code: '+82', country: 'KR', flag: '🇰🇷' },
-  { code: '+971', country: 'AE', flag: '🇦🇪' },
-  { code: '+65', country: 'SG', flag: '🇸🇬' },
-  { code: '+60', country: 'MY', flag: '🇲🇾' },
-  { code: '+66', country: 'TH', flag: '🇹🇭' },
-  { code: '+62', country: 'ID', flag: '🇮🇩' },
-  { code: '+84', country: 'VN', flag: '🇻🇳' },
 ]
 
 export default function ProfilePage() {
@@ -679,7 +656,7 @@ export default function ProfilePage() {
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
             <a
-              href={profile.links.instagram || "#"}
+              href={profile.links.instagram || "https://www.instagram.com/21spades.io"}
               target={profile.links.instagram ? "_blank" : "_self"}
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full border border-white/30 bg-black/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -688,7 +665,7 @@ export default function ProfilePage() {
               <FaInstagram className="text-xl text-white" />
             </a>
             <a
-              href={profile.links.x || "#"}
+              href={profile.links.x || "https://twitter.com/@21SpadesDPR"}
               target={profile.links.x ? "_blank" : "_self"}
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -697,7 +674,7 @@ export default function ProfilePage() {
               <FaXTwitter className="text-xl text-white" />
             </a>
             <a
-              href={profile.links.facebook || "#"}
+              href={profile.links.facebook || "https://t.me/+XyKl3RHYu-QxNWMx"}
               target={profile.links.facebook ? "_blank" : "_self"}
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
