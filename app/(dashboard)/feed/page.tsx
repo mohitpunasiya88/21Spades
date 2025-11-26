@@ -45,6 +45,21 @@ function transformPost(post: Post) {
   const isRepost = !!post.originalPost
   const originalPost = post.originalPost
   
+  // Normalize media arrays for original and regular posts
+  const originalPostImages =
+    (originalPost as any)?.postUrls && Array.isArray((originalPost as any).postUrls) && (originalPost as any).postUrls.length > 0
+      ? (originalPost as any).postUrls as string[]
+      : originalPost?.postUrl
+      ? [originalPost.postUrl]
+      : []
+
+  const postImages =
+    (post as any)?.postUrls && Array.isArray((post as any).postUrls) && (post as any).postUrls.length > 0
+      ? (post as any).postUrls as string[]
+      : post.postUrl
+      ? [post.postUrl]
+      : []
+  
   // For reposts, the repost author is the post author (not original post author)
   const repostAuthor = post.author || {
     _id: 'unknown',
@@ -64,7 +79,8 @@ function transformPost(post: Post) {
     walletAddress: originalPost.author?._id ? originalPost.author._id.slice(-8) : 'unknown',
     profilePicture: originalPost.author?.profilePicture,
     content: originalPost.text || '',
-    image: originalPost.postUrl || '/post/post.png',
+    image: originalPostImages[0] || '/post/post.png',
+    images: originalPostImages,
     likes: originalPost.likesCount || 0,
     comments: originalPost.commentsCount || 0,
     shares: originalPost.sharesCount || 0,
@@ -78,6 +94,7 @@ function transformPost(post: Post) {
   const displayPost = isRepost ? {
     text: '', // Repost caption is in post.text
     postUrl: '',
+    images: originalPostImages,
     likesCount: originalPost?.likesCount || 0,
     commentsCount: originalPost?.commentsCount || 0,
     sharesCount: originalPost?.sharesCount || 0,
@@ -86,6 +103,7 @@ function transformPost(post: Post) {
   } : {
     text: post.text || '',
     postUrl: post.postUrl || '',
+    images: postImages,
     likesCount: post.likesCount || 0,
     commentsCount: post.commentsCount || 0,
     sharesCount: post.sharesCount || 0,
@@ -103,7 +121,8 @@ function transformPost(post: Post) {
     walletAddress: repostAuthor._id ? repostAuthor._id.slice(-8) : 'unknown',
     profilePicture: repostAuthor.profilePicture,
     content: displayPost.text,
-    image: displayPost.postUrl,
+    image: displayPost.postUrl || (displayPost.images && displayPost.images[0]) || '',
+    images: displayPost.images,
     likes: displayPost.likesCount,
     comments: displayPost.commentsCount,
     shares: displayPost.sharesCount,
@@ -369,13 +388,11 @@ export default function FeedPage() {
         ? categories.find(cat => cat.name === postCategory)?._id
         : undefined
 
-      // Use first image preview URL if available (for now using data URL)
-      // In production, you'd upload to S3 first and get the URL
-      const postUrl = imagePreviews.length > 0 ? imagePreviews[0] : undefined
-
       const createdPost = await createPost({
         text: postText.trim() || undefined,
-        postUrl: postUrl,
+        // Backend now supports multiple media URLs via postUrls
+        // We send all selected images; backend can decide how to store them
+        postUrls: imagePreviews.length > 0 ? imagePreviews : undefined,
         categoryId: categoryId,
       })
       
@@ -617,76 +634,76 @@ export default function FeedPage() {
                   }
                   
                   return (
-                    <Tooltip message={tooltipMessage} disabled={!tooltipMessage || isPosting}>
+                    <Tooltip message={tooltipMessage} disabled={!tooltipMessage || isPosting}> 
                       <button 
-                        onClick={handlePostSubmit}
-                        disabled={isDisabled}
+                        onClick={handlePostSubmit} 
+                        disabled={isDisabled} 
                         className="bg-white text-black text-[16px] sm:text-base md:text-[18px] font-[600] px-8 sm:px-8 py-1 rounded-full shadow font-exo2 whitespace-nowrap w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
-                      >
-                        {isPosting ? 'Posting...' : 'Post'}
-                      </button>
-                    </Tooltip>
-                  )
-                })()}
-              </div>
+                      > 
+                        {isPosting ? 'Posting...' : 'Post'} 
+                      </button> 
+                    </Tooltip> 
+                  ) 
+                })()} 
+              </div> 
               
-              {/* Progress Indicator */}
-              {postStatus && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs sm:text-sm">
-                    <span className="text-white font-exo2 font-medium">
-                      {postStatus === 'posting' ? 'Posting...' : 'Finished'}
-                    </span>
-                    <span className="text-gray-400 font-exo2">
-                      {Math.round(postProgress)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-[#FFFFFF10] rounded-full overflow-hidden">
-                    <div
+              {/* Progress Indicator */} 
+              {postStatus && ( 
+                <div className="mt-3 space-y-2"> 
+                  <div className="flex items-center justify-between text-xs sm:text-sm"> 
+                    <span className="text-white font-exo2 font-medium"> 
+                      {postStatus === 'posting' ? 'Posting...' : 'Finished'} 
+                    </span> 
+                    <span className="text-gray-400 font-exo2"> 
+                      {Math.round(postProgress)}% 
+                    </span> 
+                  </div> 
+                  <div className="w-full h-1.5 bg-[#FFFFFF10] rounded-full overflow-hidden"> 
+                    <div 
                       className="h-full bg-gradient-to-r from-[#4F01E6] to-[#7E6BEF] transition-all duration-300 ease-out rounded-full"
                       style={{ width: `${Math.min(100, Math.max(0, postProgress))}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                    /> 
+                  </div> 
+                </div> 
+              )} 
+            </div> 
+          </div> 
 
-          <div className="border-b-1 border-[#FFFFFF33] mb-4" ></div>
-          <Ddrop />
-         
-          {/* Explore Feed Section */}
-          <div ref={postsSectionRef} className="mb-4 sm:mb-6">
-            <div className="mb-2 sm:mb-3">
+          <div className="border-b-1 border-[#FFFFFF33] mb-4" ></div> 
+          <Ddrop /> 
+          
+          {/* Explore Feed Section */} 
+          <div ref={postsSectionRef} className="mb-4 sm:mb-6"> 
+            <div className="mb-2 sm:mb-3"> 
               <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 font-audiowide" style={{
                 textShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)',
-                letterSpacing: '0.5px'
-              }}>
-                Explore Feed
-              </h2>
+                letterSpacing: '0.5px' 
+              }}> 
+                Explore Feed 
+              </h2> 
               <p className="text-gray-300 text-sm sm:text-base font-exo2 leading-relaxed">Explore Feed, the premier Web3 marketplace for securely buying, selling, and trading digital assets.</p>
-            </div>
+            </div> 
 
-            {/* Category Filter Tabs */}
-            <div className="flex gap-2 mb-3 sm:mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2">
-              {categoriesList.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+            {/* Category Filter Tabs */} 
+            <div className="flex gap-2 mb-3 sm:mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2"> 
+              {categoriesList.map((cat) => ( 
+                <button 
+                  key={cat} 
+                  onClick={() => setSelectedCategory(cat)} 
                   className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium whitespace-nowrap transition-colors border-b-2 text-sm sm:text-base flex-shrink-0 ${selectedCategory === cat
-                      ? 'text-purple-400 border-purple-500'
+                      ? 'text-purple-400 border-purple-500' 
                       : 'text-gray-400 border-transparent hover:text-white hover:border-gray-600'
-                    }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+                    }`} 
+                > 
+                  {cat} 
+                </button> 
+              ))} 
+            </div> 
 
             {/* Feed Posts */}
-            <div className="space-y-4">
+            <div className="space-y-4"> 
               {isLoading ? (
-                <div className="text-center text-gray-400 py-8">Loading posts...</div>
+                <div className="text-center text-gray-400 py-8">Loading posts...</div> 
               ) : posts.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">No posts found</div>
               ) : (
