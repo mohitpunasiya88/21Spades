@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon, MoreVertical, Edit, Trash2, X, Image as ImageIcon } from 'lucide-react'
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon, MoreVertical, Edit, Trash2, X, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
 import { Avatar, Button, Collapse, Tooltip as AntTooltip, Steps } from 'antd'
 import EmojiPicker from 'emoji-picker-react'
@@ -25,7 +25,8 @@ interface FeedPostProps {
     walletAddress: string
     profilePicture?: string
     content: string
-    image: string
+    image?: string
+    images?: string[]
     likes: number
     comments: number
     shares: number
@@ -50,7 +51,8 @@ interface FeedPostProps {
       walletAddress: string
       profilePicture?: string
       content: string
-      image: string
+      image?: string
+      images?: string[]
       likes: number
       comments: number
       shares: number
@@ -65,6 +67,80 @@ interface FeedPostProps {
 const UserList = ['U', 'Lucy', 'Tom', 'Edward'];
 const ColorList = ['#f56a00', '#7265e6', '#ffbf00', '#00a2ae'];
 const GapList = [4, 3, 2, 1];
+
+// Simple carousel component for post media (supports multiple images like Instagram)
+function PostMediaCarousel({
+  images,
+  maxHeight = 500,
+}: {
+  images: string[]
+  maxHeight?: number
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  if (!images || images.length === 0) return null
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setActiveIndex((prev) => (prev - 1 + images.length) % images.length)
+  }
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setActiveIndex((prev) => (prev + 1) % images.length)
+  }
+
+  const currentImage = images[activeIndex]
+
+  return (
+    <div className="relative flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4 bg-black/40">
+      <img
+        src={currentImage}
+        alt={`Post image ${activeIndex + 1}`}
+        className="max-w-full h-auto object-contain"
+        style={{ maxHeight }}
+      />
+
+      {images.length > 1 && (
+        <>
+          {/* Left arrow */}
+          <button
+            onClick={handlePrev}
+            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+
+          {/* Right arrow */}
+          <button
+            onClick={handleNext}
+            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+
+          {/* Dots indicator */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            {images.map((_, index) => (
+              <span
+                key={index}
+                className={`rounded-full transition-all ${
+                  index === activeIndex
+                    ? 'w-2.5 h-2.5 bg-white'
+                    : 'w-2 h-2 bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+          {/* Counter top-right (like Instagram) */}
+          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] sm:text-xs font-medium">
+            {activeIndex + 1}/{images.length}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 // Helper function to render text with clickable links
 const renderTextWithLinks = (text: string) => {
@@ -650,6 +726,8 @@ export default function FeedPost({ post }: FeedPostProps) {
       await updatePost(post.id, {
         text: updateText.trim() || undefined,
         postUrl: imageUrl,
+        // Keep first image in postUrls for compatibility with new backend
+        postUrls: imageUrl ? [imageUrl] : post.image ? [post.image] : undefined,
       })
       message.success('Post updated successfully')
       setShowUpdateModal(false)
@@ -937,16 +1015,17 @@ export default function FeedPost({ post }: FeedPostProps) {
           )}
 
           {/* Original Post Media */}
-          {post.originalPost.image && (
-            <div className="flex justify-center items-center overflow-hidden rounded-lg">
-              <img
-                src={post.originalPost.image}
-                alt="Original Post Image"
-                className="max-w-full h-auto object-contain max-h-[400px]"
-                style={{ display: 'block' }}
-              />
-            </div>
-          )}
+          {(() => {
+            const images = post.originalPost?.images && post.originalPost.images.length > 0
+              ? post.originalPost.images
+              : post.originalPost?.image
+              ? [post.originalPost.image]
+              : []
+
+            if (!images.length) return null
+
+            return <PostMediaCarousel images={images} maxHeight={400} />
+          })()}
         </div>
       ) : (
         <>
@@ -958,21 +1037,17 @@ export default function FeedPost({ post }: FeedPostProps) {
           )}
 
           {/* Regular Post Media - Only show if not a repost */}
-          {post.image ? (
-            <div className="flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4">
-              <img
-                src={post.image}
-                alt="Post Image"
-                className="max-w-full h-auto object-contain max-h-[500px]"
-                style={{ display: 'block' }}
-              />
-            </div>
-          ) : (
-            ''
-            // <div className="flex justify-center items-center rounded-lg sm:rounded-xl mb-3 sm:mb-4 border border-dashed border-[#FFFFFF33] text-gray-400 text-sm sm:text-base font-exo2 py-10 w-full">
-            //   No image available
-            // </div>
-          )}
+          {(() => {
+            const images = (post.images && post.images.length > 0)
+              ? post.images
+              : post.image
+              ? [post.image]
+              : []
+
+            if (!images.length) return null
+
+            return <PostMediaCarousel images={images} maxHeight={500} />
+          })()}
         </>
       )}
       
