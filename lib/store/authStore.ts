@@ -21,6 +21,9 @@ interface AuthState {
   loginWithPrivy: (privyUser: unknown, accessToken?: string | null) => Promise<void>
   signup: (data: SignUpData) => Promise<void>
   verifyOTP: (data: OTPData) => Promise<void>
+  // Forgot password
+  requestPasswordReset: (data: { phoneNumber: string; countryCode: string }) => Promise<void>
+  resetPassword: (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => Promise<void>
   logout: () => void
   getUser: () => Promise<void>
   updateUser: (data: User) => Promise<void>
@@ -44,6 +47,8 @@ export interface Post {
   } | null
   text?: string
   postUrl?: string
+  // New: support multiple media URLs per post
+  postUrls?: string[]
   category?: {
     _id: string
     name: string
@@ -58,6 +63,7 @@ export interface Post {
     _id: string
     text?: string
     postUrl?: string
+    postUrls?: string[]
     author?: {
       _id: string
       name: string
@@ -91,6 +97,8 @@ export interface Post {
 export interface CreatePostData {
   text?: string
   postUrl?: string
+  // New: support multiple media URLs on create/update
+  postUrls?: string[]
   categoryId?: string
 }
 
@@ -486,6 +494,40 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // Forgot password: request OTP
+      requestPasswordReset: async (data: { phoneNumber: string; countryCode: string }) => {
+        set({ isLoading: true })
+        try {
+          const payload = {
+            phoneNumber: data.phoneNumber.trim(),
+            countryCode: data.countryCode.trim(),
+          }
+          await apiCaller('POST', authRoutes.forgotPasswordRequest, payload)
+          set({ isLoading: false })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
+
+      // Forgot password: reset with OTP
+      resetPassword: async (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => {
+        set({ isLoading: true })
+        try {
+          const payload = {
+            phoneNumber: data.phoneNumber.trim(),
+            countryCode: data.countryCode.trim(),
+            otp: data.otp.trim(),
+            newPassword: data.newPassword,
+          }
+          await apiCaller('POST', authRoutes.forgotPasswordReset, payload)
+          set({ isLoading: false })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
+
       logout: async () => {
         try {
           if (typeof window !== 'undefined') {
@@ -839,6 +881,7 @@ export const useFeedStore = create<FeedState>()(
                 ...response.data.post,
                 text: response.data.post?.text || data.text || post.text,
                 postUrl: response.data.post?.postUrl || data.postUrl || post.postUrl,
+                postUrls: response.data.post?.postUrls || data.postUrls || post.postUrls,
               } : post
             )
             set({ posts: updatedPosts, isLoading: false })
