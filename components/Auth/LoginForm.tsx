@@ -251,7 +251,11 @@ export default function LoginForm() {
                   />
                   Remember me
                 </label>
-                <button className="text-white hover:text-yellow-400 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => router.push('/forgot-password')}
+                  className="text-white hover:text-yellow-400 transition-colors"
+                >
                   Forgot Password
                 </button>
               </div>

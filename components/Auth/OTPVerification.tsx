@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { ArrowLeft } from 'lucide-react'
+import { countryCodeList } from '@/lib/constants/countryCodes'
 
 export default function OTPVerification() {
   const router = useRouter()
@@ -41,15 +42,8 @@ export default function OTPVerification() {
       }
     }
     
-    // Common country codes (sorted by length DESC to match longest first)
-    const countryCodes = [
-      '+971', '+966', '+965', '+964', '+963', '+962', '+961', '+960', '+959', '+958',
-      '+90', '+86', '+84', '+82', '+81', '+66', '+65', '+62', '+61',
-      '+60', '+55', '+52', '+49', '+44', '+39', '+34', '+33', '+7', '+1'
-    ]
-    
-    // Try to match longest codes first
-    for (const code of countryCodes) {
+    // Try to match longest codes first (using common countryCodeList)
+    for (const code of countryCodeList) {
       if (cleaned.startsWith(code)) {
         const phoneNumber = cleaned.substring(code.length)
         return {

@@ -21,9 +21,9 @@ interface AuthState {
   loginWithPrivy: (privyUser: unknown, accessToken?: string | null) => Promise<void>
   signup: (data: SignUpData) => Promise<void>
   verifyOTP: (data: OTPData) => Promise<void>
-  // // Forgot password
-  // requestPasswordReset: (data: { phoneNumber: string; countryCode: string }) => Promise<void>
-  // resetPassword: (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => Promise<void>
+  // Forgot password
+  requestPasswordReset: (data: { phoneNumber: string; countryCode: string }) => Promise<void>
+  resetPassword: (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => Promise<void>
   logout: () => void
   getUser: () => Promise<void>
   updateUser: (data: User) => Promise<void>
@@ -486,39 +486,39 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // // Forgot password: request OTP
-      // requestPasswordReset: async (data: { phoneNumber: string; countryCode: string }) => {
-      //   set({ isLoading: true })
-      //   try {
-      //     const payload = {
-      //       phoneNumber: data.phoneNumber.trim(),
-      //       countryCode: data.countryCode.trim(),
-      //     }
-      //     await apiCaller('POST', authRoutes.forgotPasswordRequest, payload)
-      //     set({ isLoading: false })
-      //   } catch (error) {
-      //     set({ isLoading: false })
-      //     throw error
-      //   }
-      // },
+      // Forgot password: request OTP
+      requestPasswordReset: async (data: { phoneNumber: string; countryCode: string }) => {
+        set({ isLoading: true })
+        try {
+          const payload = {
+            phoneNumber: data.phoneNumber.trim(),
+            countryCode: data.countryCode.trim(),
+          }
+          await apiCaller('POST', authRoutes.forgotPasswordRequest, payload)
+          set({ isLoading: false })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
 
       // Forgot password: reset with OTP
-      // resetPassword: async (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => {
-      //   set({ isLoading: true })
-      //   try {
-      //     const payload = {
-      //       phoneNumber: data.phoneNumber.trim(),
-      //       countryCode: data.countryCode.trim(),
-      //       otp: data.otp.trim(),
-      //       newPassword: data.newPassword,
-      //     }
-      //     await apiCaller('POST', authRoutes.forgotPasswordReset, payload)
-      //     set({ isLoading: false })
-      //   } catch (error) {
-      //     set({ isLoading: false })
-      //     throw error
-      //   }
-      // },
+      resetPassword: async (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => {
+        set({ isLoading: true })
+        try {
+          const payload = {
+            phoneNumber: data.phoneNumber.trim(),
+            countryCode: data.countryCode.trim(),
+            otp: data.otp.trim(),
+            newPassword: data.newPassword,
+          }
+          await apiCaller('POST', authRoutes.forgotPasswordReset, payload)
+          set({ isLoading: false })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
 
       logout: async () => {
         try {
