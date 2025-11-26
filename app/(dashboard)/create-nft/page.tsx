@@ -92,18 +92,32 @@ export default function CreateNFTPage() {
 
       const url = `${authRoutes.getCollections}?${queryParams.toString()}`
 
-      const response = await apiCaller('GET', url, null, true)
+      // Fetch both user collections and system collection in parallel
+      const [userCollectionsResponse, systemCollectionResponse] = await Promise.all([
+        apiCaller('GET', url, null, true),
+        apiCaller('GET', authRoutes.getSystemCollection, null, true).catch(() => null) // Don't fail if system collection doesn't exist
+      ])
 
-      if (response.success && response.data) {
-        // Handle both array and object with collections property
-        const collectionsData = Array.isArray(response.data)
-          ? response.data
-          : (response.data.collections || response.data.data || [])
-        setCollections(collectionsData)
-      } else {
-        console.warn("⚠️ No collections found or invalid response")
-        setCollections([])
+      const allCollections: any[] = []
+
+      // Add system collection first (if available)
+      if (systemCollectionResponse?.success && systemCollectionResponse?.data) {
+        const systemCollection = systemCollectionResponse.data.collection || systemCollectionResponse.data
+        if (systemCollection) {
+          allCollections.push(systemCollection)
+        }
       }
+
+      // Add user collections
+      if (userCollectionsResponse.success && userCollectionsResponse.data) {
+        // Handle both array and object with collections property
+        const collectionsData = Array.isArray(userCollectionsResponse.data)
+          ? userCollectionsResponse.data
+          : (userCollectionsResponse.data.collections || userCollectionsResponse.data.data || [])
+        allCollections.push(...collectionsData)
+      }
+
+      setCollections(allCollections)
     } catch (error: any) {
       console.error("❌ Error fetching collections:", error)
       setCollections([])

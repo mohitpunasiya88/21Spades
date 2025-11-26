@@ -38,8 +38,14 @@ interface FeedPostProps {
     price?: number
     currency?: string
     nft?: {
+      _id?: string
+      id?: string
       price?: number
       currency?: string
+      collectionId?: string | {
+        _id?: string
+        id?: string
+      }
     }
     // For reposts - original post data
     repostCaption?: string // Caption added when reposting
@@ -1175,7 +1181,18 @@ export default function FeedPost({ post }: FeedPostProps) {
                 setShowLoginModal(true)
                 return
               }
-              // TODO: Implement buy functionality
+              
+              // Extract NFT ID and collection ID from post data
+              const nftId = post.nft?._id || post.nft?.id
+              const collectionId = typeof post.nft?.collectionId === 'string' 
+                ? post.nft.collectionId 
+                : post.nft?.collectionId?._id || post.nft?.collectionId?.id
+              
+              if (nftId && collectionId) {
+                router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)
+              } else {
+                message.error('NFT information not available')
+              }
             }}
             className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base whitespace-nowrap flex-shrink-0"
           >

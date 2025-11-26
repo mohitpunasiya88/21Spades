@@ -2,7 +2,13 @@
 
 import { useMarketDataStore } from '@/lib/store/authStore'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import GaugeComponent from 'react-gauge-component'
+import { apiCaller } from '@/app/interceptors/apicall/apicall'
+import authRoutes from '@/lib/routes'
+import Image from 'next/image'
+import bidIcon from '@/components/assets/image.png';
+import { ChevronRight, ChevronUp } from 'lucide-react'
 interface MarketData {
   fearGreed: {
     value: number
@@ -20,11 +26,49 @@ export default function FeedRightSidebar() {
   const { getFeedGreedIndex , value, getCoinPrice, coinAmount, coinCurrency, coinSymbol,getMarketCap,marketCap} = useMarketDataStore()
   const [marketData, setMarketData] = useState<MarketData | null>(null)
   const [selected, setSelected] = useState('AVAX')
+  const [newCollections, setNewCollections] = useState<any[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const fetchMarketData = async () => {
+      // Fetch Fear & Greed Index (no caching needed)
       const fearGreedData:any = await getFeedGreedIndex()
-      const marketCapData:any = await getMarketCap("bitcoin")
+      
+      // Check if market cap data exists in cache and is less than 24 hours old
+      const MARKET_CAP_CACHE_KEY = 'marketCapCache'
+      const MARKET_CAP_CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+      
+      try {
+        const cachedData = localStorage.getItem(MARKET_CAP_CACHE_KEY)
+        if (cachedData) {
+          const { data, timestamp } = JSON.parse(cachedData)
+          const now = Date.now()
+          const isExpired = (now - timestamp) > MARKET_CAP_CACHE_DURATION
+          
+          if (!isExpired) {
+            // Use cached data - no API call needed
+            console.log('Using cached market cap data')
+            return
+          }
+        }
+        
+        // Cache expired or doesn't exist - fetch new data
+        console.log('Fetching fresh market cap data')
+        const marketCapData:any = await getMarketCap("bitcoin")
+        
+        // Store in cache with timestamp
+        if (marketCapData) {
+          localStorage.setItem(MARKET_CAP_CACHE_KEY, JSON.stringify({
+            data: marketCapData,
+            timestamp: Date.now()
+          }))
+        }
+      } catch (error) {
+        console.error('Error handling market cap cache:', error)
+        // Fallback: try to fetch anyway
+        const marketCapData:any = await getMarketCap("bitcoin")
+      }
     }
     fetchMarketData()
   }, [])
@@ -35,6 +79,64 @@ export default function FeedRightSidebar() {
     }
     fetchCoinPrice()
   }, [selected])
+
+  // Fetch latest collections
+  useEffect(() => {
+    const fetchLatestCollections = async () => {
+      try {
+        setIsLoadingCollections(true)
+        const queryParams = new URLSearchParams()
+        queryParams.append('page', '1')
+        queryParams.append('limit', '50') // Fetch more to ensure we get the latest ones
+        queryParams.append('blocked', 'false')
+
+        const url = `${authRoutes.getCollectionsPublic}?${queryParams.toString()}`
+        const response = await apiCaller('GET', url, null, false)
+
+        if (response.success && response.data) {
+          const collectionsData = Array.isArray(response.data)
+            ? response.data
+            : (response.data.collections || response.data.data || [])
+          
+          // Filter active collections and sort by time (updatedAt first, then createdAt) - newest first
+          const sortedCollections = collectionsData
+            .filter((col: any) => {
+              // Only include active, non-blocked collections
+              return col.isActive !== false && col.blocked !== true
+            })
+            .sort((a: any, b: any) => {
+              // Prioritize updatedAt over createdAt for sorting
+              const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime()
+              const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime()
+              
+              // If both have updatedAt, compare them
+              if (a.updatedAt && b.updatedAt) {
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              }
+              
+              // If one has updatedAt, prioritize it
+              if (a.updatedAt && !b.updatedAt) return -1
+              if (!a.updatedAt && b.updatedAt) return 1
+              
+              // Both use createdAt or fallback
+              return dateB - dateA // Newest first
+            })
+            .slice(0, 3) // Take only the latest 3
+          
+          setNewCollections(sortedCollections)
+        } else {
+          setNewCollections([])
+        }
+      } catch (error) {
+        console.error('Error fetching latest collections:', error)
+        setNewCollections([])
+      } finally {
+        setIsLoadingCollections(false)
+      }
+    }
+
+    fetchLatestCollections()
+  }, [])
 
   const formatMarketCap = (marketCap: number): string => {
     if (marketCap >= 1e12) {
@@ -94,8 +196,10 @@ export default function FeedRightSidebar() {
       id="right-sidebar"
       className="h-full p-2 mt-5 mb-5 font-exo2 "
     >
-      {/* Fear & Greed Index */}
-      <div className="mb-6 p-4 pb-4 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] overflow-hidden">
+      {/* Outer wrapper with background #090721 */}
+      <div className="rounded-2xl p-4" style={{ backgroundColor: '#090721' }}>
+        {/* Fear & Greed Index */}
+        <div className="mb-6 p-4 pb-4 rounded-2xl overflow-hidden" style={{ backgroundColor: '#110F28' }}>
         {/* Line 1: Title */}
         <div className="mb-4">
           <h3 className="text-white font-audiowide text-[25px]">Fear & Greed Index</h3>
@@ -190,12 +294,16 @@ export default function FeedRightSidebar() {
         </div>
       </div>
 
-      {/* Market Cap */}
-      <div className="mb-6 font-exo2">
-        <div className="rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
+        {/* Market Cap */}
+        <div className="mb-6 font-exo2">
+          <div className="rounded-2xl p-4" style={{ backgroundColor: '#110F28' }}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-semibold font-exo2">Market Cap <span className="text-gray-500">›</span></h3>
-            <button className="text-purple-400 text-sm font-exo2 hover:text-purple-300 transition-colors">See All &gt;</button>
+            <h3 className="text-white font-semibold font-audiowide text-[25px]">
+              Market Cap
+            </h3>
+            <span className="text-gray-500 inline-flex items-center">
+              <ChevronUp />
+            </span>
           </div>
           <div className="w-full h-[0.5px] bg-[#FFFFFF33] mb-3" />
           <div className="flex items-center justify-between mb-2">
@@ -236,8 +344,8 @@ export default function FeedRightSidebar() {
               points={generateSparklinePath(marketCap?.sparkline || [])} 
             />
           </svg>
+          </div>
         </div>
-      </div>
 
       {/* Trending in Web3 */}
       {/* <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
@@ -341,36 +449,107 @@ export default function FeedRightSidebar() {
         </div>
       </div> */}
 
-      {/* New Collection */}
-      {/* <div className="mb-6 font-exo2 rounded-2xl border-[0.5px] border-[#FFFFFF33] bg-[#FFFFFF0A] p-4">
+        {/* New Collection */}
+        <div className="mb-6 font-exo2 rounded-2xl p-4" style={{ backgroundColor: '#110F28' }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">New Collection</h3>
-          <button className="text-white text-sm">See All &gt;</button>
+          <h3 className="text-white font-semibold font-audiowide text-[25px]" style={{
+                textShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)',
+                letterSpacing: '0.5px' 
+              }}>New Collection</h3>
         </div>
         <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-5" />
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i}>
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-12 h-12 aspect-square rounded-[5px] overflow-hidden bg-gradient-to-br from-[#4F01E6] to-[#020019]  p-2" >
-                  <img src="/assets/nft-card-icon.png" alt="Avatar" className="w-full h-full object-contain" />
-                </div>
-                <div className="flex flex-col items-start gap-[0.5px] w-full">
-                  <div className="flex flex-row items-center justify-between w-full">
-                    <p className="text-white text-[16px] font-semibold">21Spades</p>
-                    <p className="text-[#FFFFFF99] text-[10px]">35s ago</p>
-                  </div>
-                  <div className="flex flex-row items-center justify-between w-full">
-                    <p className="text-white text-[12px] font-[500]">By <span className="text-[#884DFF]">21Spades</span></p>
-                    <p className="text-white text-[12px]">⟠ 0.91 ETH</p>
-                  </div>
+        {isLoadingCollections ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-2 animate-pulse">
+                <div className="w-12 h-12 rounded-[5px] bg-gray-700" />
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-700 rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-gray-700 rounded w-1/2" />
                 </div>
               </div>
-              <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-2 mt-2" />
-            </div>
-          ))}
+            ))}
+          </div>
+        ) : newCollections.length > 0 ? (
+          <div className="space-y-3">
+            {newCollections.map((collection, index) => {
+              const collectionId = collection._id || collection.id
+              const collectionName = collection.collectionName || collection.name || 'Unnamed Collection'
+              const floorPrice = collection.floorPrice || 0
+              const floorPriceFormatted = typeof floorPrice === 'number' 
+                ? `${floorPrice.toFixed(3)}` 
+                : floorPrice
+              
+              // Calculate time ago from updatedAt
+              const getTimeAgo = (date: string | Date) => {
+                if (!date) return 'Just now'
+                const now = new Date()
+                const updated = new Date(date)
+                const diffInSeconds = Math.floor((now.getTime() - updated.getTime()) / 1000)
+                
+                if (diffInSeconds < 60) return `${diffInSeconds}s ago`
+                const diffInMinutes = Math.floor(diffInSeconds / 60)
+                if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+                const diffInHours = Math.floor(diffInMinutes / 60)
+                if (diffInHours < 24) return `${diffInHours}hr ago`
+                const diffInDays = Math.floor(diffInHours / 24)
+                return `${diffInDays}d ago`
+              }
+              
+              const timeAgo = getTimeAgo(collection.updatedAt || collection.createdAt || new Date())
+
+              return (
+                <div key={collectionId || index}>
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => collectionId && router.push(`/marketplace/collection/${collectionId}`)}
+                  >
+                    <div className="w-16 h-16 aspect-square rounded-[5px] overflow-hidden bg-gradient-to-br from-[#4F01E6] to-[#020019] p-2 flex-shrink-0">
+                      <img 
+                        src="/assets/nft-card-icon.png" 
+                        alt={collectionName} 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col items-start gap-[0.5px] w-full min-w-0">
+                      <div className="flex flex-row items-center justify-between w-full">
+                        <p className="text-white text-[16px] font-semibold truncate">{collectionName}</p>
+                        <p className="text-[#FFFFFF99] text-[10px] whitespace-nowrap ml-2">{timeAgo}</p>
+                      </div>
+                      <div className="flex flex-row items-center justify-between w-full">
+                        <div className="flex-1" />
+                        <div className="flex items-center gap-1">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg">
+                          <Image src={bidIcon} alt="detail" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                        </span>
+                          <p className="text-white text-[14px] whitespace-nowrap font-exo2 font-bold">{floorPriceFormatted}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {index < newCollections.length - 1 && (
+                    <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-2 mt-2" />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-gray-400 text-sm">No collections found</p>
+          </div>
+        )}
+        {/* View All Button - Bottom Center */}
+        <div className="flex justify-center mt-5">
+          <button 
+            onClick={() => router.push('/marketplace')}
+            className="text-white text-sm hover:text-purple-400 transition-colors cursor-pointer flex items-center gap-1 font-exo2"
+          >
+            View All <span><ChevronRight className="w-4 h-4" /></span>
+          </button>
         </div>
-      </div> */}
+        </div>
+      </div>
     </aside>
   )
 }
