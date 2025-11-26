@@ -245,15 +245,57 @@
 
 
 
+'use client'
+
+import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { BsSuitSpade } from 'react-icons/bs';
 import { CiHeart } from 'react-icons/ci';
 import { PiArrowBendUpRightBold } from 'react-icons/pi';
 import { RiArrowDropDownLine } from 'react-icons/ri';
 import { useRouter } from 'next/navigation';
+import { apiCaller } from '@/app/interceptors/apicall/apicall';
+import authRoutes from '@/lib/routes';
+import collectionImage from '../assets/21Spades-collection-image.png'
+import Image from 'next/image';
+import bidIcon from '@/components/assets/image.png';
 
 export default function DiscoverCollections() {
   const router = useRouter();
+  const [collections, setCollections] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPublicCollections();
+  }, []);
+
+  const fetchPublicCollections = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiCaller('GET', authRoutes.getCollectionsPublic, null, false);
+      
+      if (response.success && response.data) {
+        // Get last 10 active collections and take first 3
+        const collectionsData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.collections || response.data.data || []);
+        
+        // Filter active collections and take first 3
+        const activeCollections = collectionsData
+          .filter((col: any) => col.isActive !== false)
+          .slice(0, 3);
+        
+        setCollections(activeCollections);
+      } else {
+        setCollections([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching public collections:', error);
+      setCollections([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <section
       className="mt-10 flex flex-col justify-center items-center overflow-hidden"
@@ -311,53 +353,125 @@ export default function DiscoverCollections() {
           <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center gap-6 sm:gap-8">
           
           {/* Card Component Loop */}
-          {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px] transition-all hover:scale-[1.03] cursor-pointer"
-            >
-              {/* NFT Image Area */}
+          {isLoading ? (
+            // Loading state
+            [1, 2, 3].map((n) => (
               <div
-                className="w-full h-[200px] sm:h-[240px] md:h-[280px] rounded-t-[10px] flex items-center justify-center relative"
-                style={{
-                  background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
-                }}
+                key={n}
+                className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px] animate-pulse"
               >
-                <img
-                  src="/assets/card-icon.png"
-                  alt="NFT"
-                  className="object-contain w-[120px] sm:w-[140px] md:w-[150px]"
-                />
-
-                {/* Heart Icon */}
-                <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
-                  <CiHeart className="w-5 h-5 text-white" />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="px-3 py-3 sm:px-4 sm:py-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <img src="/assets/verify-tick-icon.png" className="w-4 h-4" />
-                  <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
+                <div className="w-full h-[200px] sm:h-[240px] md:h-[280px] rounded-t-[10px] bg-gray-300"></div>
+                <div className="px-3 py-3 sm:px-4 sm:py-4">
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-6 bg-gray-300 rounded mb-3"></div>
+                  <div className="h-4 bg-gray-300 rounded"></div>
                 </div>
+              </div>
+            ))
+          ) : collections.length > 0 ? (
+            collections.map((collection, index) => {
+              const collectionName = collection.collectionName || collection.name || 'Unnamed Collection';
+              const floorPrice = collection.floorPrice || 0;
+              const floorPriceFormatted = typeof floorPrice === 'number' 
+                ? `${floorPrice.toFixed(2)} AVAX` 
+                : floorPrice;
 
-                <h3 className="text-gray-900 font-bold text-base sm:text-lg mb-2 sm:mb-3">Aether Guardian</h3>
+              return (
+                <div
+                  key={collection._id || collection.id || index}
+                  onClick={() => {
+                    const collectionId = collection._id || collection.id;
+                    if (collectionId) {
+                      router.push(`/marketplace/collection/${collectionId}`);
+                    }
+                  }}
+                  className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px] transition-all hover:scale-[1.03] cursor-pointer"
+                >
+                  {/* NFT Image Area */}
+                  <div
+                    className="w-full h-[200px] sm:h-[240px] md:h-[280px] rounded-t-[10px] flex items-center justify-center relative"
+                    style={{
+                      background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
+                    }}
+                  >
+                    <img
+                      src={typeof collectionImage === 'string' ? collectionImage : collectionImage.src}
+                      alt={collectionName}
+                      className="object-contain w-[120px] sm:w-[140px] md:w-[150px]"
+                    />
 
-                <hr className="border-gray-300 mb-2 sm:mb-3" />
+                    {/* Heart Icon */}
+                    <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
+                      <CiHeart className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
 
-                {/* Floor Price */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[#4A01D9] text-xs sm:text-sm font-semibold">Floor Price</span>
+                  {/* Content */}
+                  <div className="px-3 py-3 sm:px-4 sm:py-4">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <img src="/assets/verify-tick-icon.png" className="w-4 h-4" />
+                      <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
+                    </div>
 
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-500 text-base sm:text-lg">▲</span>
-                    <span className="text-[#000000] font-semibold text-xs sm:text-sm">0.01 AVAX</span>
+                    <h3 className="text-gray-900 font-bold text-base sm:text-lg mb-2 sm:mb-3">{collectionName}</h3>
+
+                    <hr className="border-gray-300 mb-2 sm:mb-3" />
+
+                    {/* Floor Price */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#4A01D9] text-xs sm:text-sm font-semibold">Floor Price</span>
+
+                      <div className="flex items-center gap-1">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg">
+                          <Image src={bidIcon} alt="detail" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                        </span>
+                        <span className="text-[#000000] font-semibold text-xs sm:text-sm">{floorPriceFormatted}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            // Empty state - show 3 placeholder cards
+            [1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full sm:w-[280px] md:w-[300px] max-w-[300px] transition-all hover:scale-[1.03] cursor-pointer"
+              >
+                <div
+                  className="w-full h-[200px] sm:h-[240px] md:h-[280px] rounded-t-[10px] flex items-center justify-center relative"
+                  style={{
+                    background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
+                  }}
+                >
+                  <img
+                    src={typeof collectionImage === 'string' ? collectionImage : collectionImage.src}
+                    alt="NFT"
+                    className="object-contain w-[120px] sm:w-[140px] md:w-[150px]"
+                  />
+                  <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
+                    <CiHeart className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+                <div className="px-3 py-3 sm:px-4 sm:py-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <img src="/assets/verify-tick-icon.png" className="w-4 h-4" />
+                    <span className="text-gray-700 text-xs font-medium">21Spades NFTs</span>
+                  </div>
+                  <h3 className="text-gray-900 font-bold text-base sm:text-lg mb-2 sm:mb-3">Aether Guardian</h3>
+                  <hr className="border-gray-300 mb-2 sm:mb-3" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#4A01D9] text-xs sm:text-sm font-semibold">Floor Price</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-red-500 text-base sm:text-lg">▲</span>
+                      <span className="text-[#000000] font-semibold text-xs sm:text-sm">0.01 AVAX</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
           </div>
 
           <div className="absolute inset-0 flex items-center justify-end pointer-events-none opacity-20 z-0 right-[-20%]">

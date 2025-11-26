@@ -52,11 +52,17 @@ const authRoutes = {
     // NFT Collections
     createCollection: 'nft/collections',
     getCollections: 'nft/collections',
+    getCollectionsPublic: 'nft/collections/public', // Public endpoint - no auth required
+    getSystemCollection: 'nft/collections/system', // Get system collection (21NftSpades)
     getCollectionById: 'nft/collections', // Use with id: `nft/collections/${id}`
     
     // NFT Items & Bids
     createNFT: 'nft/items',
     getNFTsByCollection: 'nft/items', // Use with collectionId: `nft/items?collectionId=${id}`
+    getNFTById: 'nft/items', // Use with id: `nft/items/${id}`
+    getMyNFTs: 'nft/items/my-nfts', // Get all NFTs owned by current user
+    updateNFT: 'nft/items', // Use with id: `nft/items/${id}` (PUT/PATCH)
+    resetNFTStatus: 'nft/items', // Use with id: `nft/items/${id}/reset-status` (PUT)
     bids: 'bids',
 
     // nonce

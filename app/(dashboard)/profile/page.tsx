@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/store/authStore"
 import { Button, Form, Input, Select, Tabs, Dropdown, Spin } from "antd"
 import { useMessage } from "@/lib/hooks/useMessage"
@@ -12,6 +12,9 @@ import defaultCoverImage from "@/components/assets/profile-bg.jpg"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { countryCodes } from '@/lib/constants/countryCodes'
+import { apiCaller } from "@/app/interceptors/apicall/apicall"
+import authRoutes from "@/lib/routes"
+import { useWallet } from "@/app/hooks/useWallet"
 
 const countries = [
   "United States",
@@ -29,7 +32,16 @@ export default function ProfilePage() {
   const { message } = useMessage()
   const [editing, setEditing] = useState(false)
   const isViewingOtherUser = userId && userId !== user?.id && userId !== (user as any)?._id
-  const [activeTab, setActiveTab] = useState('Items')
+  const [activeTab, setActiveTab] = useState('About')
+  const router = useRouter()
+  const { address } = useWallet()
+  
+  // NFTs state
+  const [nfts, setNfts] = useState<any[]>([])
+  const [isLoadingNFTs, setIsLoadingNFTs] = useState(false)
+  const [nftStatusFilter, setNftStatusFilter] = useState<number | null>(null) // 1: minted, 2: approved, 3: put_on_sale
+  const [updatingNFTId, setUpdatingNFTId] = useState<string | null>(null) // Track which NFT is being updated
+  const [resettingNFTId, setResettingNFTId] = useState<string | null>(null) // Track which NFT is being reset
   const [form] = Form.useForm()
   // const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -93,6 +105,146 @@ export default function ProfilePage() {
     // incrementProfileView()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
+
+  // Fetch NFTs when NFTs tab is active
+  useEffect(() => {
+    if (activeTab === 'NFTs') {
+      fetchUserNFTs()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, userId, address])
+
+  // Fetch user NFTs (both created and purchased)
+  const fetchUserNFTs = async () => {
+    try {
+      setIsLoadingNFTs(true)
+      
+      // Use the my-nfts endpoint to get all NFTs owned by current user
+      const response = await apiCaller('GET', authRoutes.getMyNFTs, null, true)
+
+      let allNFTs: any[] = []
+
+      if (response.success && response.data) {
+        const nftsData = Array.isArray(response.data)
+          ? response.data
+          : (response.data.items || response.data.nfts || response.data.data || [])
+
+        // Fetch full details for each NFT to get nftStatus
+        const nftDetailsPromises = nftsData.map(async (nft: any) => {
+          try {
+            const nftId = nft._id || nft.id
+            if (nftId) {
+              const detailResponse = await apiCaller('GET', `${authRoutes.getNFTById}/${nftId}`, null, true)
+              if (detailResponse.success && detailResponse.data) {
+                const fullNft = detailResponse.data.nft || detailResponse.data
+                return {
+                  ...nft,
+                  nftStatus: fullNft.nftStatus || nft.nftStatus || 1,
+                  ...fullNft
+                }
+              }
+            }
+            return { ...nft, nftStatus: nft.nftStatus || 1 }
+          } catch (error) {
+            console.error(`Error fetching NFT ${nft._id || nft.id} details:`, error)
+            return { ...nft, nftStatus: nft.nftStatus || 1 }
+          }
+        })
+
+        allNFTs = await Promise.all(nftDetailsPromises)
+      }
+
+      setNfts(allNFTs)
+    } catch (error: any) {
+      console.error('Error fetching user NFTs:', error)
+      message.error('Failed to fetch NFTs')
+      setNfts([])
+    } finally {
+      setIsLoadingNFTs(false)
+    }
+  }
+
+  // Filter NFTs by status
+  const filteredNFTs = useMemo(() => {
+    if (nftStatusFilter === null) {
+      return nfts
+    }
+    return nfts.filter(nft => nft.nftStatus === nftStatusFilter)
+  }, [nfts, nftStatusFilter])
+
+  // Update NFT status to "Put on Sale" (3)
+  const handlePutOnSale = async (nftId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    
+    try {
+      setUpdatingNFTId(nftId)
+      
+      // Update NFT status to 3 (Put on Sale) - send nftStatus field
+      const updatePayload = {
+        nftStatus: 3,
+        putOnSale: 1
+      }
+
+      const updateResponse = await apiCaller('PUT', `${authRoutes.updateNFT}/${nftId}`, updatePayload, true)
+      
+      if (updateResponse.success) {
+        message.success('NFT status updated to "Put on Sale"')
+        
+        // Update local state
+        setNfts(prevNfts => 
+          prevNfts.map(nft => 
+            (nft._id || nft.id) === nftId 
+              ? { ...nft, nftStatus: 3, putOnSale: 1 }
+              : nft
+          )
+        )
+      } else {
+        message.error(updateResponse.message || 'Failed to update NFT status')
+      }
+    } catch (error: any) {
+      console.error('Error updating NFT status:', error)
+      message.error(error?.response?.data?.message || error?.message || 'Failed to update NFT status')
+    } finally {
+      setUpdatingNFTId(null)
+    }
+  }
+
+  // Reset NFT status to 1 (Minted)
+  const handleResetStatus = async (nftId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    
+    try {
+      setResettingNFTId(nftId)
+      
+      // Reset NFT status to 1 (Minted) using reset-status endpoint
+      // Backend expects nftStatus field in payload
+      const resetPayload = {
+        nftStatus: 1
+      }
+      
+      const resetResponse = await apiCaller('PUT', `${authRoutes.resetNFTStatus}/${nftId}/reset-status`, resetPayload, true)
+      
+      if (resetResponse.success) {
+        message.success('NFT status reset to "Minted"')
+        
+        // Update local state
+        setNfts(prevNfts => 
+          prevNfts.map(nft => 
+            (nft._id || nft.id) === nftId 
+              ? { ...nft, nftStatus: 1, putOnSale: 0 }
+              : nft
+          )
+        )
+      } else {
+        message.error(resetResponse.message || 'Failed to reset NFT status')
+      }
+    } catch (error: any) {
+      console.error('Error resetting NFT status:', error)
+      message.error(error?.response?.data?.message || error?.message || 'Failed to reset NFT status')
+    } finally {
+      setResettingNFTId(null)
+    }
+  }
 
   // Update form phone field when profile.phone changes and editing is active
   useEffect(() => {
@@ -806,7 +958,7 @@ export default function ProfilePage() {
       <div className="-mx-4 md:-mx-6 px-4 md:px-6 border-b border-white/10">
         <div className="py-4 sm:py-6">
           <div className="flex items-center gap-4 sm:gap-6 md:gap-8 overflow-x-auto">
-            {['About', 'Posts', 'Portfolio'].map((tab) => (
+            {['About', 'Posts', 'Portfolio', 'NFTs'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -825,47 +977,198 @@ export default function ProfilePage() {
       {/* Content area */}
       {!editing ? (
         <div className="pb-24 md:pb-6">
-          {/* Personal Details */}
-          <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6">
-            <div className="px-5 py-4 text-[24px] text-white font-semibold">
-              Personal Details
-            </div>
-            <div className="p-5 text-sm">
-              <div className="">
-                <Field label="Name:" value={`${profile.name} @${profile.username}`} />
-                <div className="border-b border-[#2A2F4A]"></div>
-                <Field label="Email:" value={profile.email} />
-                <div className="border-b border-[#2A2F4A]"></div>
-                <Field label="Country:" value={profile.country} />
-                <div className="border-b border-[#2A2F4A]"></div>
-                <Field
-                  label="Interests:"
-                  value={Array.isArray(profile.interests)
-                    ? profile.interests.join(", ")
-                    : profile.interests || ""}
-                />
-                <div className="border-b border-[#2A2F4A]"></div>
-                <Field label="User Since:" value={profile.joined} />
+          {activeTab === 'About' && (
+            <>
+              {/* Personal Details */}
+              <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6">
+                <div className="px-5 py-4 text-[24px] text-white font-semibold">
+                  Personal Details
+                </div>
+                <div className="p-5 text-sm">
+                  <div className="">
+                    <Field label="Name:" value={`${profile.name} @${profile.username}`} />
+                    <div className="border-b border-[#2A2F4A]"></div>
+                    <Field label="Email:" value={profile.email} />
+                    <div className="border-b border-[#2A2F4A]"></div>
+                    <Field label="Country:" value={profile.country} />
+                    <div className="border-b border-[#2A2F4A]"></div>
+                    <Field
+                      label="Interests:"
+                      value={Array.isArray(profile.interests)
+                        ? profile.interests.join(", ")
+                        : profile.interests || ""}
+                    />
+                    <div className="border-b border-[#2A2F4A]"></div>
+                    <Field label="User Since:" value={profile.joined} />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Links + Stats */}
-          {/* <div className="space-y-6">
-          
-            <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6">
-              <div className="px-5 py-4 text-[24px] text-white font-[700]">
-                Stats
+              {/* Links + Stats */}
+              {/* <div className="space-y-6">
+              
+                <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-6">
+                  <div className="px-5 py-4 text-[24px] text-white font-[700]">
+                    Stats
+                  </div>
+                  <div className="p-5">
+                    <Field label="Posts Views:" value={profile.stats.posts} />
+                    <div className="border-b border-[#2A2F4A]"></div>
+                    <Field label="Projects:" value={profile.stats.projects} />
+                    <div className="border-b border-[#2A2F4A]"></div>
+                    <Field label="Contributions:" value={profile.stats.contributions} />
+                  </div>
+                </div>
+              </div> */}
+            </>
+          )}
+
+          {activeTab === 'NFTs' && (
+            <div className="space-y-6">
+              {/* Filter Section */}
+              <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white text-lg font-semibold">Filter by Status</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setNftStatusFilter(null)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      nftStatusFilter === null
+                        ? 'bg-[#7E6BEF] text-white'
+                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setNftStatusFilter(1)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      nftStatusFilter === 1
+                        ? 'bg-[#7E6BEF] text-white'
+                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Minted
+                  </button>
+                  <button
+                    onClick={() => setNftStatusFilter(2)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      nftStatusFilter === 2
+                        ? 'bg-[#7E6BEF] text-white'
+                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Approved
+                  </button>
+                  <button
+                    onClick={() => setNftStatusFilter(3)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      nftStatusFilter === 3
+                        ? 'bg-[#7E6BEF] text-white'
+                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Put on Sale
+                  </button>
+                </div>
               </div>
-              <div className="p-5">
-                <Field label="Posts Views:" value={profile.stats.posts} />
-                <div className="border-b border-[#2A2F4A]"></div>
-                <Field label="Projects:" value={profile.stats.projects} />
-                <div className="border-b border-[#2A2F4A]"></div>
-                <Field label="Contributions:" value={profile.stats.contributions} />
-              </div>
+
+              {/* NFTs Grid */}
+              {isLoadingNFTs ? (
+                <div className="flex justify-center items-center py-20">
+                  <Spin size="large" />
+                </div>
+              ) : filteredNFTs.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {filteredNFTs.map((nft) => {
+                    const nftId = nft._id || nft.id
+                    const nftName = nft.itemName || nft.name || 'Unnamed NFT'
+                    const nftImage = nft.imageUrl || nft.image || '/assets/card-icon.png'
+                    const nftPrice = nft.price ? `${nft.price} AVAX` : '0 AVAX'
+                    const statusLabel = nft.nftStatus === 1 ? 'Minted' : nft.nftStatus === 2 ? 'Approved' : nft.nftStatus === 3 ? 'Put on Sale' : 'Unknown'
+
+                    return (
+                      <div
+                        key={nftId}
+                        className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] overflow-hidden hover:border-[#7E6BEF] transition-colors relative"
+                      >
+                        <div 
+                          onClick={() => nftId && router.push(`/marketplace/nft/${nftId}`)}
+                          className="relative w-full aspect-square bg-gradient-to-b from-[#4F01E6] to-[#020019] cursor-pointer"
+                        >
+                          <Image
+                            src={nftImage}
+                            alt={nftName}
+                            fill
+                            className="object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/assets/card-icon.png'
+                            }}
+                          />
+                          {nft.isPurchased && (
+                            <div className="absolute top-2 right-2 px-2 py-1 bg-green-500/80 text-white text-xs font-semibold rounded">
+                              Purchased
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h4 
+                            onClick={() => nftId && router.push(`/marketplace/nft/${nftId}`)}
+                            className="text-white font-semibold text-sm mb-1 truncate cursor-pointer hover:text-[#7E6BEF] transition-colors"
+                          >
+                            {nftName}
+                          </h4>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[#7E6BEF] text-xs font-medium">{statusLabel}</span>
+                            <span className="text-gray-400 text-xs">{nftPrice}</span>
+                          </div>
+                          {/* Action Buttons - Only show for own profile */}
+                          {!isViewingOtherUser && (
+                            <div className="flex gap-2 mt-2">
+                              {/* Put on Sale Button - Only show for minted NFTs (status 1) */}
+                              {nft.nftStatus === 1 && (
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  loading={updatingNFTId === nftId}
+                                  onClick={(e) => handlePutOnSale(nftId, e)}
+                                  className="!flex-1 !bg-[#7E6BEF] !border-none !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#6C5AE8] transition-colors"
+                                >
+                                  {updatingNFTId === nftId ? 'Updating...' : 'Put on Sale'}
+                                </Button>
+                              )}
+                              {/* Reset Status Button - Show for non-minted NFTs (status 2 or 3) */}
+                              {(nft.nftStatus === 2 || nft.nftStatus === 3) && (
+                                <Button
+                                  type="default"
+                                  size="small"
+                                  loading={resettingNFTId === nftId}
+                                  onClick={(e) => handleResetStatus(nftId, e)}
+                                  className="!flex-1 !bg-[#1A183A] !border !border-[#7E6BEF] !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#2A1F4A] transition-colors"
+                                >
+                                  {resettingNFTId === nftId ? 'Resetting...' : 'Reset to Minted'}
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] p-12 text-center">
+                  <p className="text-gray-400 text-lg">No NFTs found</p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    {nftStatusFilter !== null
+                      ? `No NFTs with status "${nftStatusFilter === 1 ? 'Minted' : nftStatusFilter === 2 ? 'Approved' : nftStatusFilter === 3 ? 'Put on Sale' : 'Unknown'}"`
+                      : 'This user has no NFTs yet'}
+                  </p>
+                </div>
+              )}
             </div>
-          </div> */}
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] mb-12 font-exo2 pb-6">

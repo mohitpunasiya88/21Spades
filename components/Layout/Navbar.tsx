@@ -1007,7 +1007,20 @@ export default function Navbar() {
                     className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group"
                   >
                     <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                    <span className="group-hover:text-purple-300 transition-colors">{shortAddress(address as string) } Balance: {Number(balance).toFixed(4)}</span>
+                    <span 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const textToCopy = `${address as string} Balance: ${Number(balance).toFixed(4)}`
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                          message.success('Copied to clipboard!')
+                        }).catch(() => {
+                          message.error('Failed to copy')
+                        })
+                      }}
+                      className="group-hover:text-purple-300 transition-colors cursor-pointer hover:underline"
+                    >
+                      {shortAddress(address as string) } Balance: {Number(balance).toFixed(4)}
+                    </span>
                     {selectedWalletOption === 'Wallet' && (
                       <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
                     )}
