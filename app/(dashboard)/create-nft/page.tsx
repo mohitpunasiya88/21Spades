@@ -432,6 +432,7 @@ const idsssss = Number(response[0].args.tokenId).toString()
         console.error("❌ Error creating NFT:", error)
         throw error
       }
+      
      //todo
       /// list nft for sale (exppected a sale model at backend to store the sale details)
 

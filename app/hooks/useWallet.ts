@@ -13,15 +13,24 @@ export function useWallet() {
   const [balance, setBalance] = useState<string>('0');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [walletAddresses, setWalletAddresses] = useState<any>([]);
 
   // Get the embedded wallet
   const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
+  const embeddedWallets = wallets.filter(wallet => wallet.walletClientType === 'privy');
+
+
 
   // Initialize provider and signer
   useEffect(() => {
     const init = async () => {
       try {
-        if (embeddedWallet) {
+        if (embeddedWallet && embeddedWallets.length > 0) {
+
+          embeddedWallets.forEach(wallet => {
+            
+            setWalletAddresses(wallet.address);
+          })
           // Use getEthereumProvider to get the provider
           const ethereumProvider = await embeddedWallet.getEthereumProvider();
           const provider = new ethers.BrowserProvider(ethereumProvider);
@@ -29,7 +38,6 @@ export function useWallet() {
           const address = await signer.getAddress();
           const network = await provider.getNetwork();
           const balance = await provider.getBalance(address);
-          
           setProvider(provider);
           setSigner(signer);
           setAddress(address);
@@ -122,6 +130,7 @@ export function useWallet() {
     // State
     isConnected: !!address,
     address,
+    walletAddresses,
     chainId,
     balance,
     provider,
