@@ -646,8 +646,14 @@ export default function ProfilePage() {
         const userCountryCode = userData.countryCode || user?.countryCode || countryCode || '+1'
         setCountryCode(userCountryCode)
         
-        // Get phone number - prioritize API response
-        const phoneNumber = userData.phoneNumber || userData.phone || profile.phone || user?.phoneNumber || user?.phone || ""
+        // Get phone number - prioritize what is already shown on profile, then latest API/user store
+        const phoneNumber =
+          profile.phone ||
+          userData.phoneNumber ||
+          userData.phone ||
+          user?.phoneNumber ||
+          user?.phone ||
+          ""
         
         // Convert interests to array format for the form
         let interestsArray: string[] = []
@@ -944,8 +950,8 @@ export default function ProfilePage() {
       <div className="-mx-4 md:-mx-6 px-4 md:px-6 border-b border-white/10">
         <div className="py-4 sm:py-6">
           <div className="flex items-center gap-4 sm:gap-6 md:gap-8 overflow-x-auto">
-            {['About', 'Posts', 'Portfolio'].map((tab) => (
-            // {['About', 'Posts', 'Portfolio', 'NFTs'].map((tab) => (
+            {/* {['About', 'Posts', 'Portfolio'].map((tab) => ( */}
+            {['About', 'Posts', 'Portfolio', 'NFTs'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -1175,7 +1181,7 @@ export default function ProfilePage() {
                 username: profile.username || user?.username || "",
                 email: profile.email || user?.email || "",
                 country: profile.country || user?.country || "",
-                phone: profile.phone || user?.phoneNumber || user?.phone || "",
+                phone: profile?.phone || user?.phoneNumber || user?.phone || "",
                 profession: profile.profession || "",
                 interests: Array.isArray(profile.interests)
                   ? profile.interests

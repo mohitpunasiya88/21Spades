@@ -337,20 +337,6 @@ const { user } = useAuthStore()
     let loadingMessage: any = null
     try {
       // loadingMessage = message.loading("Creating NFT...", 0)
-
-      // Ensure marketplace approval for this collection before minting / API call
-      const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
-      try {
-        const hasApproval = await isApproved(walletAddress, marketplaceAddress, selectedCollectionAddress)
-        if (!hasApproval) {
-          await setApprovalForAll(marketplaceAddress, true, selectedCollectionAddress)
-        }
-      } catch (approvalError) {
-        console.error("❌ Error while ensuring marketplace approval:", approvalError)
-        message.error("Failed to set marketplace approval. Please try again.")
-        return
-      }
-
       // Convert file to base64 data URL
       const fileToDataURL = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -472,6 +458,20 @@ const idsssss = Number(response[0].args.tokenId).toString()
         console.error("❌ Error creating NFT:", error)
         throw error
       }
+
+      // Ensure marketplace approval for this collection before minting / API call
+      const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
+      try {
+        const hasApproval = await isApproved(walletAddress, marketplaceAddress, selectedCollectionAddress)
+        if (!hasApproval) {
+          await setApprovalForAll(marketplaceAddress, true, selectedCollectionAddress)
+        }
+      } catch (approvalError) {
+        console.error("❌ Error while ensuring marketplace approval:", approvalError)
+        message.error("Failed to set marketplace approval. Please try again.")
+        return
+      }
+
       
      //todo
       /// list nft for sale (exppected a sale model at backend to store the sale details)

@@ -1079,12 +1079,31 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         return
       }
 
+      let isValid = true;
+let nonceResponse = null;
+
+while (isValid) {
+  // GET API call
+  nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
+
+  // Validate nonce
+  isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+
+  // If still invalid → again call GET
+  if (isValid) {
+    await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+  }
+}
+
       // Build inputs for buy
       const tokenId = Number(NFTDetails?.nftId)
       const erc721 = NFTDetails?.collectionId?.collectionAddress as string
       const priceStr = String(NFTDetails?.price)
-      const nonceNum = Number(NFTDetails?.nonce)
+      // const nonceNum = Number(NFTDetails?.nonce)
+      const nonceNum = Number(nonceResponse.data.nonce)
+      console.log(nonceNum,'nonceNum');
       const sign = NFTDetails?.signature as `0x${string}`
+      console.log(sign,'sign');
       const erc20Token = NFTDetails?.erc20Token === undefined ? ethers.ZeroAddress : NFTDetails?.erc20Token as string
     const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
      
