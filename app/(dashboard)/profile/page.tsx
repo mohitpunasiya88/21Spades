@@ -154,66 +154,27 @@ export default function ProfilePage() {
     return nfts.filter(nft => nft.nftStatus === nftStatusFilter)
   }, [nfts, nftStatusFilter])
 
-  // Update NFT status to "Put on Sale" (3)
-  const handlePutOnSale = async (nftId: string, e: React.MouseEvent) => {
+  // Reset NFT status to 1 (Minted) from Put on Sale
+  const handleNFTStatus = async (nftId: string, nftStatus: number, e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click
-    
-    try {
-      setUpdatingNFTId(nftId)
-      
-      // Update NFT status to 3 (Put on Sale) - send nftStatus field
-      const updatePayload = {
-        nftStatus: 3,
-        putOnSale: 1
-      }
 
-      const updateResponse = await apiCaller('PUT', `${authRoutes.updateNFT}/${nftId}`, updatePayload, true)
-      
-      if (updateResponse.success) {
-        message.success('NFT status updated to "Put on Sale"')
-        
-        // Update local state
-        setNfts(prevNfts => 
-          prevNfts.map(nft => 
-            (nft._id || nft.id) === nftId 
-              ? { ...nft, nftStatus: 3, putOnSale: 1 }
-              : nft
-          )
-        )
-      } else {
-        message.error(updateResponse.message || 'Failed to update NFT status')
-      }
-    } catch (error: any) {
-      console.error('Error updating NFT status:', error)
-      message.error(error?.response?.data?.message || error?.message || 'Failed to update NFT status')
-    } finally {
-      setUpdatingNFTId(null)
-    }
-  }
-
-  // Reset NFT status to 2 (Approved) from Put on Sale
-  const handleResetStatus = async (nftId: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click
+    const status = nftStatus === 1 ? 2 : 1;
     
     try {
       setResettingNFTId(nftId)
       
-      // Reset NFT status to 2 (Approved) using reset-status endpoint
-      // Backend expects nftStatus field in payload
-      const resetPayload = {
-        nftStatus: 2
-      }
-      
-      const resetResponse = await apiCaller('PUT', `${authRoutes.resetNFTStatus}/${nftId}/reset-status`, resetPayload, true)
+      // Reset NFT status to 1 (Minted) using reset-status endpoint
+      // Endpoint automatically resets to status 1, no payload needed
+      const resetResponse = await apiCaller('PUT', `${authRoutes.resetNFTStatus}/${nftId}/reset-status`, {status}, true)
       
       if (resetResponse.success) {
-        message.success('NFT status reset to "Approved"')
+        message.success('NFT status reset to "Minted"')
         
         // Update local state
         setNfts(prevNfts => 
           prevNfts.map(nft => 
             (nft._id || nft.id) === nftId 
-              ? { ...nft, nftStatus: 2, putOnSale: 0 }
+              ? { ...nft, nftStatus: status, putOnSale: 0 }
               : nft
           )
         )
@@ -1125,22 +1086,22 @@ export default function ProfilePage() {
                                   type="primary"
                                   size="small"
                                   loading={updatingNFTId === nftId}
-                                  onClick={(e) => handlePutOnSale(nftId, e)}
+                                  onClick={(e) => handleNFTStatus(nftId,nft?.nftStatus, e)}
                                   className="!flex-1 !bg-[#7E6BEF] !border-none !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#6C5AE8] transition-colors"
                                 >
                                   {updatingNFTId === nftId ? 'Updating...' : 'Put on Sale'}
                                 </Button>
                               )}
                               {/* Reset Status Button - Show only for NFTs that are already on sale (status 3) */}
-                              {nft.nftStatus === 3 && (
+                              {nft.nftStatus === 1 && (
                                 <Button
                                   type="default"
                                   size="small"
                                   loading={resettingNFTId === nftId}
-                                  onClick={(e) => handleResetStatus(nftId, e)}
+                                  onClick={(e) => handleNFTStatus(nftId,nft?.nftStatus, e)}
                                   className="!flex-1 !bg-[#1A183A] !border !border-[#7E6BEF] !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#2A1F4A] transition-colors"
                                 >
-                                  {resettingNFTId === nftId ? 'Resetting...' : 'Reset to Approved'}
+                                  {resettingNFTId === nftId ? 'Resetting...' : 'Reset to Minted'}
                                 </Button>
                               )}
                             </div>

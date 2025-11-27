@@ -63,6 +63,7 @@ const authRoutes = {
     getMyNFTs: 'nft/items/my-nfts', // Get all NFTs owned by current user
     updateNFT: 'nft/items', // Use with id: `nft/items/${id}` (PUT/PATCH)
     resetNFTStatus: 'nft/items', // Use with id: `nft/items/${id}/reset-status` (PUT)
+    putOnSale: 'nft/items', // Use with id: `nft/items/${id}/put-on-sale` (PUT)
     bids: 'bids',
     walletAddresses: 'wallet-addresses',
 
