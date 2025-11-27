@@ -260,6 +260,10 @@ export default function ProfilePage() {
           joinedDate = `Joined ${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
         }
 
+        const fallbackAvatar = isViewingOtherUser
+          ? "/post/card-21.png"
+          : user?.profilePicture || user?.avatar || "/post/card-21.png"
+
         setProfile({
           name: userData.name || user?.name || "",
           username: userData.username || user?.username || "",
@@ -285,7 +289,7 @@ export default function ProfilePage() {
             ? userData.interests
             : userData.interests ? [userData.interests] : [],
           coverPicture: userData.coverPicture || defaultCoverImage.src,
-          avatar: userData.profilePicture || user?.profilePicture || user?.avatar || "/post/card-21.png",
+          avatar: userData.profilePicture || fallbackAvatar,
         })
 
         // Set country code from user data
