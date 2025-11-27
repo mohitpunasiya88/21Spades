@@ -23,12 +23,13 @@ import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
 import { useMessage } from "@/lib/hooks/useMessage"
 import { ethers } from "ethers"
 import { CONTRACTS } from "@/app/utils/contracts/contractConfig"
+import { logWalletActivity } from "@/lib/utils/logWalletActivity"
 
 const { TextArea } = Input
 
 export default function CreateNFTPage() {
-  const { user } = useAuthStore()
-  const {address } = useWallet();
+const { user } = useAuthStore()
+  const {address, chainId } = useWallet();
   const { message } = useMessage()
   const router = useRouter()
   const { ready, authenticated, createWallet, connectWallet } = usePrivy();
@@ -48,6 +49,7 @@ export default function CreateNFTPage() {
   const [selectedCollection, setSelectedCollection] = useState<string>("")
   const [selectedCollectionAddress, setSelectedCollectionAddress] = useState<string>("") // I need this to pass the collection address to the mint function you can addujset thise by manage in backend
   const [isCreatingNFT, setIsCreatingNFT] = useState<boolean>(false)
+  const resolvedChainId = chainId ?? Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? '11155111')
 
   const [postToFeed, setPostToFeed] = useState<boolean>(true)
   const [freeMinting, setFreeMinting] = useState<boolean>(false)
@@ -460,6 +462,12 @@ export default function CreateNFTPage() {
         },selectedCollectionAddress)
 const idsssss = Number(response[0].args.tokenId).toString()
         payload.nftId = Number(response[0].args.tokenId).toString()
+        const mintTxHash = Array.isArray(response) ? response[0]?.transactionHash : undefined
+        await logWalletActivity({
+          walletAddress,
+          hash: mintTxHash,
+          chainId: resolvedChainId,
+        })
       } catch (error) {
         console.error("❌ Error creating NFT:", error)
         throw error
@@ -801,7 +809,11 @@ payload.nonce = nonceResponse.data.nonce;
       const events = await getEventFromTx(
       'ERC721Factory', result as any, 'CollectionCreated', 11155111, "",
     );
-   
+      await logWalletActivity({
+        walletAddress: address,
+        hash: result?.hash,
+        chainId: resolvedChainId,
+      })
 
 
     

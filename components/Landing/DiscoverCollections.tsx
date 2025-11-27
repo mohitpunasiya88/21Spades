@@ -272,7 +272,9 @@ export default function DiscoverCollections() {
   const fetchPublicCollections = async () => {
     try {
       setIsLoading(true);
+      const response_system = await apiCaller('GET', authRoutes.getSystemCollection);
       const response = await apiCaller('GET', authRoutes.getCollectionsPublic, null, false);
+
       
       if (response.success && response.data) {
         // Get last 10 active collections and take first 3
@@ -283,9 +285,9 @@ export default function DiscoverCollections() {
         // Filter active collections and take first 3
         const activeCollections = collectionsData
           .filter((col: any) => col.isActive !== false)
-          .slice(0, 3);
+          .slice(0, 2);
         
-        setCollections(activeCollections);
+        setCollections([response_system.data.collection,...activeCollections, ]);
       } else {
         setCollections([]);
       }
@@ -296,6 +298,7 @@ export default function DiscoverCollections() {
       setIsLoading(false);
     }
   };
+  console.log(collections,'collections');
   return (
     <section
       className="mt-10 flex flex-col justify-center items-center overflow-hidden"
@@ -371,6 +374,7 @@ export default function DiscoverCollections() {
           ) : collections.length > 0 ? (
             collections.map((collection, index) => {
               const collectionName = collection.collectionName || collection.name || 'Unnamed Collection';
+              const imageUrl = collection.imageUrl || collection.coverPhoto || null;
               const floorPrice = collection.floorPrice || 0;
               const floorPriceFormatted = typeof floorPrice === 'number' 
                 ? `${floorPrice.toFixed(2)} AVAX` 
@@ -395,7 +399,7 @@ export default function DiscoverCollections() {
                     }}
                   >
                     <img
-                      src={typeof collectionImage === 'string' ? collectionImage : collectionImage.src}
+                      src={imageUrl}
                       alt={collectionName}
                       className="object-contain w-[120px] sm:w-[140px] md:w-[150px]"
                     />

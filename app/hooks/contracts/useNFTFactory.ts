@@ -14,7 +14,7 @@ export function useNFTFactory() {
   const { call, execute,getGasLimit, ...rest } = useContract();
 
   // Mint a new NFT
-  const createCollection = useCallback(async (params: CreateCollectionParams): Promise<ethers.ContractTransaction> => {
+  const createCollection = useCallback(async (params: CreateCollectionParams): Promise<ethers.TransactionReceipt> => {
       const gas = await getGasLimit(
       'ERC721Factory', 'createCollection', 11155111, "",
       [params.name, params.symbol, params.contractURI, params.tokenURIPrefix, params.royaltyLimit],

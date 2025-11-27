@@ -64,6 +64,7 @@ const authRoutes = {
     updateNFT: 'nft/items', // Use with id: `nft/items/${id}` (PUT/PATCH)
     resetNFTStatus: 'nft/items', // Use with id: `nft/items/${id}/reset-status` (PUT)
     bids: 'bids',
+    walletAddresses: 'wallet-addresses',
 
     // nonce
     getNonce: 'nonce',
