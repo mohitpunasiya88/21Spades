@@ -333,7 +333,6 @@ export default function CreateNFTPage() {
 
     setIsCreatingNFT(true)
     let loadingMessage: any = null
-    debugger
     try {
       // loadingMessage = message.loading("Creating NFT...", 0)
 
@@ -1543,7 +1542,7 @@ payload.nonce = nonceResponse.data.nonce;
                  
                   const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
                  
-                  const handleCollectionClick = () => {debugger
+                  const handleCollectionClick = () => {
                   
                       // Select this collection
                       setSelectedCollection(collectionId)
