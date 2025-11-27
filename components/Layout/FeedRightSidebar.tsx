@@ -191,7 +191,7 @@ export default function FeedRightSidebar() {
   const isPositive = dummyPriceChange >= 0
   const marketCapFormatted = formatMarketCap(marketCap?.marketCap || 0)
 
-  console.log(newCollections,'newCollections')
+  // console.log(newCollections,'newCollections')
 
   return (
     <aside
