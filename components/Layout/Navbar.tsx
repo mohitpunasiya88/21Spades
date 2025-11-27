@@ -547,7 +547,7 @@ export default function Navbar() {
 
               {/* Notifications */}
               <button
-                className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#2A2F4A]"
+                className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#2A2F4A] cursor-pointer"
               >
                 <Bell className="w-5 h-5" />
                 <span>Notifications</span>
@@ -952,7 +952,7 @@ export default function Navbar() {
                 setIsWalletHovered(false)
                 setIsWalletOpen(false)
               }}
-              className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${isWalletHovered ? 'px-3 py-2' : 'p-2'
+              className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden cursor-pointer ${isWalletHovered ? 'px-3 py-2' : 'p-2'
                 }`}
             >
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 ">
@@ -977,7 +977,7 @@ export default function Navbar() {
                     setIsWalletHovered(true)
                     setIsWalletOpen(true)
                   }}
-                  className="absolute top-full right-0 w-full h-1"
+                  className="absolute top-full right-0 w-full h-1 px-2"
                   style={{ zIndex: 1001 }}
                 />
                 <div
@@ -1011,16 +1011,16 @@ export default function Navbar() {
                     <span 
                       onClick={(e) => {
                         e.stopPropagation()
-                        const textToCopy = `${address as string} Balance: ${Number(balance).toFixed(4)}`
+                        const textToCopy = address as string
                         navigator.clipboard.writeText(textToCopy).then(() => {
                           message.success('Copied to clipboard!')
                         }).catch(() => {
                           message.error('Failed to copy')
                         })
                       }}
-                      className="group-hover:text-purple-300 transition-colors cursor-pointer hover:underline"
+                      className="group-hover:text-purple-300 transition-colors cursor-pointer hover:underline whitespace-nowrap"
                     >
-                      {shortAddress(address as string) } Balance: {Number(balance).toFixed(4)}
+                      {shortAddress(address as string) } Balance: {Number(balance).toFixed(4)} AVAX
                     </span>
                     {selectedWalletOption === 'Wallet' && (
                       <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
@@ -1088,7 +1088,7 @@ export default function Navbar() {
                 </svg>
               </span>
               {isCreateTokenHovered && (
-                <span className="text-white font-semibold text-sm md:text-base whitespace-nowrap">Create Token</span>
+                <span className="text-white font-semibold text-sm md:text-base whitespace-nowrap cursor-pointer">Create Token</span>
               )}
             </button>
           </div>
