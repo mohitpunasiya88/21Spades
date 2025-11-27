@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import type { User, SignUpData, LoginData, OTPData } from '@/types/auth'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
+import { useCreateWallet } from '@privy-io/react-auth'
 
 type PrivyUserLike = {
   id?: string
@@ -18,7 +19,7 @@ interface AuthState {
 
   sendOtp: (data: OTPData) => Promise<void>
   login: (data: LoginData) => Promise<void>
-  loginWithPrivy: (privyUser: unknown, accessToken?: string | null) => Promise<void>
+  loginWithPrivy: (privyUser: unknown, accessToken?: string | null, createWallet?: () => Promise<void>) => Promise<void>
   signup: (data: SignUpData) => Promise<void>
   verifyOTP: (data: OTPData) => Promise<void>
   // Forgot password
@@ -309,7 +310,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      loginWithPrivy: async (privyUser: unknown, accessToken?: string | null) => {
+      loginWithPrivy: async (privyUser: unknown, accessToken?: string | null, createWallet?: () => Promise<void>) => {
         set({ isLoading: true })
         try {
           const mappedUser = mapPrivyUserToUser(privyUser)
@@ -326,6 +327,10 @@ export const useAuthStore = create<AuthState>()(
           
           // Call backend API - MANDATORY: User will only be logged in if backend responds successfully
           const response = await apiCaller('POST', authRoutes.loginWithPrivy, payload, true)
+          
+          if(response?.data?.newUser && createWallet){
+            await createWallet()
+          }
 
           // ONLY login if backend returns success response
           if (response.success && response.data) {
