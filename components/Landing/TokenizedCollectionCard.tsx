@@ -12,7 +12,9 @@ import authRoutes from '@/lib/routes'
 import { useAuthStore } from '@/lib/store/authStore'
 import spadesImage from '../assets/21spades.png'
 import bidIcon from '../assets/image.png'
+import collectionImage from '../assets/21Spades-collection-image.png'
 import { HiCheckBadge } from 'react-icons/hi2'
+import { CiHeart } from 'react-icons/ci'
 
 interface marketplace {
   title?: string
@@ -108,17 +110,98 @@ interface NFTCardProps {
   imageUrl?: string
 }
 
+// Old NFTCard component - commented for future use
+// function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, collectionId, imageUrl }: NFTCardProps) {
+//   const [isFavorite, setIsFavorite] = useState(false)
+//   const [imageError, setImageError] = useState(false)
+//   const router = useRouter()
+
+//   const [floorValue, floorUnit] = useMemo(() => {
+//     const [value, unit] = floorPrice.split(' ')
+//     return [value, unit || 'AVAX']
+//   }, [floorPrice])
+
+//   const hasValidImage = !!imageUrl && !imageError
+
+//   const handleCardClick = () => {
+//     // Navigate to collection page with actual collection ID
+//     if (collectionId) {
+//       router.push(`/marketplace/collection/${collectionId}`)
+//     } else {
+//       // Fallback to slug-based ID if collectionId not provided
+//       const slugId = title.toLowerCase().replace(/\s+/g, '-')
+//       router.push(`/marketplace/collection/${slugId}`)
+//     }
+//   }
+
+//   return (
+//     <div
+//       onClick={handleCardClick}
+//       className="group relative flex flex-col rounded-[32px] bg-gradient-to-b from-[#24084F] via-[#0B0320] to-[#050215] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)] overflow-hidden cursor-pointer transition-transform hover:scale-[1.015]"
+//     >
+//       <div
+//         className={`relative h-[220px] w-full overflow-hidden p-6 ${
+//           hasValidImage ? '' : 'bg-gradient-to-br from-[#5F1BFF] via-[#4210C3] to-[#0E041F]'
+//         }`}
+//       >
+//         <button
+//           onClick={(e) => {
+//             e.stopPropagation()
+//             setIsFavorite(!isFavorite)
+//           }}
+//           className="absolute top-6 right-6 z-10 p-2 rounded-full border border-white/35 bg-white/10 text-white transition-colors hover:bg-white/25"
+//         >
+//           <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+//         </button>
+//         <div className="absolute inset-0">
+//           {hasValidImage ? (
+//             <Image
+//               src={imageUrl}
+//               alt={title}
+//               fill
+//               className="object-cover"
+//               loading="lazy"
+//               onError={() => setImageError(true)}
+//             />
+//           ) : (
+//             <Image
+//               src={spadesImage}
+//               alt="21 Spade"
+//               width={160}
+//               height={160}
+//               className="object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+//             />
+//           )}
+//         </div>
+//       </div>
+
+//       <div className="flex flex-col gap-3 px-6 py-5">
+//         <div className="flex items-center gap-2 text-[#A5B3D6] text-xs sm:text-sm font-semibold font-exo2 uppercase tracking-wide">
+//           <span className="inline-flex items-center justify-center rounded-full bg-white/5 text-[#5CC8FF] p-1.5">
+//             <HiCheckBadge className="w-4 h-4" />
+//           </span>
+//           {creator || '21Spades NFTs'}
+//         </div>
+//         <h3 className="text-white text-[1.25rem] sm:text-[1.35rem] font-bold font-exo2">{title}</h3>
+//         <div className="h-px w-full bg-white/10" />
+//         <div className="flex items-center justify-between">
+//           <span className="text-[#7E6BEF] text-sm font-semibold font-exo2">Floor Price</span>
+//           <div className="flex items-center gap-2 text-white font-semibold font-exo2 text-base">
+//             <Image src={bidIcon} alt="AVAX" width={18} height={18} className="w-4 h-4 object-contain" />
+//             <span className="flex items-center gap-1">
+//               {floorValue}
+//               <span className="text-[#A3AED0] text-xs">{floorUnit}</span>
+//             </span>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+// New NFTCard component with DiscoverCollections design - matching Figma exactly
 function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, collectionId, imageUrl }: NFTCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [imageError, setImageError] = useState(false)
   const router = useRouter()
-
-  const [floorValue, floorUnit] = useMemo(() => {
-    const [value, unit] = floorPrice.split(' ')
-    return [value, unit || 'AVAX']
-  }, [floorPrice])
-
-  const hasValidImage = !!imageUrl && !imageError
 
   const handleCardClick = () => {
     // Navigate to collection page with actual collection ID
@@ -131,56 +214,60 @@ function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, co
     }
   }
 
+  // Parse floor price - extract value and unit
+  const [floorValue, floorUnit] = useMemo(() => {
+    if (!floorPrice) return ['0.01', 'AVAX']
+    const parts = floorPrice.trim().split(' ')
+    if (parts.length >= 2) {
+      return [parts[0], parts.slice(1).join(' ')]
+    }
+    return [floorPrice, 'AVAX']
+  }, [floorPrice])
+
   return (
     <div
       onClick={handleCardClick}
-      className="group relative flex flex-col rounded-[32px] bg-gradient-to-b from-[#24084F] via-[#0B0320] to-[#050215] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)] overflow-hidden cursor-pointer transition-transform hover:scale-[1.015]"
+      className="overflow-hidden rounded-[10px] bg-gradient-to-b from-[#24084F] via-[#0B0320] to-[#050215] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)] w-full transition-transform hover:scale-[1.015] cursor-pointer"
     >
+      {/* NFT Image Area - Exact match with Figma */}
       <div
-        className={`relative h-[220px] w-full overflow-hidden p-6 ${
-          hasValidImage ? '' : 'bg-gradient-to-br from-[#5F1BFF] via-[#4210C3] to-[#0E041F]'
-        }`}
+        className="w-full h-[300px] rounded-t-[10px] flex items-center justify-center relative overflow-hidden"
+        style={{
+          background: 'radial-gradient(100% 100% at 50% 0%, #4F01E6 0%, #020019 100%)',
+        }}
       >
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsFavorite(!isFavorite)
-          }}
+        <img
+          src={typeof collectionImage === 'string' ? collectionImage : collectionImage.src}
+          alt={title || "NFT"}
+          className="object-contain w-[120px] sm:w-[140px] md:w-[250px]"
+        />
+
+        {/* Heart Icon - Exact positioning */}
+        <button 
+          onClick={(e) => e.stopPropagation()}
           className="absolute top-6 right-6 z-10 p-2 rounded-full border border-white/35 bg-white/10 text-white transition-colors hover:bg-white/25"
         >
-          <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+          <CiHeart className="w-4 h-4" />
         </button>
-        <div className="absolute inset-0">
-          {hasValidImage ? (
-            <Image
-              src={imageUrl}
-              alt={title}
-              fill
-              className="object-cover"
-              loading="lazy"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <Image
-              src={spadesImage}
-              alt="21 Spade"
-              width={160}
-              height={160}
-              className="object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-            />
-          )}
-        </div>
       </div>
 
-      <div className="flex flex-col gap-3 px-6 py-5">
+      {/* Content - Exact match with Figma - Dark theme with white text */}
+      <div className="flex flex-col gap-3 px-4 py-4">
+        {/* Creator with verify icon - White text with blue badge */}
         <div className="flex items-center gap-2 text-[#A5B3D6] text-xs sm:text-sm font-semibold font-exo2 uppercase tracking-wide">
           <span className="inline-flex items-center justify-center rounded-full bg-white/5 text-[#5CC8FF] p-1.5">
             <HiCheckBadge className="w-4 h-4" />
           </span>
-          {creator || '21Spades NFTs'}
+          <span className="text-white">21Spades NFTs</span>
         </div>
-        <h3 className="text-white text-[1.25rem] sm:text-[1.35rem] font-bold font-exo2">{title}</h3>
+
+        {/* Title - API se aayega - White text */}
+        <h3 className="text-white text-[1.25rem] sm:text-[1.35rem] font-bold font-exo2">{title || 'Aether Guardian'}</h3>
+
+        {/* Divider - White/transparent */}
         <div className="h-px w-full bg-white/10" />
+
+        {/* Floor Price - API se aayega - White text */}
         <div className="flex items-center justify-between">
           <span className="text-[#7E6BEF] text-sm font-semibold font-exo2">Floor Price</span>
           <div className="flex items-center gap-2 text-white font-semibold font-exo2 text-base">
@@ -214,10 +301,10 @@ const TokenizedCollectionCard: React.FC = () => {
       // Build query params - fetch all collections (not filtered by wallet)
       const queryParams = new URLSearchParams()
       queryParams.append('page', '1')
-      queryParams.append('limit', '24')
+      queryParams.append('limit', '50')
       queryParams.append('blocked', 'false')
       
-      const url = `${authRoutes.getCollections}?${queryParams.toString()}`
+      const url = `${authRoutes.getCollectionsPublic}?${queryParams.toString()}`
       
       const response = await apiCaller('GET', url, null, true)
       
@@ -404,18 +491,32 @@ const TokenizedCollectionCard: React.FC = () => {
               <Spin size="large" />
             </div>
           ) : displayedCollections.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-              {displayedCollections.map((nft, index) => (
-                <NFTCard 
-                  key={nft.collectionId || index}
-                  title={nft.title}
-                  creator={nft.creator}
-                  floorPrice={nft.floorPrice}
-                  verified={nft.verified}
-                  collectionId={nft.collectionId}
-                  imageUrl={nft.imageUrl}
-                />
-              ))}
+            <div className="relative w-full">
+              {/* Background Image - Left */}
+              <div className="absolute inset-0 flex items-center justify-start pointer-events-none opacity-20 z-0 left-[-20%]">
+                <img src="/assets/card-icon.png" alt="Background" className="left-0 translate-x-[-50%] rotate-[90deg] object-contain w-[75%] h-[75%]" />
+              </div>
+              
+              {/* Cards Grid */}
+              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-16">
+                {displayedCollections.map((nft, index) => (
+                  <NFTCard 
+                    key={nft.collectionId || index}
+                    title={nft.title}
+                    // creator={nft.creator}
+                    creator="21Spades NFTs"
+                    floorPrice={nft.floorPrice}
+                    verified={nft.verified}
+                    collectionId={nft.collectionId}
+                    imageUrl={nft.imageUrl}
+                  />
+                ))}
+              </div>
+
+              {/* Background Image - Right */}
+              <div className="absolute inset-0 flex items-center justify-end pointer-events-none opacity-20 z-0 right-[-20%]">
+                <img src="/assets/card-icon.png" alt="Background" className="right-0 translate-x-[50%] rotate-[-90deg] object-contain w-[75%] h-[75%]" />
+              </div>
             </div>
           ) : (
             <div className="text-center text-gray-400 py-12">

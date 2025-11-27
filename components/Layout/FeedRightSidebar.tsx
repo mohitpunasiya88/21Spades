@@ -90,7 +90,7 @@ export default function FeedRightSidebar() {
         queryParams.append('limit', '50') // Fetch more to ensure we get the latest ones
         queryParams.append('blocked', 'false')
 
-        const url = `${authRoutes.getCollections}?${queryParams.toString()}`
+        const url = `${authRoutes.getCollectionsPublic}?${queryParams.toString()}`
         const response = await apiCaller('GET', url, null, true)
 
         if (response.success && response.data) {

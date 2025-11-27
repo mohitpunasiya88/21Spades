@@ -22,6 +22,7 @@ import { useContract } from "@/app/hooks/contracts/useContract"
 import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
 import { useMessage } from "@/lib/hooks/useMessage"
 import { ethers } from "ethers"
+import { CONTRACTS } from "@/app/utils/contracts/contractConfig"
 
 const { TextArea } = Input
 
@@ -290,7 +291,7 @@ export default function CreateNFTPage() {
     }
   }
 
-  const {mint} = useNFTCollection();
+  const { mint, setApprovalForAll, isApproved } = useNFTCollection();
   const {createPutOnSaleSignature, auctionNonceStatus} = useMarketplace();
   const handleCreateItem = async () => {
     // Validation
@@ -310,6 +311,10 @@ export default function CreateNFTPage() {
       message.error("Please select or create a collection")
       return
     }
+    if (!selectedCollectionAddress) {
+      message.error("Selected collection address is missing. Please reselect the collection.")
+      return
+    }
     if ((!fixedPrice || fixedPrice.trim() === "") && selectedMethod === "Fixed Rate") {
       message.error("Please enter a fixed price")
       return
@@ -321,15 +326,29 @@ export default function CreateNFTPage() {
 
     // Hardcoded wallet address for testing
     const walletAddress = address
-    // if (!walletAddress) {
-    //   message.error("Wallet address not found. Please connect your wallet.")
-    //   return
-    // }
+    if (!walletAddress) {
+      message.error("Wallet address not found. Please connect your wallet.")
+      return
+    }
 
     setIsCreatingNFT(true)
     let loadingMessage: any = null
+    debugger
     try {
       // loadingMessage = message.loading("Creating NFT...", 0)
+
+      // Ensure marketplace approval for this collection before minting / API call
+      const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
+      try {
+        const hasApproval = await isApproved(walletAddress, marketplaceAddress, selectedCollectionAddress)
+        if (!hasApproval) {
+          await setApprovalForAll(marketplaceAddress, true, selectedCollectionAddress)
+        }
+      } catch (approvalError) {
+        console.error("❌ Error while ensuring marketplace approval:", approvalError)
+        message.error("Failed to set marketplace approval. Please try again.")
+        return
+      }
 
       // Convert file to base64 data URL
       const fileToDataURL = (file: File): Promise<string> => {
@@ -1515,7 +1534,7 @@ payload.nonce = nonceResponse.data.nonce;
                 </div>
               ) : collections.length > 0 ? (
                 <>
-                  {collections.slice(0, 4).map((collection) => {
+                  {collections?.map((collection) => {
                   const collectionId = collection._id || collection.collectionId || collection.id
                   const collectionAddress = collection.collectionAddress 
                   const isSelected = selectedCollection === collectionId
@@ -1524,16 +1543,12 @@ payload.nonce = nonceResponse.data.nonce;
                  
                   const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
                  
-                  const handleCollectionClick = () => {
-                    if (isSelected) {
-                      // If already selected, deselect it
-                      setSelectedCollection("")
-                      setSelectedCollectionAddress("")
-                    } else {
+                  const handleCollectionClick = () => {debugger
+                  
                       // Select this collection
                       setSelectedCollection(collectionId)
                       setSelectedCollectionAddress(collectionAddress)
-                    }
+                    
                   }
 
                   const handleDeselectClick = (e: React.MouseEvent) => {
