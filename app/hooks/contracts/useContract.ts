@@ -23,6 +23,14 @@ export function useContract() {
     // Get the embedded wallet
     const embeddedWallet = wallets.find((wallet: any) => wallet.walletClientType === 'privy');
 
+    const getSigner = useCallback(async () => {
+        const embedded = wallets.find((w: any) => w.walletClientType === 'privy');
+        if (!embedded) throw new Error('Wallet not connected');
+        const ethProvider = await embedded.getEthereumProvider();
+        const provider = new ethers.BrowserProvider(ethProvider);
+        return provider.getSigner();
+    }, [wallets]);
+
     // Get a contract instance
     const getContract = useCallback(async (contractName: ContractName, chainId?: number) => {
         if (!embeddedWallet) {
@@ -67,10 +75,12 @@ export function useContract() {
             let contract: ethers.Contract;
 
             if (contractName === 'ERC721Collection') {
+                const signer = await getSigner();
+                const provider = signer.provider ?? signer;
                 contract = new ethers.Contract(
                     contractAddress as string,
                     CONTRACTS[contractName].abi.abi,
-
+                    provider
                 );
 
             } else {
@@ -94,16 +104,7 @@ export function useContract() {
         } finally {
             setIsLoading(false);
         }
-    }, [getContract]);
-
-
-    const getSigner = useCallback(async () => {
-        const embeddedWallet: any = wallets.find((w: any) => w.walletClientType === 'privy');
-        if (!embeddedWallet) throw new Error('Wallet not connected');
-        const ethProvider = await embeddedWallet.getEthereumProvider();
-        const provider = new ethers.BrowserProvider(ethProvider);
-        return provider.getSigner();
-    }, [wallets]);
+    }, [getContract, getSigner]);
     // Execute a write contract method
     const execute = useCallback(async <T = any>(
         contractName: ContractName,
@@ -114,7 +115,7 @@ export function useContract() {
         args: any[] = [],
         overrides: ethers.Overrides = {},
         options: ContractCallOptions = {}
-    ): Promise<ethers.ContractTransaction> => {
+    ): Promise<ethers.TransactionReceipt> => {
         try {
             setIsLoading(true);
             setError(null);
@@ -155,7 +156,7 @@ export function useContract() {
         } finally {
             setIsLoading(false);
         }
-    }, [getContract]);
+    }, [getContract, getSigner]);
 
     // Estimate gas for a contract method
  const getGasLimit = useCallback(async (

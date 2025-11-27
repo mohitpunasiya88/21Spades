@@ -12,13 +12,14 @@ import authRoutes from '@/lib/routes'
 import { useMessage } from '@/lib/hooks/useMessage'
 import { useRouter } from 'next/navigation'
 import { useMarketplace } from '@/app/hooks/contracts/useMarketplace'
-import { useWallets } from '@privy-io/react-auth'
+import { useWallet } from '@/app/hooks/useWallet'
 import { ethers } from 'ethers'
 import bidIcon from '@/components/assets/image.png'
 import { useNFT } from '@/app/hooks/contracts/useNFT'
 import { CONTRACTS } from '@/app/utils/contracts/contractConfig'
 import { useNFTCollection } from '@/app/hooks/contracts/useNFTCollection'
 import { useAuthStore } from '@/lib/store/authStore'
+import { logWalletActivity } from '@/lib/utils/logWalletActivity'
 
 const parseNumericValue = (input: unknown): number | undefined => {
   if (input === undefined || input === null) return undefined
@@ -815,7 +816,8 @@ const currentNftIdentifier = useMemo(() => {
 
 
   const { bid, getBrokerage, decimalPrecision, auctions,buy,auctionNonceStatus } = useMarketplace()
-  const address = useWallets()?.wallets[0]?.address
+  const { address, chainId } = useWallet()
+  const resolvedChainId = chainId ?? Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? '11155111')
   const fetchBids = useCallback(
     async (page = 1, orderOverride?: BidOrder) => {
       if (!currentNftIdentifier) return
@@ -931,6 +933,10 @@ const currentNftIdentifier = useMemo(() => {
         setIsPlaceBidOpen(false)
         return
       }
+      if (!address) {
+        message.error('Please connect your wallet to place a bid')
+        return
+      }
       
       const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
       let isValid = true;
@@ -1011,6 +1017,11 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
           bidPayload?.sign as `0x${string}`,
           overrides,
         )
+        await logWalletActivity({
+          walletAddress: address,
+          hash: receipt?.hash,
+          chainId: resolvedChainId,
+        })
       }
       const response = await apiCaller('POST', authRoutes.bids, payload, true)
       if (response?.success) {
@@ -1095,7 +1106,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         overrides = { value: base + buyerFee }// 0.001+0.0000000015 = 0.0010000015 vale >fee+base
       }
 
-      const receipt = await buy(
+      const buyEvents = await buy(
         BigInt(tokenId),
         erc721,
         ethers.parseEther(priceStr),
@@ -1105,7 +1116,13 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
         address,
         overrides,
       )
-      if(receipt){
+      if(buyEvents){
+        const buyTxHash = Array.isArray(buyEvents) ? buyEvents[0]?.transactionHash : undefined
+        await logWalletActivity({
+          walletAddress: address,
+          hash: buyTxHash,
+          chainId: resolvedChainId,
+        })
         message.success('Purchase transaction submitted');
         
           const payload = {

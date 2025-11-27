@@ -115,7 +115,7 @@ let message = ethers.solidityPackedKeccak256(
 
     // );
     const receipt = await execute('ERC721Marketplace', 'buy', chainId,"", [tokenId, erc721, price, nonce, sign, erc20Token, buyer], { ...overrides, gasLimit: 500000 });
-    const events = getEventFromTx( 'ERC721Marketplace',receipt as any, 'buy', chainId,"",)
+    const events = await getEventFromTx( 'ERC721Marketplace',receipt as any, 'buy', chainId,"",)
     return events
   }, [execute]);
 
