@@ -10,13 +10,15 @@ import { Eye, Loader2 } from 'lucide-react'
 import { useMessage } from '@/lib/hooks/useMessage'
 import { FacebookIcon, GoogleIcon, XIcon } from '@/app/icon/svg'
 import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
+import { useWallet } from '@/app/hooks/useWallet'
 
 export default function LoginForm() {
   const router = useRouter()
   const { login, loginWithPrivy, isLoading, user, isAuthenticated } = useAuthStore()
   const { message } = useMessage()
+  const {address} = useWallet()
   const { initOAuth, state: oauthState } = useLoginWithOAuth()
-  const { ready: privyReady, authenticated: privyAuthenticated, user: privyUser, getAccessToken } = usePrivy()
+  const { ready: privyReady, authenticated: privyAuthenticated, user: privyUser, getAccessToken, createWallet} = usePrivy()
   const hasCompletedPrivyLoginRef = useRef(false)
   const [isCompletingLogin, setIsCompletingLogin] = useState(false)
 
@@ -57,6 +59,11 @@ export default function LoginForm() {
         setIsCompletingLogin(true)
         const accessToken = await getAccessToken()
         await loginWithPrivy(privyUser, accessToken ?? null)
+
+        if(!address){
+         await createWallet()
+        }
+        
         message.success('Logged in successfully!')
         router.replace('/feed')
       } catch (error: any) {
