@@ -1031,8 +1031,9 @@ export default function Navbar() {
                       setSelectedWalletOption('My Wallets')
                       setIsWalletOpen(false)
                       setIsWalletHovered(false)
+                      router.push('/wallets')
                     }}
-                    className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]"
+                    className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A] cursor-pointer"
                   >
                     <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                     <span className="group-hover:text-purple-300 transition-colors">My Wallets</span>
