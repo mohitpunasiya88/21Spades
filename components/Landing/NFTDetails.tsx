@@ -1095,18 +1095,23 @@ while (isValid) {
   }
 }
 
-      // Build inputs for buy
-      const tokenId = Number(NFTDetails?.nftId)
-      const erc721 = NFTDetails?.collectionId?.collectionAddress as string
+const payload = {
+  walletAddress: address,
+}
+
+const response_2 = await apiCaller('POST', `${authRoutes.buyNow}/${id}/buy`, payload, true)// Build inputs for buy
+const tokenId = Number(NFTDetails?.nftId)
+const erc721 = NFTDetails?.collectionId?.collectionAddress as string
       const priceStr = String(NFTDetails?.price)
-      // const nonceNum = Number(NFTDetails?.nonce)
-      const nonceNum = Number(nonceResponse.data.nonce)
+      const nonceNum = Number(NFTDetails?.nonce)
+      // const nonceNum = Number(nonceResponse.data.nonce)
+      // const nonceNum =203
       console.log(nonceNum,'nonceNum');
       const sign = NFTDetails?.signature as `0x${string}`
       console.log(sign,'sign');
       const erc20Token = NFTDetails?.erc20Token === undefined ? ethers.ZeroAddress : NFTDetails?.erc20Token as string
-    const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
-     
+      const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
+      
       if (!isApproved(address,marketplaceAddress,erc721)) { // mene market ko is erc721 collection ke approval de diya hai
         await setApprovalForAll(marketplaceAddress, true,erc721)
       }
@@ -1124,7 +1129,7 @@ while (isValid) {
         const buyerFee = (br.buyer * base) / (BigInt(100) * precision) 
         overrides = { value: base + buyerFee }// 0.001+0.0000000015 = 0.0010000015 vale >fee+base
       }
-
+      
       const buyEvents = await buy(
         BigInt(tokenId),
         erc721,
@@ -1144,11 +1149,7 @@ while (isValid) {
         })
         message.success('Purchase transaction submitted');
         
-          const payload = {
-            walletAddress: address,
-          }
         
-        const response = await apiCaller('POST', `${authRoutes.buyNow}/${id}/buy`, payload, true)
       }
     } catch (error: any) {
       console.error('❌ Failed to buy now', error)
