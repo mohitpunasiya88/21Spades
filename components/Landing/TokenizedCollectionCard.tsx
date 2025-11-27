@@ -237,7 +237,7 @@ function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, co
         }}
       >
         <img
-          src={typeof collectionImage === 'string' ? collectionImage : collectionImage.src}
+          src={imageUrl}
           alt={title || "NFT"}
           className="object-contain w-[120px] sm:w-[140px] md:w-[250px]"
         />
@@ -307,13 +307,14 @@ const TokenizedCollectionCard: React.FC = () => {
       const url = `${authRoutes.getCollectionsPublic}?${queryParams.toString()}`
       
       const response = await apiCaller('GET', url, null, true)
+      const response_system = await apiCaller('GET', authRoutes.getSystemCollection);
       
       if (response.success && response.data) {
         // Handle both array and object with collections property
         const collectionsData = Array.isArray(response.data) 
           ? response.data 
           : (response.data.collections || response.data.data || [])
-        setCollections(collectionsData)
+        setCollections([response_system.data.collection,...collectionsData])
       } else {
         console.warn("⚠️ No collections found or invalid response")
         setCollections([])
@@ -367,7 +368,7 @@ const TokenizedCollectionCard: React.FC = () => {
   }
 
   // Map collections to NFT card format
-  const mappedCollections = collections.map((collection: any) => {
+  const mappedCollections = collections.map((collection: any) => {debugger
     const collectionId = collection._id || collection.id || collection.collectionId
     const collectionName = collection.collectionName || collection.name || 'Unnamed Collection'
     const creatorName = collection?.createdBy?.name || 'Unknown Creator'

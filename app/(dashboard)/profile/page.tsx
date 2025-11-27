@@ -940,7 +940,8 @@ export default function ProfilePage() {
       <div className="-mx-4 md:-mx-6 px-4 md:px-6 border-b border-white/10">
         <div className="py-4 sm:py-6">
           <div className="flex items-center gap-4 sm:gap-6 md:gap-8 overflow-x-auto">
-            {['About', 'Posts', 'Portfolio', 'NFTs'].map((tab) => (
+            {['About', 'Posts', 'Portfolio'].map((tab) => (
+            // {['About', 'Posts', 'Portfolio', 'NFTs'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}

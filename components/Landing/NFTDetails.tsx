@@ -1049,7 +1049,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
       debugger;
       if (!address) {
         try {
-          message.info('Wallet connected. Please click Buy Now again.')
+          message.info('Wallet not connected. Please connect your wallet to continue')
         } catch (e) {
           message.error('Please connect your wallet to continue')
         }

@@ -903,7 +903,8 @@ export default function Navbar() {
               </div>
             )}
           </div>
-
+          {isAuthenticated ? (
+          <>
           {/* Notifications - Desktop */}
           <div className="relative hidden sm:block" ref={notificationsRef}>
             <Badge count={unreadCount} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white  [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
@@ -939,7 +940,7 @@ export default function Navbar() {
           </div>
 
           {/* Notifications - Mobile - HIDDEN, now in menu */}
-
+        
           {/* Wallet Button with Hover Dropdown - Desktop */}
           <div className="relative hidden sm:block" ref={walletRef}>
             <button
@@ -1059,7 +1060,7 @@ export default function Navbar() {
               </>
             )}
           </div>
-
+          
           {/* Create Token Button - Desktop */}
           <div className="relative hidden sm:block">
             <button
@@ -1091,6 +1092,10 @@ export default function Navbar() {
               )}
             </button>
           </div>
+          </>
+          ) : (
+            <></>
+          )}
 
           {/* Wallet Button - Mobile - HIDDEN, now in menu */}
 
@@ -1339,4 +1344,4 @@ export default function Navbar() {
 }
 
 export const shortAddress = (address: string, chars = 4) =>
-  `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
+  `${address?.slice(0, chars + 2)}...${address?.slice(-chars)}`;
