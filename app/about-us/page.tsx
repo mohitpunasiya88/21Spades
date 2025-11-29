@@ -17,12 +17,12 @@ export default function AboutUsPage() {
       <div className="w-full px-8">
 
         {/* About Title */}
-        <h1 className="text-white font-400 text-2xl md:text-3xl font-audiowide mb-8">
+        <h1 className="text-white font-400 text-2xl md:text-3xl font-audiowide mb-4">
           About
         </h1>
 
         {/* Hero Image */}
-        <div className="flex justify-center mb-8 relative w-full">
+        <div className="flex justify-center mb-4 relative w-full">
           <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden">
 
             {/* Background Pattern */}
@@ -79,7 +79,7 @@ export default function AboutUsPage() {
 
         {/* Entrusting Section */}
         <div className="mt-16">
-          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-6">
+          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-4">
             Entrusting the Digital Creators Globally
           </h2>
 
@@ -101,8 +101,8 @@ export default function AboutUsPage() {
         </div>
 
         {/* Introducing Video Placeholder */}
-        <div className="mt-24">
-          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-10">
+        <div className="mt-16">
+          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-4">
             Introducing 21Spades
           </h2>
 
@@ -123,12 +123,12 @@ export default function AboutUsPage() {
         </div>
 
         {/* Our Values */}
-        <div className="mt-8">
-          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-10">
+        <div className="mt-16">
+          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-4">
             Our Values
           </h2>
 
-          <div className="space-y-8 text-white font-exo2">
+          <div className="space-y-6 text-white font-exo2">
 
             {[
               {
@@ -168,7 +168,7 @@ export default function AboutUsPage() {
 
         {/* Security Section */}
         <div className="mt-16">
-          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-8">
+          <h2 className="text-white text-2xl md:text-3xl font-audiowide mb-4">
             Security & Trust
           </h2>
 
@@ -250,7 +250,7 @@ function SubscribeSection() {
 /* ----------------------- FAQ Section ----------------------- */
 function FAQSection() {
   return (
-    <div className="mt-16 mb-8">
+    <div className="mt-16 mb-4">
       <h2 className="text-white text-3xl font-audiowide mb-6">FAQ's</h2>
       <FAQAccordion />
     </div>
