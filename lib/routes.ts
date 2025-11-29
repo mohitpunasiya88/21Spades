@@ -65,6 +65,8 @@ const authRoutes = {
     resetNFTStatus: 'nft/items', // Use with id: `nft/items/${id}/reset-status` (PUT)
     putOnSale: 'nft/items', // Use with id: `nft/items/${id}/put-on-sale` (PUT)
     bids: 'bids',
+    getHighestBid: 'bids/highest',
+    collect: 'nft/items',
     walletAddresses: 'wallet-addresses',
 
     // nonce

@@ -321,9 +321,19 @@ const { user } = useAuthStore()
       message.error("Please enter a fixed price")
       return
     }
-    if (selectedMethod === "Time Auction" && !expirationDate) {
-      message.error("Please select an expiration date")
-      return
+    if (selectedMethod === "Time Auction") {
+      if (!startingDate) {
+        message.error("Please select a starting date and time")
+        return
+      }
+      if (!expirationDate) {
+        message.error("Please select an expiration date and time")
+        return
+      }
+      if (expirationDate.isBefore(startingDate) || expirationDate.isSame(startingDate)) {
+        message.error("Expiration date and time must be after starting date and time")
+        return
+      }
     }
 
     // Hardcoded wallet address for testing
@@ -1410,37 +1420,125 @@ payload.nonce = nonceResponse.data.nonce;
         {selectedMethod === "Time Auction" && (
           <div className="p-4 sm:p-6 font-exo2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Starting Date */}
+              {/* Starting Date & Time */}
               <div>
-                <h2 className="text-white text-sm font-medium mb-2">Starting Date</h2>
+                <h2 className="text-white text-sm font-medium mb-2">Starting Date & Time</h2>
                 <DatePicker
                   value={startingDate}
                   onChange={(date) => setStartingDate(date)}
+                  showTime={{
+                    format: 'HH:mm',
+                    minuteStep: 1,
+                  }}
                   disabledDate={(current) => {
                     return current && current < dayjs().startOf('day')
                   }}
-                  format="DD/MM/YYYY"
-                  placeholder="Select starting date"
+                  disabledTime={(current) => {
+                    if (!current) return {}
+                    const now = dayjs()
+                    if (current.isSame(now, 'day')) {
+                      return {
+                        disabledHours: () => {
+                          const hours = []
+                          for (let i = 0; i < now.hour(); i++) {
+                            hours.push(i)
+                          }
+                          return hours
+                        },
+                        disabledMinutes: (selectedHour: number) => {
+                          if (selectedHour === now.hour()) {
+                            const minutes = []
+                            for (let i = 0; i <= now.minute(); i++) {
+                              minutes.push(i)
+                            }
+                            return minutes
+                          }
+                          return []
+                        },
+                      }
+                    }
+                    return {}
+                  }}
+                  format="DD/MM/YYYY HH:mm"
+                  placeholder="Select starting date & time"
                   className="!w-full !h-12 [&_.ant-picker-input]:!bg-[#090721] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input]:!font-exo2 [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#090721] !border-[#A3AED033] !rounded-lg [&_.ant-picker-suffix]:!text-white"
-                  popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF]"
+                  popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30"
                   suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                   getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 />
               </div>
 
-              {/* Expiration Date */}
+              {/* Expiration Date & Time */}
               <div>
-                <h2 className="text-white text-sm font-medium mb-2">Expiration Date</h2>
+                <h2 className="text-white text-sm font-medium mb-2">Expiration Date & Time</h2>
                 <DatePicker
                   value={expirationDate}
                   onChange={(date) => setExpirationDate(date)}
-                  disabledDate={(current) => {
-                    return current && current < dayjs().startOf('day')
+                  showTime={{
+                    format: 'HH:mm',
+                    minuteStep: 1,
                   }}
-                  format="DD/MM/YYYY"
-                  placeholder="Select ending date"
+                  disabledDate={(current) => {
+                    if (!current) return false
+                    // Disable past dates
+                    if (current < dayjs().startOf('day')) return true
+                    // If starting date is selected, disable dates before starting date
+                    if (startingDate && current < startingDate.startOf('day')) return true
+                    return false
+                  }}
+                  disabledTime={(current) => {
+                    if (!current || !startingDate) return {}
+                    // If same day as starting date, disable times before starting time
+                    if (current.isSame(startingDate, 'day')) {
+                      return {
+                        disabledHours: () => {
+                          const hours = []
+                          for (let i = 0; i < startingDate.hour(); i++) {
+                            hours.push(i)
+                          }
+                          return hours
+                        },
+                        disabledMinutes: (selectedHour: number) => {
+                          if (selectedHour === startingDate.hour()) {
+                            const minutes = []
+                            for (let i = 0; i <= startingDate.minute(); i++) {
+                              minutes.push(i)
+                            }
+                            return minutes
+                          }
+                          return []
+                        },
+                      }
+                    }
+                    // If today, disable past times
+                    const now = dayjs()
+                    if (current.isSame(now, 'day')) {
+                      return {
+                        disabledHours: () => {
+                          const hours = []
+                          for (let i = 0; i < now.hour(); i++) {
+                            hours.push(i)
+                          }
+                          return hours
+                        },
+                        disabledMinutes: (selectedHour: number) => {
+                          if (selectedHour === now.hour()) {
+                            const minutes = []
+                            for (let i = 0; i <= now.minute(); i++) {
+                              minutes.push(i)
+                            }
+                            return minutes
+                          }
+                          return []
+                        },
+                      }
+                    }
+                    return {}
+                  }}
+                  format="DD/MM/YYYY HH:mm"
+                  placeholder="Select ending date & time"
                   className="!w-full !h-12 [&_.ant-picker-input]:!bg-[#090721] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input]:!font-exo2 [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#090721] !border-[#A3AED033] !rounded-lg [&_.ant-picker-suffix]:!text-white"
-                  popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF]"
+                  popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30"
                   suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                   getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 />
