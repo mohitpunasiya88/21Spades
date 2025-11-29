@@ -438,7 +438,7 @@ export default function ProfilePage() {
       }
      const UpdatedNonce = nonceResponse.data.nonce; 
 
-     const salePayload = {
+     var salePayload = {
       tokenId: selectedNFTForSale.nftId, // this is the token id of the nft
       erc721: selectedCollectionAddress, // this is the erc721 collection address of the nft
       priceEth: priceString, // Use exact string value to preserve precision (no scientific notation)
