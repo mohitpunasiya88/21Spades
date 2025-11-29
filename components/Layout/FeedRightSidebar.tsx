@@ -1,7 +1,7 @@
 'use client'
 
 import { useMarketDataStore } from '@/lib/store/authStore'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import GaugeComponent from 'react-gauge-component'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
@@ -28,6 +28,8 @@ export default function FeedRightSidebar() {
   const [selected, setSelected] = useState('AVAX')
   const [newCollections, setNewCollections] = useState<any[]>([])
   const [isLoadingCollections, setIsLoadingCollections] = useState(false)
+  const [liveNFTs, setLiveNFTs] = useState<any[]>([])
+  const [isLoadingLiveNFTs, setIsLoadingLiveNFTs] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -137,6 +139,137 @@ export default function FeedRightSidebar() {
 
     fetchLatestCollections()
   }, [])
+
+  // Format duration from milliseconds to "Xd Xh Xm" format
+  const formatDurationFromMs = (ms: number): string => {
+    if (!Number.isFinite(ms) || ms <= 0) return '0m'
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+    const days = Math.floor(totalSeconds / 86400)
+    const hours = Math.floor((totalSeconds % 86400) / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const parts: string[] = []
+    if (days > 0) parts.push(`${days}d`)
+    if (hours > 0 || days > 0) parts.push(`${hours}h`)
+    if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`)
+    return parts.join(' ')
+  }
+
+  // Parse epoch timestamp
+  const parseEpochTimestamp = (value: unknown): number | undefined => {
+    if (value === undefined || value === null) return undefined
+    if (typeof value === 'string') {
+      const dateParsed = new Date(value).getTime()
+      if (!isNaN(dateParsed)) {
+        return dateParsed
+      }
+      const numParsed = Number(value)
+      if (Number.isFinite(numParsed)) {
+        return numParsed > 1e12 ? numParsed : numParsed * 1000
+      }
+      return undefined
+    }
+    const numericValue = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(numericValue)) return undefined
+    const cleaned = Number(numericValue)
+    return cleaned > 1e12 ? cleaned : cleaned * 1000
+  }
+
+  // Fetch live NFTs (auction type)
+  useEffect(() => {
+    const fetchLiveNFTs = async () => {
+      try {
+        setIsLoadingLiveNFTs(true)
+        const queryParams = new URLSearchParams()
+        queryParams.append('page', '1')
+        queryParams.append('limit', '100')
+        queryParams.append('blocked', 'false')
+
+        const url = `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`
+        const response = await apiCaller('GET', url, null, true)
+
+        if (response.success && response.data) {
+          const nftsData = Array.isArray(response.data)
+            ? response.data
+            : (response.data.items || response.data.nfts || response.data.data || [])
+
+          const now = Date.now()
+
+          // Filter for live auction NFTs (auctionType = 2)
+          let liveAuctions = nftsData.filter((nft: any) => {
+            const auctionType = nft.auctionType !== undefined ? Number(nft.auctionType) : null
+            if (auctionType === 2) {
+              const startingTime = parseEpochTimestamp(nft.startingTime)
+              const endingTime = parseEpochTimestamp(nft.endingTime)
+              
+              // If time data exists, check if live
+              if (startingTime && endingTime) {
+                return now >= startingTime && now <= endingTime
+              }
+              // Show even without time data if it's auction type
+              return true
+            }
+            return false
+          })
+
+          // Sort by latest first and take first 2
+          liveAuctions = liveAuctions
+            .sort((a: any, b: any) => {
+              const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime()
+              const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime()
+              return dateB - dateA
+            })
+            .slice(0, 2)
+
+          setLiveNFTs(liveAuctions)
+        } else {
+          setLiveNFTs([])
+        }
+      } catch (error) {
+        console.error('Error fetching live NFTs:', error)
+        setLiveNFTs([])
+      } finally {
+        setIsLoadingLiveNFTs(false)
+      }
+    }
+
+    fetchLiveNFTs()
+
+    // Refresh data every minute
+    const interval = setInterval(() => {
+      fetchLiveNFTs()
+    }, 60000) // Refresh every minute
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Update timer every second
+  const [timeUpdate, setTimeUpdate] = useState(0)
+  useEffect(() => {
+    if (liveNFTs.length > 0) {
+      const interval = setInterval(() => {
+        setTimeUpdate(prev => prev + 1)
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [liveNFTs.length])
+
+  // Calculate time left for each NFT
+  const liveNFTsWithTime = useMemo(() => {
+    return liveNFTs.map((nft) => {
+      const endingTime = parseEpochTimestamp(nft.endingTime)
+      let timeLeft = 'N/A'
+      if (endingTime) {
+        const now = Date.now()
+        const diff = endingTime - now
+        if (diff > 0) {
+          timeLeft = formatDurationFromMs(diff)
+        } else {
+          timeLeft = 'Ended'
+        }
+      }
+      return { ...nft, timeLeft }
+    })
+  }, [liveNFTs, timeUpdate])
 
   const formatMarketCap = (marketCap: number): string => {
     if (marketCap >= 1e12) {
@@ -550,6 +683,87 @@ export default function FeedRightSidebar() {
             View All <span><ChevronRight className="w-4 h-4" /></span>
           </button>
         </div>
+        
+        </div>
+        {/* Live Section */}
+        <div className="mb-6 font-exo2 rounded-2xl p-4" style={{ backgroundColor: '#110F28' }}>
+          <div className="mb-4">
+            <h3 className="text-white font-audiowide text-[25px]">Live</h3>
+          </div>
+          <div className="w-full h-[0.5px] bg-[#FFFFFF0D] mb-5" />
+          {isLoadingLiveNFTs ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="w-full h-32 rounded-lg bg-gray-700 mb-2" />
+                  <div className="h-4 bg-gray-700 rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-gray-700 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : liveNFTsWithTime.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {liveNFTsWithTime.map((nft, index) => {
+                console.log(nft,'nft');
+                const nftId = nft._id || nft.id
+                const nftName = nft.itemName || nft.name || 'Unnamed NFT'
+                const nftImage = nft.imageUrl || nft.image || '/assets/nft-card-icon.png'
+                const collectionId = nft.collectionId?._id
+                console.log(collectionId,'collectionId');
+                const timeLeft = nft.timeLeft || 'N/A'
+
+                return (
+                  <div
+                    key={nftId || index}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      if (collectionId) {
+                        router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)
+                      }
+                    }}
+                  >
+                    <div className="w-full h-32 rounded-lg overflow-hidden bg-gradient-to-br from-[#4F01E6] to-[#020019] mb-2 relative">
+                      <img
+                        src={nftImage}
+                        alt={nftName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/assets/nft-card-icon.png'
+                        }}
+                      />
+                    </div>
+                    <p className="text-white text-sm font-semibold mb-1 truncate">{nftName}</p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[#FFFFFF99] text-xs">Ends in</span>
+                      <span className="text-[#FBBF24] text-xs font-semibold">{timeLeft}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-400 text-sm">No live auctions found</p>
+            </div>
+          )}
+          {/* View All Button - Bottom Center */}
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => {
+                const firstCollectionId = liveNFTsWithTime.length > 0 
+                  ? (liveNFTsWithTime[0].collectionId?._id || liveNFTsWithTime[0].collectionId)
+                  : null
+                if (firstCollectionId) {
+                  router.push(`/marketplace/collection/${firstCollectionId}`)
+                } else {
+                  router.push('/marketplace')
+                }
+              }}
+              className="text-white text-sm hover:text-purple-400 transition-colors cursor-pointer flex items-center gap-1 font-exo2"
+            >
+              View All <span><ChevronRight className="w-4 h-4" /></span>
+            </button>
+          </div>
         </div>
       </div>
     </aside>

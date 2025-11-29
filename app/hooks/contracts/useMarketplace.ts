@@ -142,11 +142,12 @@ let message = ethers.solidityPackedKeccak256(
     auction: Auction,
     nonce: BigNumberish,
     sign: BytesLike,
+    sellerAddr: string,
     overrides: ethers.Overrides = {},
   ) => {
     const signer = await getSigner();
     
- const sellerAddr = await signer.getAddress();
+ 
       // Must match validateBidSign in helper: address(this), _auction.seller, _erc721, _tokenId, _nonce, _auction.startingPrice, _auction.startingTime, _auction.closingTime, _auction.erc20Token
      const message = ethers.solidityPackedKeccak256(
         [
@@ -172,6 +173,7 @@ let message = ethers.solidityPackedKeccak256(
           auction.erc20Token,
         ]
       );
+      debugger
     const recoveredAddress = ethers.verifyMessage(ethers.getBytes(message), sign as string);
     if (
       auction.erc20Token === ethers.ZeroAddress &&
@@ -210,8 +212,8 @@ let message = ethers.solidityPackedKeccak256(
   }, [execute]);
 
   const collect = useCallback(async (
-    tokenId: BigNumberish,
-    erc721: string,
+    tokenId: BigNumberish, // nft id
+    erc721: string, // collection address
   ) => {
     return execute('ERC721Marketplace', 'collect', chainId,"", [tokenId, erc721]);
   }, [execute]);
