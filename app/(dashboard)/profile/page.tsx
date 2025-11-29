@@ -8,7 +8,8 @@ import { useAuthStore } from "@/lib/store/authStore"
 import { Button, Form, Input, Select, Tabs, Dropdown, Spin } from "antd"
 import { useMessage } from "@/lib/hooks/useMessage"
 import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-react"
-import defaultCoverImage from "@/components/assets/profile-bg.jpg"
+import defaultCoverImage from "@/public/assets/BgCover.png"
+import card21Img from "@/public/assets/21-card-img.png"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { countryCodes } from '@/lib/constants/countryCodes'
@@ -35,7 +36,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('About')
   const router = useRouter()
   const { address } = useWallet()
-  
+
   // NFTs state
   const [nfts, setNfts] = useState<any[]>([])
   const [isLoadingNFTs, setIsLoadingNFTs] = useState(false)
@@ -118,7 +119,7 @@ export default function ProfilePage() {
   const fetchUserNFTs = async () => {
     try {
       setIsLoadingNFTs(true)
-      
+
       // Use the my-nfts endpoint to get all NFTs owned by current user
       const response = await apiCaller('GET', authRoutes.getMyNFTs, null, true)
 
@@ -159,21 +160,21 @@ export default function ProfilePage() {
     e.stopPropagation() // Prevent card click
 
     const status = nftStatus === 1 ? 2 : 1;
-    
+
     try {
       setResettingNFTId(nftId)
-      
+
       // Reset NFT status to 1 (Minted) using reset-status endpoint
       // Endpoint automatically resets to status 1, no payload needed
-      const resetResponse = await apiCaller('PUT', `${authRoutes.resetNFTStatus}/${nftId}/reset-status`, {status}, true)
-      
+      const resetResponse = await apiCaller('PUT', `${authRoutes.resetNFTStatus}/${nftId}/reset-status`, { status }, true)
+
       if (resetResponse.success) {
         message.success('NFT status reset to "Minted"')
-        
+
         // Update local state
-        setNfts(prevNfts => 
-          prevNfts.map(nft => 
-            (nft._id || nft.id) === nftId 
+        setNfts(prevNfts =>
+          prevNfts.map(nft =>
+            (nft._id || nft.id) === nftId
               ? { ...nft, nftStatus: status, putOnSale: 0 }
               : nft
           )
@@ -202,7 +203,7 @@ export default function ProfilePage() {
   const fetchProfileData = async () => {
     try {
       // setProfileLoading(true)
-      
+
       // If userId is provided and different from logged-in user, fetch that user's profile
       let profileData
       if (isViewingOtherUser && userId) {
@@ -279,7 +280,7 @@ export default function ProfilePage() {
       if (user) {
         const userCountryCode = user.countryCode || '+1'
         setCountryCode(userCountryCode)
-        
+
         setProfile({
           name: user.name || "",
           username: user.username || "",
@@ -483,7 +484,7 @@ export default function ProfilePage() {
 
     try {
       setUploadingAvatar(true)
-      
+
       // Convert to base64 for preview
       const base64 = await fileToBase64(file)
       setAvatarPreview(base64)
@@ -543,7 +544,7 @@ export default function ProfilePage() {
 
     try {
       setUploadingCover(true)
-      
+
       // Convert to base64 for preview
       const base64 = await fileToBase64(file)
       setCoverPreview(base64)
@@ -596,17 +597,17 @@ export default function ProfilePage() {
   // Handle edit button click - populate form with current profile data
   const handleEditClick = async () => {
     setEditing(true) // Set editing mode first
-    
+
     // Fetch latest profile data to ensure we have the most up-to-date phone number and country code
     try {
       const profileData = await getProfile()
       if (profileData && profileData.user) {
         const userData = profileData.user
-        
+
         // Set country code from latest user data
         const userCountryCode = userData.countryCode || user?.countryCode || countryCode || '+1'
         setCountryCode(userCountryCode)
-        
+
         // Get phone number - prioritize what is already shown on profile, then latest API/user store
         const phoneNumber =
           profile.phone ||
@@ -615,7 +616,7 @@ export default function ProfilePage() {
           user?.phoneNumber ||
           user?.phone ||
           ""
-        
+
         // Convert interests to array format for the form
         let interestsArray: string[] = []
         if (profile.interests) {
@@ -715,7 +716,7 @@ export default function ProfilePage() {
       {/* Main Profile Container */}
       <div className="relative rounded-xl overflow-hidden ">
         {/* Header / Cover Banner */}
-        <div className="relative h-40 md:h-48 w-full bg-gradient-to-r from-purple-800/30 to-yellow-500/10">
+        <div className="relative h-40 md:h-56 w-full bg-gradient-to-r from-purple-800/30 to-yellow-500/10 overflow-hidden">
           {/* Cover image upload button - Only show for own profile */}
           {!isViewingOtherUser && (
             <>
@@ -737,14 +738,14 @@ export default function ProfilePage() {
             </>
           )}
           {/* Fallback cover image */}
-          {!uploadingCover && (coverPreview || profile.coverPicture) ? (
+          {(!uploadingCover && (coverPreview || profile.coverPicture)) ? (
             <img
               src={coverPreview || profile.coverPicture}
               alt="Cover"
-              className="absolute inset-0 w-full h-full object-cover opacity-90 rounded-xl"
+              className="absolute inset-0 w-full h-full object-cover rounded-xl"
               onError={(e) => {
-                console.error('Cover image error, using fallback:', e)
-                e.currentTarget.src = defaultCoverImage.src
+                console.error("Cover image error – using fallback");
+                e.currentTarget.src = defaultCoverImage.src;
               }}
             />
           ) : !uploadingCover ? (
@@ -753,10 +754,45 @@ export default function ProfilePage() {
               alt="Cover"
               fill
               priority
-              className="object-cover opacity-90 rounded-xl"
+              className="object-cover rounded-xl"
               sizes="100vw"
             />
           ) : null}
+
+          {/* Overlapping 21 Spade Cards - Right Side */}
+          <div className="absolute top-1/2 md:top-3/5 right-6 md:right-20 lg:right-28 -translate-y-1/2 flex items-center z-10">
+
+            {/* Card 1 - Back */}
+            <div className="relative w-14 h-20 sm:w-14 sm:h-20 md:w-20 md:h-32 lg:w-24 lg:h-36 -mr-8 sm:-mr-8 md:-mr-14">
+              <Image
+                src="/assets/21-card-img.png"
+                alt="21 Card"
+                fill
+                className="object-contain drop-shadow-lg"
+              />
+            </div>
+
+            {/* Card 2 - Middle */}
+            <div className="relative w-16 h-24 sm:w-16 sm:h-24 md:w-24 md:h-36 lg:w-28 lg:h-44 z-20">
+              <Image
+                src="/assets/21-card-img.png"
+                alt="21 Card"
+                fill
+                className="object-contain drop-shadow-lg"
+              />
+            </div>
+
+            {/* Card 3 - Front */}
+            <div className="relative w-16 h-24 sm:w-14 sm:h-20 md:w-20 md:h-32 lg:w-24 lg:h-36 -ml-8 sm:-ml-8 md:-ml-14">
+              <Image
+                src="/assets/21-card-img.png"
+                alt="21 Card"
+                fill
+                className="object-contain drop-shadow-lg"
+              />
+            </div>
+
+          </div>
 
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
@@ -831,7 +867,7 @@ export default function ProfilePage() {
                   {/* {uploadingAvatar ? (
                     <Spin size="small" />
                   ) : ( */}
-                    <Camera size={16} />
+                  <Camera size={16} />
                   {/* )} */}
                 </button>
                 <input
@@ -987,11 +1023,10 @@ export default function ProfilePage() {
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setNftStatusFilter(null)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      nftStatusFilter === null
-                        ? 'bg-[#7E6BEF] text-white'
-                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${nftStatusFilter === null
+                      ? 'bg-[#7E6BEF] text-white'
+                      : 'bg-[#1A183A] text-gray-400 hover:text-white'
+                      }`}
                   >
                     All
                   </button>
@@ -1047,7 +1082,7 @@ export default function ProfilePage() {
                         key={nftId}
                         className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] overflow-hidden hover:border-[#7E6BEF] transition-colors relative"
                       >
-                        <div 
+                        <div
                           onClick={() => nftId && router.push(`/marketplace/nft/${nftId}`)}
                           className="relative w-full aspect-square bg-gradient-to-b from-[#4F01E6] to-[#020019] cursor-pointer"
                         >
@@ -1067,7 +1102,7 @@ export default function ProfilePage() {
                           )}
                         </div>
                         <div className="p-4">
-                          <h4 
+                          <h4
                             onClick={() => nftId && router.push(`/marketplace/nft/${nftId}`)}
                             className="text-white font-semibold text-sm mb-1 truncate cursor-pointer hover:text-[#7E6BEF] transition-colors"
                           >
@@ -1086,7 +1121,7 @@ export default function ProfilePage() {
                                   type="primary"
                                   size="small"
                                   loading={updatingNFTId === nftId}
-                                  onClick={(e) => handleNFTStatus(nftId,nft?.nftStatus, e)}
+                                  onClick={(e) => handleNFTStatus(nftId, nft?.nftStatus, e)}
                                   className="!flex-1 !bg-[#7E6BEF] !border-none !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#6C5AE8] transition-colors"
                                 >
                                   {updatingNFTId === nftId ? 'Updating...' : 'Put on Sale'}
@@ -1098,7 +1133,7 @@ export default function ProfilePage() {
                                   type="default"
                                   size="small"
                                   loading={resettingNFTId === nftId}
-                                  onClick={(e) => handleNFTStatus(nftId,nft?.nftStatus, e)}
+                                  onClick={(e) => handleNFTStatus(nftId, nft?.nftStatus, e)}
                                   className="!flex-1 !bg-[#1A183A] !border !border-[#7E6BEF] !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#2A1F4A] transition-colors"
                                 >
                                   {resettingNFTId === nftId ? 'Resetting...' : 'Reset to Minted'}
@@ -1246,7 +1281,7 @@ export default function ProfilePage() {
                               />
                             </div>
                           </div>
-                          
+
                           {/* Country List */}
                           <div className="overflow-y-auto scrollbar-hide flex-1">
                             <div className="p-2">
@@ -1268,9 +1303,8 @@ export default function ProfilePage() {
                                       setShowCountryDropdown(false)
                                       setCountrySearchQuery('')
                                     }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1A183A] transition-colors ${
-                                      countryCode === country.code ? 'bg-[#4A01D8]/30' : ''
-                                    }`}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1A183A] transition-colors ${countryCode === country.code ? 'bg-[#4A01D8]/30' : ''
+                                      }`}
                                   >
                                     <span className="text-xl">{country.flag}</span>
                                     <span className="text-white text-sm font-exo2 flex-1 text-left">
@@ -1289,10 +1323,10 @@ export default function ProfilePage() {
                                   country.flag.includes(query)
                                 )
                               }).length === 0 && (
-                                <div className="px-4 py-3 text-gray-400 text-sm font-exo2 text-center">
-                                  No country found
-                                </div>
-                              )}
+                                  <div className="px-4 py-3 text-gray-400 text-sm font-exo2 text-center">
+                                    No country found
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>
