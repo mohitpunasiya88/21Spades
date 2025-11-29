@@ -52,6 +52,12 @@ export interface CollectionNFT {
   collection?: {
     category?: string
   }
+  currentOwner?: {
+    _id?: string
+    id?: string
+    name?: string
+    profilePicture?: string | null
+  }
 }
 
 interface SetCollectionPayload {
@@ -111,6 +117,7 @@ export const mapApiNftToCollectionNft = (nft: any): CollectionNFT => ({
   category: nft?.category?.name || nft?.category || nft?.collectionCategory,
   collectionCategory: nft?.collectionCategory || nft?.category,
   collection: nft?.collection || undefined,
+  currentOwner: nft?.currentOwner || undefined,
 })
 
 export const useCollectionStore = create<CollectionStore>((set) => ({
