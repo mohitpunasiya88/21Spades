@@ -97,7 +97,7 @@ export default function ContactUsPage() {
               {/* Name */}
               <div className="space-y-2">
                 <label className="block text-sm md:text-base text-gray-200" style={{ fontFamily: 'var(--font-exo2)' }}>
-                  Name <span className="text-red-500">*</span>
+                  Name <span className="text-blue-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -110,7 +110,7 @@ export default function ContactUsPage() {
               {/* Email */}
               <div className="space-y-2">
                 <label className="block text-sm md:text-base text-gray-200" style={{ fontFamily: 'var(--font-exo2)' }}>
-                  Email <span className="text-red-500">*</span>
+                  Email <span className="text-blue-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -123,7 +123,7 @@ export default function ContactUsPage() {
               {/* Subject */}
               <div className="space-y-2">
                 <label className="block text-sm md:text-base text-gray-200" style={{ fontFamily: 'var(--font-exo2)' }}>
-                  Subject <span className="text-red-500">*</span>
+                  Subject <span className="text-blue-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -136,7 +136,7 @@ export default function ContactUsPage() {
               {/* Message */}
               <div className="space-y-2">
                 <label className="block text-sm md:text-base text-gray-200" style={{ fontFamily: 'var(--font-exo2)' }}>
-                  How can we help? <span className="text-red-500">*</span>
+                  How can we help? <span className="text-blue-500">*</span>
                 </label>
                 <textarea
                   rows={5}
