@@ -119,7 +119,10 @@ export default function LoginForm() {
     }
 
     try {
-      await login(formData)
+      const createWalletWrapper = async () => {
+        await createWallet()
+      }
+      await login(formData, createWalletWrapper)
       message.success('Login successful! Redirecting...')
       // Redirect will happen via useEffect when isAuthenticated becomes true
     } catch (error: any) {

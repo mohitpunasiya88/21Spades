@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { ArrowLeft } from 'lucide-react'
 import { countryCodeList } from '@/lib/constants/countryCodes'
+import { useCreateWallet } from '@privy-io/react-auth'
 
 export default function OTPVerification() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fullPhone = searchParams.get('phone') || ''
   const { verifyOTP, isLoading, isAuthenticated } = useAuthStore()
+  const { createWallet } = useCreateWallet()
 
   // Parse phone number to extract countryCode and phoneNumber
   // Format: +919174570187 -> countryCode: +91, phoneNumber: 9174570187
@@ -106,13 +108,15 @@ export default function OTPVerification() {
     if (otpString.length !== 4) return
 
     try {
-      
+      const createWalletWrapper = async () => {
+        await createWallet()
+      }
       // Send phoneNumber and countryCode separately as backend expects
       await verifyOTP({ 
         phoneNumber, 
         countryCode, 
         otp: otpString 
-      } as any)
+      } as any, createWalletWrapper)
       // Redirect will happen via useEffect when isAuthenticated becomes true
     } catch (error: any) {
       console.error('OTP verification error:', error)
