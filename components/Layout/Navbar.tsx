@@ -13,7 +13,7 @@ import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
 import { useMessage } from '@/lib/hooks/useMessage'
 import { useWallet } from '@/app/hooks/useWallet'
-import { usePrivy } from '@privy-io/react-auth'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 
 
 
@@ -22,6 +22,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const { logout, user, getUser, isAuthenticated, checkAuth } = useAuthStore()
   const { logout: privyLogout } = usePrivy()
+  const { wallets } = useWallets()
   const { message } = useMessage()
   const {
     items: notifItems,
@@ -54,8 +55,10 @@ export default function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null)
   const mobileSearchRef = useRef<HTMLDivElement>(null)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isMyWalletsOpen, setIsMyWalletsOpen] = useState(false)
   const hasFetchedNotificationsRef = useRef(false)
   const {isConnected,address,balance,walletAddresses } = useWallet()
+  const myWalletsRef = useRef<HTMLDivElement>(null)
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -189,6 +192,9 @@ export default function Navbar() {
       }
       if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
         setIsSearchOpen(false)
+      }
+      if (myWalletsRef.current && !myWalletsRef.current.contains(event.target as Node)) {
+        setIsMyWalletsOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -1031,6 +1037,7 @@ export default function Navbar() {
                       setSelectedWalletOption('My Wallets')
                       setIsWalletOpen(false)
                       setIsWalletHovered(false)
+                      setIsMyWalletsOpen(true)
                     }}
                     className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A] cursor-pointer"
                   >
@@ -1061,6 +1068,99 @@ export default function Navbar() {
               </>
             )}
           </div>
+
+          {/* My Wallets Modal */}
+          {isMyWalletsOpen && (
+            <div className="fixed mt-20 top-20 inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setIsMyWalletsOpen(false)}>
+              <div 
+                ref={myWalletsRef}
+                onClick={(e) => e.stopPropagation()}
+                className="relative rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+                style={{
+                  background: 'rgba(17, 24, 39, 0.98)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                }}
+              >
+                {/* Header */}
+                <div className="p-4 border-b border-[#2A2F4A] flex items-center justify-between">
+                  <h3 className="text-white font-semibold text-lg">My Wallets</h3>
+                  <button
+                    onClick={() => setIsMyWalletsOpen(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Wallets List */}
+                <div className="p-4">
+                  {wallets && wallets.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {wallets.map((wallet: any, index: number) => (
+                        <div
+                          key={wallet.address || index}
+                          className="p-4 rounded-lg border border-[#2A2F4A] bg-[#090721] hover:bg-purple-600/10 transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-purple-600/20 flex items-center justify-center">
+                                <Wallet className="w-5 h-5 text-purple-400" />
+                              </div>
+                              <div>
+                                <p className="text-white font-medium text-sm">
+                                  {wallet.walletClientType === 'privy' ? 'Privy Wallet' : 
+                                   wallet.walletClientType === 'metamask' ? 'MetaMask' :
+                                   wallet.walletClientType === 'walletconnect' ? 'WalletConnect' :
+                                   wallet.walletClientType || 'Unknown Wallet'}
+                                </p>
+                                <p className="text-gray-400 text-xs mt-1">
+                                  {wallet.chainId ? `Chain ID: ${wallet.chainId}` : 'Chain ID: N/A'}
+                                </p>
+                              </div>
+                            </div>
+                            {wallet.address === address && (
+                              <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2A2F4A]">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-gray-400 text-xs mb-1">Address</p>
+                              <p className="text-white text-sm font-mono truncate">{wallet.address}</p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const textToCopy = wallet.address
+                                navigator.clipboard.writeText(textToCopy).then(() => {
+                                  message.success('Address copied to clipboard!')
+                                }).catch(() => {
+                                  message.error('Failed to copy')
+                                })
+                              }}
+                              className="ml-2 px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs transition-colors whitespace-nowrap"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <div className="w-16 h-16 rounded-full bg-[#A3AED033] flex items-center justify-center mx-auto mb-3">
+                        <Wallet className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-white text-sm font-medium mb-1">No wallets connected</p>
+                      <p className="text-gray-400 text-xs">Connect a wallet to get started</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Create Token Button - Desktop */}
           <div className="relative hidden sm:block">
