@@ -1127,9 +1127,55 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
       const erc20Token = NFTDetails?.erc20Token === undefined ? ethers.ZeroAddress : NFTDetails?.erc20Token as string
       const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
       
-      if (!isApproved(address,marketplaceAddress,erc721)) { // mene market ko is erc721 collection ke approval de diya hai
-        await setApprovalForAll(marketplaceAddress, true,erc721)
+      // Check and set approval with retry logic
+      let hasApproval = false
+      try {
+        hasApproval = await isApproved(address, marketplaceAddress, erc721)
+      } catch (error) {
+        console.error('Error checking approval:', error)
+        message.warning('Checking approval status...')
       }
+
+      if (!hasApproval) {
+        message.info('Setting marketplace approval...')
+        try {
+          await setApprovalForAll(marketplaceAddress, true, erc721)
+          // Wait a bit for blockchain state to update
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          
+          // Verify approval with retry
+          let retries = 3
+          while (retries > 0) {
+            try {
+              hasApproval = await isApproved(address, marketplaceAddress, erc721)
+              if (hasApproval) {
+                break
+              }
+              retries--
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1500))
+              }
+            } catch (error) {
+              console.error('Error verifying approval:', error)
+              retries--
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1500))
+              }
+            }
+          }
+          
+          if (!hasApproval) {
+            message.error('Approval transaction completed but verification failed. Please try again in a few seconds.')
+            return
+          }
+        } catch (error: any) {
+          console.error('Error setting approval:', error)
+          const errorMessage = error?.message || 'Failed to set marketplace approval'
+          message.error(errorMessage)
+          return
+        }
+      }
+      
       if (!tokenId || !erc721 || !sign || nonceNum === undefined || nonceNum === null) {
         message.error('Missing buy parameters')
         return
