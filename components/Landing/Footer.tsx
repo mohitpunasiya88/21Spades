@@ -1,7 +1,35 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Twitter, Instagram } from 'lucide-react';
 import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
+  const router = useRouter();
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const desktopDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isOutsideMobile = mobileDropdownRef.current && !mobileDropdownRef.current.contains(target);
+      const isOutsideDesktop = desktopDropdownRef.current && !desktopDropdownRef.current.contains(target);
+      
+      if (isOutsideMobile && isOutsideDesktop) {
+        setShowCompanyDropdown(false);
+      }
+    };
+
+    if (showCompanyDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCompanyDropdown]);
   return (
     <footer className="h-[80vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
 
@@ -24,17 +52,40 @@ export default function Footer() {
 
         {/* Navigation Links */}
         <div className="flex md:hidden items-center justify-center md:justify-start items-center gap-4 sm:gap-8 flex-wrap font-exo2 mb-8 sm:mb-12">
-          <a href="#" className="text-white hover:text-purple-400 transition-colors text-[18px] font-bold">
-            Platform
-          </a>
-          <span className="text-white">|</span>
-          <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-            Resource
-          </a>
-          <span className="text-white">|</span>
-          <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-            Company
-          </a>
+          <div className="relative" ref={mobileDropdownRef}>
+            <button 
+              onClick={() => setShowCompanyDropdown(!showCompanyDropdown)}
+              className="text-white hover:text-purple-400 transition-colors text-lg font-bold"
+            >
+              Company
+            </button>
+            {showCompanyDropdown && (
+              <div className="absolute top-full left-0 mt-2 bg-purple-950 border border-purple-800 rounded-lg shadow-lg z-50 min-w-[150px]">
+                <a 
+                  href="/about-us" 
+                  className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowCompanyDropdown(false);
+                    router.push('/about-us');
+                  }}
+                >
+                  About us
+                </a>
+                <a 
+                  href="/contact-us" 
+                  className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowCompanyDropdown(false);
+                    router.push('/contact-us');
+                  }}
+                >
+                  Contact us
+                </a>
+              </div>
+            )}
+          </div>
         </div>
 
 
@@ -59,17 +110,40 @@ export default function Footer() {
             </div>
 
             <div className="flex justify-center md:justify-start items-center gap-4 sm:gap-8 flex-wrap font-exo2">
-              <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-                Platform
-              </a>
-              <span className="text-white">|</span>
-              <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-                Resource
-              </a>
-              <span className="text-white">|</span>
-              <a href="#" className="text-white hover:text-purple-400 transition-colors text-lg font-bold">
-                Company
-              </a>
+              <div className="relative" ref={desktopDropdownRef}>
+                <button 
+                  onClick={() => setShowCompanyDropdown(!showCompanyDropdown)}
+                  className="text-white hover:text-purple-400 transition-colors text-lg font-bold"
+                >
+                  Company
+                </button>
+                {showCompanyDropdown && (
+                  <div className="absolute top-full left-0 mt-2 bg-purple-950 border border-purple-800 rounded-lg shadow-lg z-50 min-w-[150px]">
+                    <a 
+                      href="/about-us" 
+                      className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowCompanyDropdown(false);
+                        router.push('/about-us');
+                      }}
+                    >
+                      About us
+                    </a>
+                    <a 
+                      href="/contact-us" 
+                      className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowCompanyDropdown(false);
+                        router.push('/contact-us');
+                      }}
+                    >
+                      Contact us
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Social Media Icons - Desktop Only */}
