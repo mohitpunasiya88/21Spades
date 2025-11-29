@@ -115,8 +115,40 @@ let message = ethers.solidityPackedKeccak256(
 
     // );
     const receipt = await execute('ERC721Marketplace', 'buy', chainId,"", [tokenId, erc721, price, nonce, sign, erc20Token, buyer], { ...overrides, gasLimit: 500000 });
-    const events = await getEventFromTx( 'ERC721Marketplace',receipt as any, 'buy', chainId,"",)
-    return events
+    
+    // Try to get events, but if event not found, return receipt info instead
+    try {
+      const events = await getEventFromTx( 'ERC721Marketplace',receipt as any, 'buy', chainId,"",)
+      return events
+    } catch (error: any) {
+      // If event not found but transaction was successful, return receipt info
+      const errorMessage = error?.message || ''
+      const isEventNotFoundError = errorMessage.includes('Event buy not found') || 
+                                   errorMessage.includes('not found in transaction')
+      
+      if (isEventNotFoundError && receipt) {
+        // Transaction was successful but event parsing failed
+        // Return receipt info so caller can still get transaction hash
+        const receiptData = receipt as any
+        console.warn('⚠️ Event buy not found, but transaction succeeded. Returning receipt info.', {
+          hash: receiptData.hash || receiptData.transactionHash,
+          status: receiptData.status,
+          receipt: receiptData
+        })
+        
+        // Return receipt info in same format as events array
+        return [{
+          transactionHash: receiptData.hash || receiptData.transactionHash,
+          receipt: receiptData,
+          status: receiptData.status,
+          // Add a flag to indicate this is a receipt, not an event
+          _isReceipt: true
+        }]
+      }
+      
+      // Re-throw other errors
+      throw error
+    }
   }, [execute]);
 
   const buyBatch = useCallback(async (
