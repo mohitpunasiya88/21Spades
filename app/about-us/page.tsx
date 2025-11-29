@@ -262,10 +262,10 @@ function FAQAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   const faqs = [
-    { question: "What is Tokenization?", answer: "Tokenization converts assets into tokens..." },
-    { question: "How do D-Drops work?", answer: "D-Drops are exclusive digital drop events..." },
-    { question: "How are royalties paid?", answer: "Royalties are automatically distributed..." },
-    { question: "Is 21Spades safe?", answer: "Yes, we use secure blockchain infra..." },
+    { question: "What is Tokenization?", answer: "Tokenization is the process of converting real-world or digital assets into blockchain-based tokens (NFTs). On 21Spades, our guided studio makes this simple — just upload your asset, add details, and mint your token in minutes. No technical knowledge required." },
+    { question: "How do D-Drops work?", answer: "D-Drops are exclusive digital drop events where creators can release their work to a select audience. On 21Spades, you can create your own D-Drop, set a release date, and invite your followers to join. It's a great way to build your community and share your work with like-minded individuals." },
+    { question: "How are royalties paid?", answer: "Royalties are automatically distributed to creators when their work is sold on the marketplace." },
+    { question: "Is 21Spades safe?", answer: "Yes, we use secure blockchain infrastructure, rigorous smart-contract audits, and industry-leading authentication systems." },
   ]
 
   return (
