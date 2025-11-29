@@ -89,7 +89,7 @@ export default function Header() {
   }
   return (
     <header
-      className="flex items-center justify-center w-full mx-4 md:mx-8"
+      className="flex items-center justify-center w-full px-4 md:px-8 py-4"
     >
       <div className="mx-auto w-full">
         <div className="flex items-center justify-between relative">
