@@ -1237,7 +1237,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
       const receipt = await collect(BigInt(tokenId), erc721)
 
       const payload = {
-        userId: response_highestBid?.data?.bid?.createdBy?._id,
+        transferToUserId: response_highestBid?.data?.bid?.createdBy?._id,
         price: response_highestBid?.data?.bid?.price,
         walletAddress: response_highestBid?.data?.bid?.walletAddress,
       }

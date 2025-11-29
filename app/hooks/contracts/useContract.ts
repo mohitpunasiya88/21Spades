@@ -94,8 +94,24 @@ export function useContract() {
             }
 
             return result;
-        } catch (err) {
+        } catch (err: any) {
             const error = err as Error;
+            
+            // Handle "could not decode result data" error (usually means contract not deployed or invalid address)
+            if (err?.code === 'BAD_DATA' || err?.message?.includes('could not decode result data')) {
+                console.warn(`Contract call failed for ${contractName}.${method}:`, err.message);
+                // For read-only calls that fail, return a safe default based on method
+                if (method === 'isApprovedForAll') {
+                    return false as any;
+                }
+                // Re-throw for other methods
+                setError(error);
+                if (options.onError) {
+                    options.onError(error);
+                }
+                throw error;
+            }
+            
             setError(error);
             if (options.onError) {
                 options.onError(error);

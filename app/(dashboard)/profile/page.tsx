@@ -504,7 +504,7 @@ export default function ProfilePage() {
         postToFeed: postToFeed,
         collectionId: selectedCollection,
         nonce: UpdatedNonce,
-        signature: signature,
+        signature: signature?.signature,
       }
 
       // Remove undefined fields

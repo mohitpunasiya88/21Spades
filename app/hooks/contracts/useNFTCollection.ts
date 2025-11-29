@@ -78,7 +78,26 @@ export function useNFTCollection() {
 
   // Check if an address is an approved operator for a token
   const isApproved = useCallback(async (owner: string, operator: string, contractAddress?: string) => {
-    return call('ERC721Collection', 'isApprovedForAll', 11155111, contractAddress, [owner, operator]);
+    // Validate addresses before calling
+    if (!owner || !operator || !contractAddress) {
+      console.warn('isApproved: Missing required addresses', { owner, operator, contractAddress });
+      return false;
+    }
+    
+    if (!ethers.isAddress(owner) || !ethers.isAddress(operator) || !ethers.isAddress(contractAddress)) {
+      console.warn('isApproved: Invalid address format', { owner, operator, contractAddress });
+      return false;
+    }
+
+    try {
+      const result = await call('ERC721Collection', 'isApprovedForAll', 11155111, contractAddress, [owner, operator]);
+      // Ensure result is boolean
+      return Boolean(result);
+    } catch (error: any) {
+      // If contract call fails (e.g., contract not deployed, invalid address, etc.), default to false
+      console.warn('isApproved: Contract call failed, defaulting to false', error?.message || error);
+      return false;
+    }
   }, [call]);
 
   // Set approval for all tokens
