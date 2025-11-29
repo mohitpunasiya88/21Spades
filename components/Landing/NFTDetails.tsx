@@ -956,12 +956,19 @@ const currentNftIdentifier = useMemo(() => {
       }
       // payload.nonce = nonceResponse.data.nonce; 
       const NFTDetails = response?.data?.nft;
+      const seller = NFTDetails?.walletAddress;
+      const startingTime = NFTDetails?.startingTime;
+      const endingTime = NFTDetails?.endingTime;
+      const startingPrice = NFTDetails?.price
+      const auctionType = NFTDetails.auctionType
+      const erc20Token = NFTDetails.erc20Token
+      const nonce= NFTDetails.nonce
       const bidPayload = {
         erc20Token: NFTDetails?.ipfsHash,
         price: bidAmount,
         nftId: Number(NFTDetails?.nftId),
         collectionAddress: NFTDetails?.collectionId?.collectionAddress,
-        nonce: Number(nonceResponse.data.nonce),
+        nonce: Number(NFTDetails.nonce),
         sign: NFTDetails?.signature,
       }
     if (!bidAmount || Number(bidAmount) <= 0) {
@@ -993,19 +1000,20 @@ const currentNftIdentifier = useMemo(() => {
 // ------------------------------
 
 if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && bidPayload?.sign) {
+  //
   const auction = await auctions(bidPayload?.collectionAddress, bidPayload?.nftId)
         
-
+debugger
         // Normalize auction (ethers v6 Result is read-only)
         const auctionStruct = {
-          seller: auction.seller,
-          currentBid: BigInt(auction.currentBid ?? 0),
+          seller: seller,
+          currentBid: BigInt(auction.currentBid ?? ethers.parseEther(startingPrice.toString())),
           highestBidder: auction.highestBidder ?? auction.currentBidder ?? auction.bidder ?? address,
-          auctionType: BigInt(auction.auctionType ?? 2),
-          startingPrice: BigInt(auction.startingPrice),
-          startingTime: BigInt(auction.startingTime),
-          closingTime: BigInt(auction.closingTime),
-          erc20Token: auction.erc20Token,
+          auctionType: BigInt(auctionType),
+          startingPrice: BigInt(auction.startingPrice>0 ? auction.startingPrice : ethers.parseEther(startingPrice.toString())),
+          startingTime: BigInt(auction.startingTime>0 ? auction.startingTime : BigInt(startingTime)),
+          closingTime: BigInt(auction.closingTime>0 ? auction.closingTime : BigInt(endingTime)),
+          erc20Token: auction.erc20Token ?? erc20Token,
         }
 
         const receipt = await bid(BigInt(bidPayload?.nftId),
@@ -1015,6 +1023,7 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
           auctionStruct,
           BigInt(bidPayload?.nonce),
           bidPayload?.sign as `0x${string}`,
+          seller,
           overrides,
         )
         await logWalletActivity({
