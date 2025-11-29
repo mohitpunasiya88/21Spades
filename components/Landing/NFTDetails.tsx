@@ -1166,6 +1166,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
         
         
       }
+      router.push(`/marketplace`)
     } catch (error: any) {
       console.error('❌ Failed to buy now', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to buy now'
