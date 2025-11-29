@@ -45,6 +45,7 @@ export default function Navbar() {
   const [selectedWalletOption, setSelectedWalletOption] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isMobileWalletModal, setIsMobileWalletModal] = useState(false)
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const walletRef = useRef<HTMLDivElement>(null)
@@ -560,12 +561,12 @@ export default function Navbar() {
                 <Badge count={8} className="ml-auto [&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs" />
               </button>
 
-              {/* Wallet */}
+              {/* Wallet - open mobile modal */}
               <button
                 className="w-full text-left px-4 py-3 text-white hover:bg-purple-600/30 transition-colors flex items-center gap-3 border-b border-[#A3AED033]"
+                onClick={() => setIsMobileWalletModal(true)}
               >
-                <Wallet className="w-5 h-5" />
-                <span>Wallet</span>
+                <Wallet className="w-5 h-5" /> Wallet
               </button>
 
               {/* Create Token */}
@@ -579,6 +580,76 @@ export default function Navbar() {
                 <Plus className="w-5 h-5" />
                 <span>Create Token</span>
               </button>
+
+              {/* Mobile Wallet Modal */}
+              {isMobileWalletModal && (
+                <div
+                  className="fixed inset-0 z-[10000] bg-black/60 flex items-end md:hidden"
+                  onClick={() => setIsMobileWalletModal(false)}
+                >
+                  <div
+                    className="w-full bg-[#090721] rounded-t-2xl p-4 pb-6 max-h-[70vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-white text-lg font-semibold">Wallet</h2>
+                      <button
+                        onClick={() => setIsMobileWalletModal(false)}
+                        className="text-gray-300 text-2xl leading-none px-1"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {/* Row 1 – Wallet address + balance */}
+                    <button
+                      className="w-full text-left px-3 py-3 text-white hover:bg-purple-600/30 flex items-center gap-3 border-b border-[#2A2F4A]"
+                      onClick={() => {
+                        if (!address) return
+                        const textToCopy = address as string
+                        navigator.clipboard.writeText(textToCopy)
+                          .then(() => message.success('Copied to clipboard!'))
+                          .catch(() => message.error('Failed to copy'))
+                      }}
+                    >
+                      <Wallet className="w-5 h-5 text-gray-300" />
+                      <span className="text-sm truncate">
+                      
+                        {address
+                          ? `${shortAddress(address as string)} · Balance: ${Number(balance || 0).toFixed(4)} AVAX`
+                          : 'Walletss'}
+                      </span>
+                    </button>
+
+                    {/* Row 2 – My Wallets */}
+                    <button
+                      className="w-full text-left px-3 py-3 text-white hover:bg-purple-600/30 flex items-center gap-3 border-b border-[#2A2F4A]"
+                      onClick={() => {
+                        setSelectedWalletOption('My Wallets')
+                        setIsMobileWalletModal(false)
+                        setIsMyWalletsOpen(true)
+                      }}
+                    >
+                      <Wallet className="w-5 h-5 text-gray-300" />
+                      <span>My Wallets</span>
+                    </button>
+
+                    {/* Row 3 – Transaction History */}
+                    <button
+                      className="w-full text-left px-3 py-3 text-white hover:bg-purple-600/30 flex items-center gap-3"
+                      onClick={() => {
+                        setSelectedWalletOption('Transaction History')
+                        setIsMobileWalletModal(false)
+                        router.push('/transaction-history')
+                      }}
+                    >
+                      <Wallet className="w-5 h-5 text-gray-300" />
+                      <span>Transaction History</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1084,7 +1155,7 @@ export default function Navbar() {
                 }}
               >
                 {/* Header */}
-                <div className="p-4 border-b border-[#2A2F4A] flex items-center justify-between">
+                <div className="p-4 border-b border-[#2A2F4A] mt-16 flex items-center justify-between">
                   <h3 className="text-white font-semibold text-lg">My Wallets</h3>
                   <button
                     onClick={() => setIsMyWalletsOpen(false)}
