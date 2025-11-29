@@ -995,7 +995,7 @@ export default function ProfilePage() {
                   >
                     All
                   </button>
-                  <button
+                  {/* <button
                     onClick={() => setNftStatusFilter(1)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       nftStatusFilter === 1
@@ -1024,7 +1024,7 @@ export default function ProfilePage() {
                     }`}
                   >
                     Put on Sale
-                  </button>
+                  </button> */}
                 </div>
               </div>
 

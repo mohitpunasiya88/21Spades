@@ -49,6 +49,30 @@ body {
   background: #7c3aed;
 } */
 
+/* NFT Cards Scrollbar */
+.nft-cards-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #7E6BEF #0A0D1F;
+}
+
+.nft-cards-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.nft-cards-scrollbar::-webkit-scrollbar-track {
+  background: #0A0D1F;
+  border-radius: 4px;
+}
+
+.nft-cards-scrollbar::-webkit-scrollbar-thumb {
+  background: #7E6BEF;
+  border-radius: 4px;
+}
+
+.nft-cards-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9D8AFF;
+}
+
 .glass{
   /* background:"transparent"; */
   border: 0px solid #CBD5E14D !important;

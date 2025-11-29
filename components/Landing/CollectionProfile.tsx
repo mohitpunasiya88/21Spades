@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, ArrowLeft } from 'lucide-react'
 import { Dropdown, Space, Avatar, Spin } from 'antd'
@@ -10,6 +10,7 @@ import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
 import spadesImage from '../assets/21spades.png'
 import { useRouter } from 'next/navigation'
+import SkeletonBox from '@/components/Common/SkeletonBox'
 
 interface NFT {
   id: string
@@ -350,6 +351,17 @@ export default function CollectionProfile({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionId])
 
+  // Update timer every second for Live tab
+  const [timeUpdate, setTimeUpdate] = useState(0)
+  useEffect(() => {
+    if (activeTab === 'Live' && nfts.length > 0) {
+      const interval = setInterval(() => {
+        setTimeUpdate(prev => prev + 1)
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [activeTab, nfts.length])
+
   // Use API data if available, otherwise use props/defaults
   const displayCollectionName = collectionData?.collectionName || collectionData?.name || collectionName
   const displayDescription = collectionData?.collectionDescription || collectionData?.description || description
@@ -358,6 +370,50 @@ export default function CollectionProfile({
   const displayOwners = collectionData?.totalOwners || owners
   const displayNftCount = collectionData?.totalCollectionNfts || collectionData?.totalNfts || nftCount
   const collectionImage = collectionData?.imageUrl || collectionData?.coverPhoto || null
+
+  // Parse epoch timestamp helper
+  const parseEpochTimestamp = (value: unknown): number | undefined => {
+    if (value === undefined || value === null) return undefined
+    if (typeof value === 'string') {
+      const dateParsed = new Date(value).getTime()
+      if (!isNaN(dateParsed)) {
+        return dateParsed
+      }
+      const numParsed = Number(value)
+      if (Number.isFinite(numParsed)) {
+        return numParsed > 1e12 ? numParsed : numParsed * 1000
+      }
+      return undefined
+    }
+    const numericValue = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(numericValue)) return undefined
+    const cleaned = Number(numericValue)
+    return cleaned > 1e12 ? cleaned : cleaned * 1000
+  }
+
+  // Filter NFTs based on active tab
+  const filteredNFTs = useMemo(() => {
+    if (activeTab === 'Live') {
+      const now = Date.now()
+      return nfts.filter((nft) => {
+        // Only show auction type NFTs (auctionType === 2)
+        if (nft.auctionType !== 2) return false
+        
+        const startingTime = parseEpochTimestamp(nft.startingTime)
+        const endingTime = parseEpochTimestamp(nft.endingTime)
+        
+        // If time data exists, check if live
+        if (startingTime && endingTime) {
+          return now >= startingTime && now <= endingTime
+        }
+        
+        // If no time data but it's auction type, show it
+        return true
+      })
+    }
+    // For "Items" tab, show all NFTs
+    return nfts
+  }, [nfts, activeTab, timeUpdate])
 
   const sortItems: MenuProps['items'] = [
     { label: 'Price High to Low', key: 'price-high' },
@@ -562,14 +618,59 @@ export default function CollectionProfile({
       </div>
 
       {/* NFT Cards Grid */}
-      <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+      <div 
+        className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 max-h-[calc(100vh-300px)] overflow-y-auto nft-cards-scrollbar"
+      >
         {isLoadingNFTs ? (
-          <div className="flex justify-center items-center py-12">
-            <Spin size="large" />
-          </div>
-        ) : nfts.length > 0 ? (
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {nfts.map((nft) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="relative w-full mx-auto">
+                <div 
+                  className="relative rounded-2xl overflow-hidden p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
+                  style={{
+                    height: '380px',
+                    boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  {/* Media box skeleton */}
+                  <div className="relative h-[250px] p-3">
+                    <div className="absolute inset-0 p-3.5">
+                      <div className="relative p-3 h-full w-full rounded-[14px] overflow-hidden ring-1 ring-white/10 bg-[#050616]">
+                        <SkeletonBox width="100%" height="100%" radius={14} />
+                      </div>
+                    </div>
+                    {/* Heart icon skeleton */}
+                    <div className="absolute top-7.5 right-7.5 z-10">
+                      <SkeletonBox width={36} height={36} radius="50%" />
+                    </div>
+                  </div>
+
+                  {/* Bottom Section skeleton */}
+                  <div className="px-4 pb-4 pt-3">
+                    {/* NFT Name skeleton */}
+                    <div className="mb-2">
+                      <SkeletonBox width="70%" height={24} radius={4} />
+                    </div>
+                    
+                    {/* Badge skeleton */}
+                    <div className="mb-2.5 flex items-center gap-2">
+                      <SkeletonBox width={80} height={24} radius={6} />
+                      <SkeletonBox width={60} height={20} radius={12} />
+                    </div>
+                    
+                    {/* Price and Details skeleton */}
+                    <div className="flex items-center justify-between">
+                      <SkeletonBox width={80} height={20} radius={4} />
+                      <SkeletonBox width={70} height={28} radius={20} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredNFTs.length > 0 ? (
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {filteredNFTs.map((nft) => (
               <div key={nft._id || nft.id} className="rounded-2xl">
                 <NFTCard 
                   id={nft.id}
@@ -591,7 +692,7 @@ export default function CollectionProfile({
           </div>
         ) : (
           <div className="text-center text-gray-400 py-12">
-            No NFTs found in this collection
+            {activeTab === 'Live' ? 'No live auctions found' : 'No NFTs found in this collection'}
           </div>
         )}
       </div>

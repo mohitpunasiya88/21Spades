@@ -501,7 +501,7 @@ function MakeOfferModal({ isOpen, onClose, onConfirm, nftName = 'new_Spades.avax
 }
 
 // Bid Placed Successfully Modal
-function BidPlacedSuccessModal({ isOpen, onClose, bidAmount = '77.9', nftName = 'MOONLIGHT', nftImage }: { isOpen: boolean; onClose: () => void; bidAmount?: string; nftName?: string; nftImage?: string }) {
+function BidPlacedSuccessModal({ isOpen, onClose, bidAmount = '77.9', nftName = 'MOONLIGHT', nftImage, timeLeft }: { isOpen: boolean; onClose: () => void; bidAmount?: string; nftName?: string; nftImage?: string; timeLeft?: string }) {
   const hash = '0x3a...D4F1'
   const bidUsd = (parseFloat(bidAmount) * 0.3).toFixed(2)
 
@@ -539,9 +539,11 @@ function BidPlacedSuccessModal({ isOpen, onClose, bidAmount = '77.9', nftName = 
                   <span className="text-[#33E030] text-xs font-exo2 font-semibold">Live</span>
                 </div>
                 {/* Timer Badge */}
-                <div className="absolute top-3 right-3 bg-black/60 rounded-full px-3 py-1">
-                  <span className="text-white text-xs font-exo2">13h 50m 2s left</span>
-                </div>
+                {timeLeft && timeLeft !== 'Ended' && timeLeft !== 'Live' && timeLeft !== 'NA' && (
+                  <div className="absolute top-3 right-3 bg-black/60 rounded-full px-3 py-1">
+                    <span className="text-white text-xs font-exo2">{timeLeft} left</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1821,6 +1823,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
         bidAmount={placedBidAmount}
         nftName={displayName}
         nftImage={currentImage || undefined}
+        timeLeft={auctionTimerValue}
       />
       <OfferSubmittedModal
         isOpen={isOfferSubmittedOpen}
