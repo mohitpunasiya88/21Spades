@@ -404,7 +404,8 @@ export default function ProfilePage() {
 
 
       // call hooks
-     const priceString = fixedPrice ? parseFloat(fixedPrice) || 0 : 0;
+
+      const priceString = fixedPrice && fixedPrice.trim() !== "" ? fixedPrice : "0"
 
 
       const marketplaceAddress = CONTRACTS.ERC721Marketplace.address

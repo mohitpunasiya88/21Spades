@@ -451,6 +451,7 @@ export const useAuthStore = create<AuthState>()(
           if (response.success) {
             // Save token to localStorage
             if (response.data.token) {
+              await createWallet()
               localStorage.setItem('token', response.data.token)
             }
             // Persist user to localStorage
