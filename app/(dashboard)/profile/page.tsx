@@ -18,6 +18,10 @@ import authRoutes from "@/lib/routes"
 import { useWallet } from "@/app/hooks/useWallet"
 import dayjs, { Dayjs } from "dayjs"
 import collectionOneImage from "@/components/assets/image21.png"
+import { CONTRACTS } from "@/app/utils/contracts/contractConfig"
+import { useNFTCollection } from "@/app/hooks/contracts/useNFTCollection"
+import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
+import { ethers } from "ethers"
 
 const countries = [
   "United States",
@@ -38,6 +42,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('About')
   const router = useRouter()
   const { address } = useWallet()
+  const { setApprovalForAll, isApproved } = useNFTCollection();
+  const {createPutOnSaleSignature, auctionNonceStatus} = useMarketplace();
+
 
   // NFTs state
   const [nfts, setNfts] = useState<any[]>([])
@@ -270,6 +277,7 @@ export default function ProfilePage() {
     const nftCollectionAddress = nft.collectionId?.collectionAddress || ""
     setSelectedCollection(nftCollectionId || "")
     setSelectedCollectionAddress(nftCollectionAddress)
+      // Ensure marketplace approval for this collection before minting / API call
     
     // Set auction type based on existing data
     if (nft.auctionType === 1) {
@@ -328,9 +336,11 @@ export default function ProfilePage() {
 
     return (avaxValue * avaxRate).toFixed(2)
   }, [fixedPrice, coinAmount])
-
+// cons
   // Handle Update NFT (Put on Sale)
   const handleUpdateNFT = async () => {
+    console.log("selectedNFTForSale1111111111111", selectedNFTForSale)
+    // return;
     if (!selectedNFTForSale) return
 
     // Validation
@@ -392,9 +402,97 @@ export default function ProfilePage() {
         ? Math.ceil((expirationDate.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
         : 0
 
+
+      // call hooks
+     const priceString = fixedPrice ? parseFloat(fixedPrice) || 0 : 0;
+
+
+      const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
+      try {
+        const hasApproval = await isApproved(address as string, marketplaceAddress, selectedCollectionAddress)
+        if (!hasApproval) {
+          await setApprovalForAll(marketplaceAddress, true, selectedCollectionAddress)
+        }
+      } catch (approvalError) {
+        console.error("❌ Error while ensuring marketplace approval:", approvalError)
+        message.error("Failed to set marketplace approval. Please try again.")
+        return
+      }
+
+      // 2 hook
+
+      let isValid = true;
+      let nonceResponse = null;
+      
+      while (isValid) {
+        // GET API call
+        nonceResponse = await apiCaller('GET', `${authRoutes.getNonce}`, null, true);
+      
+        // Validate nonce
+        isValid = await auctionNonceStatus(nonceResponse.data.nonce);
+      
+        // If still invalid → again call GET
+        if (isValid) {
+          await new Promise(res => setTimeout(res, 500)); // optional: 0.5s delay
+        }
+      }
+     const UpdatedNonce = nonceResponse.data.nonce; 
+
+     const salePayload = {
+      tokenId: selectedNFTForSale.nftId, // this is the token id of the nft
+      erc721: selectedCollectionAddress, // this is the erc721 collection address of the nft
+      priceEth: priceString, // Use exact string value to preserve precision (no scientific notation)
+      nonce: UpdatedNonce, // get nonce by hook of useMarketplace
+      erc20Token: selectedNFTForSale.erc20Token || "0x0000000000000000000000000000000000000000", // 0x0000000000000000000000000000000000000000 for native token or erc20 token address 
+      auctionType: auctionType, // 1 (Fixed Price) for fixed price, 2 (Auction) for auction 
+      startingTime:startingTime, // this is the starting time  of the nft Auction type 2 sale in seconds
+      endingTime:endingTime, // this is the ending time of the nft Auction type 2 sale in seconds
+      sign: "", // this is the signature of the sale which will be generate in next step
+    }
+//  payload.erc20Token = salePayload.erc20Token;
+ let signature;
+     // 
+     try {
+      
+      if(auctionType === 1){
+         signature = await createPutOnSaleSignature(
+       BigInt(salePayload.tokenId),
+       salePayload.erc721,
+       ethers.parseEther(salePayload.priceEth),
+       BigInt(UpdatedNonce),
+       salePayload.erc20Token,
+       auctionType,
+       BigInt(0),
+       BigInt(0),
+ 
+     );
+  
+     }else if(auctionType === 2 && endingTime && startingTime){
+        signature = await createPutOnSaleSignature(
+       BigInt(salePayload.tokenId),
+       salePayload.erc721,
+       ethers.parseEther(salePayload.priceEth),
+       BigInt(`${UpdatedNonce}`),
+       salePayload.erc20Token,
+       auctionType,
+       BigInt(startingTime),
+       BigInt(endingTime),
+ 
+     );
+    
+ 
+     }
+    } catch (error) {
+      console.error("❌ Error creating sale:", error)
+      throw error
+    }
+
+      // call hooks above
+
+
       // Prepare update payload
       const payload: any = {
-        price: fixedPrice ? parseFloat(fixedPrice) || 0 : 0,
+        price: priceString,
         totalDays: totalDays,
         putOnSale: putOnMarketplace ? 1 : 0,
         auctionType: auctionType,
@@ -404,6 +502,8 @@ export default function ProfilePage() {
         isUnlockable: unlockOncePurchased,
         postToFeed: postToFeed,
         collectionId: selectedCollection,
+        nonce: UpdatedNonce,
+        signature: signature,
       }
 
       // Remove undefined fields
@@ -1433,7 +1533,7 @@ export default function ProfilePage() {
                                   onClick={(e) => handleOpenPutOnSaleModal(nft, e)}
                                   className="!flex-1 !bg-[#7E6BEF] !border-none !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#6C5AE8] transition-colors"
                                 >
-                                  {updatingNFTId === nftId ? 'Updating...' : 'Put on Sale'}
+                                  {updatingNFTId === nftId ? 'Updating...' : 'Put on Sale...'}
                                 </Button>
                               )}
                               {/* Reset Status Button - Show only for NFTs that are already on sale (status 3) */}
