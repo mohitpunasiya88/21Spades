@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore, useCategoriesStore } from '@/lib/store/authStore';
 import { apiCaller } from '@/app/interceptors/apicall/apicall';
 import authRoutes from '@/lib/routes';
+import Image from "next/image";
 
 // Icon mapping for categories
 const categoryIconMap: Record<string, string> = {
@@ -248,8 +249,20 @@ export default function Trending() {
                 <NFTCard key={(nft as any).nftId || `nft-${index}`} {...nft} />
               ))
             ) : (
-              <div className="col-span-full text-center text-gray-400 py-12">
-                No NFTs found in this category
+              <div className="col-span-full flex flex-col items-center justify-center py-12 px-4">
+                <div className="relative w-full h-auto mb-6">
+                  <Image
+                    src="/assets/page-not-found.png"
+                    alt="No NFTs found"
+                    width={500}
+                    height={400}
+                    className="w-full h-auto object-contain"
+                    priority
+                  />
+                </div>
+                <p className="text-gray-400 text-lg font-semibold mt-4">
+                  No NFTs found in this category
+                </p>
               </div>
             )}
           </div>
