@@ -1267,11 +1267,11 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
 
   const displayName = currentNft?.name ?? name
   const displayOwner =
-    currentNft?.creator?.name ||
+    currentNft?.currentOwner?.name ||
     currentNft?.ownerName ||
     currentNft?.owner ||
     owner
-  const profilePictureCollection = currentNft?.creator?.profilePicture
+  const profilePictureCollection = currentNft?.currentOwner?.profilePicture
   const ownerAvatar = profilePictureCollection ? (
     <Avatar
       src={profilePictureCollection}
@@ -1381,16 +1381,16 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
     // First check from raw API data (most reliable)
     if (rawNftData) {
       // Check createdBy - can be string (user ID) or object
-      const createdBy = rawNftData.createdBy
-      if (typeof createdBy === 'string' && String(userId) === String(createdBy)) {
-        return true
-      }
-      if (createdBy && typeof createdBy === 'object') {
-        const createdById = createdBy._id || createdBy.id
-        if (createdById && String(userId) === String(createdById)) {
-          return true
-        }
-      }
+      // const createdBy = rawNftData.createdBy
+      // if (typeof createdBy === 'string' && String(userId) === String(createdBy)) {
+      //   return true
+      // }
+      // if (createdBy && typeof createdBy === 'object') {
+      //   const createdById = createdBy._id || createdBy.id
+      //   if (createdById && String(userId) === String(createdById)) {
+      //     return true
+      //   }
+      // }
       
       // Also check currentOwner._id
       const currentOwnerId = rawNftData?.currentOwner?._id || rawNftData?.currentOwner?.id
@@ -1401,12 +1401,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
     
     // Fallback: check from mapped currentNft
     if (currentNft) {
-      // Check createdBy - can be string or object
-      if (typeof currentNft.createdBy === 'string') {
-        if (String(userId) === String(currentNft.createdBy)) {
-          return true
-        }
-      } else if (currentNft.createdBy && typeof currentNft.createdBy === 'object') {
+      if (currentNft.createdBy && typeof currentNft.createdBy === 'object') {
         const createdById = (currentNft.createdBy as any)?._id || (currentNft.createdBy as any)?.id
         if (createdById && String(userId) === String(createdById)) {
           return true
