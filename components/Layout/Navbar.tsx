@@ -1031,7 +1031,6 @@ export default function Navbar() {
                       setSelectedWalletOption('My Wallets')
                       setIsWalletOpen(false)
                       setIsWalletHovered(false)
-                      router.push('/wallets')
                     }}
                     className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A] cursor-pointer"
                   >
@@ -1047,6 +1046,7 @@ export default function Navbar() {
                       setSelectedWalletOption('Transaction History')
                       setIsWalletOpen(false)
                       setIsWalletHovered(false)
+                      router.push('/transaction-history')
                     }}
                     className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]"
                   >

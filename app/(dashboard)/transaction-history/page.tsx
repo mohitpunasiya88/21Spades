@@ -24,7 +24,7 @@ interface Pagination {
   pages: number
 }
 
-export default function WalletsPage() {
+export default function TransactionHistoryPage() {
   const { message } = useMessage()
   const [walletAddresses, setWalletAddresses] = useState<WalletAddress[]>([])
   const [pagination, setPagination] = useState<Pagination>({
@@ -144,7 +144,7 @@ export default function WalletsPage() {
     <div className="relative w-full min-h-[calc(100vh-80px)] bg-[#020019] p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 font-audiowide">
-          My Wallets
+          Transaction History
         </h1>
 
         {/* Search and Filter Section */}
