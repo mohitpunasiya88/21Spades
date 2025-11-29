@@ -1008,7 +1008,6 @@ if (bidPayload?.nftId && bidPayload?.collectionAddress && bidPayload?.nonce && b
   //
   const auction = await auctions(bidPayload?.collectionAddress, bidPayload?.nftId)
         
-debugger
         // Normalize auction (ethers v6 Result is read-only)
         const auctionStruct = {
           seller: seller,
@@ -1071,7 +1070,6 @@ debugger
         return
       }
       
-      debugger;
       if (!address) {
         try {
           message.info('Wallet not connected. Please connect your wallet to continue')
@@ -1114,7 +1112,7 @@ const payload = {
   walletAddress: address,
 }
 
-const response_2 = await apiCaller('POST', `${authRoutes.buyNow}/${id}/buy`, payload, true)// Build inputs for buy
+
 const tokenId = Number(NFTDetails?.nftId)
 const erc721 = NFTDetails?.collectionId?.collectionAddress as string
       const priceStr = String(NFTDetails?.price)
@@ -1155,16 +1153,42 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
         address,
         overrides,
       )
-      if(buyEvents){
-        const buyTxHash = Array.isArray(buyEvents) ? buyEvents[0]?.transactionHash : undefined
-        await logWalletActivity({
-          walletAddress: address,
-          hash: buyTxHash,
-          chainId: resolvedChainId,
-        })
-        message.success('Purchase transaction submitted');
+
+      
+      if(buyEvents && Array.isArray(buyEvents) && buyEvents.length > 0){
+        // Get transaction hash from events or receipt
+        const buyTxHash = buyEvents[0]?.transactionHash || 
+                         buyEvents[0]?.receipt?.hash || 
+                         buyEvents[0]?.receipt?.transactionHash
         
-        
+        if (buyTxHash) {
+          try {
+            await logWalletActivity({
+              walletAddress: address,
+              hash: buyTxHash,
+              chainId: resolvedChainId,
+            })
+          } catch (logError) {
+            console.warn('Failed to log wallet activity:', logError)
+            // Don't fail the flow if logging fails
+          }
+          
+          message.success('Purchase transaction submitted successfully')
+          
+          // Call backend API to update purchase status
+          try {
+            await apiCaller('POST', `${authRoutes.buyNow}/${id}/buy`, payload, true)
+          } catch (apiError) {
+            console.warn('Backend API call failed, but transaction was successful:', apiError)
+            // Don't fail the flow if backend call fails
+          }
+          
+          router.push(`/marketplace`)
+        } else {
+          message.warning('Transaction submitted but hash not found. Please check your wallet.')
+        }
+      } else {
+        message.error('Failed to get transaction information')
       }
     } catch (error: any) {
       console.error('❌ Failed to buy now', error)

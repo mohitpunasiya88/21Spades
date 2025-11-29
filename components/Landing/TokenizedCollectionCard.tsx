@@ -368,7 +368,7 @@ const TokenizedCollectionCard: React.FC = () => {
   }
 
   // Map collections to NFT card format
-  const mappedCollections = collections.map((collection: any) => {debugger
+  const mappedCollections = collections.map((collection: any) => {
     const collectionId = collection._id || collection.id || collection.collectionId
     const collectionName = collection.collectionName || collection.name || 'Unnamed Collection'
     const creatorName = collection?.createdBy?.name || 'Unknown Creator'

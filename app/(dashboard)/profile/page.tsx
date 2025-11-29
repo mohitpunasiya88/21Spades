@@ -1,13 +1,13 @@
 
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/store/authStore"
-import { Button, Form, Input, Select, Tabs, Dropdown, Spin } from "antd"
+import { useAuthStore, useMarketDataStore } from "@/lib/store/authStore"
+import { Button, Form, Input, Select, Tabs, Dropdown, Spin, Modal, Switch, DatePicker } from "antd"
 import { useMessage } from "@/lib/hooks/useMessage"
-import { Share2, Camera, MessageSquareText, ChevronDown, Search } from "lucide-react"
+import { Share2, Camera, MessageSquareText, ChevronDown, Search, Calendar, X } from "lucide-react"
 import defaultCoverImage from "@/public/assets/BgCover.png"
 import card21Img from "@/public/assets/21-card-img.png"
 import { FaInstagram, FaFacebookF } from "react-icons/fa";
@@ -16,6 +16,8 @@ import { countryCodes } from '@/lib/constants/countryCodes'
 import { apiCaller } from "@/app/interceptors/apicall/apicall"
 import authRoutes from "@/lib/routes"
 import { useWallet } from "@/app/hooks/useWallet"
+import dayjs, { Dayjs } from "dayjs"
+import collectionOneImage from "@/components/assets/image21.png"
 
 const countries = [
   "United States",
@@ -44,6 +46,23 @@ export default function ProfilePage() {
   const [updatingNFTId, setUpdatingNFTId] = useState<string | null>(null) // Track which NFT is being updated
   const [resettingNFTId, setResettingNFTId] = useState<string | null>(null) // Track which NFT is being reset
   const [form] = Form.useForm()
+  
+  // Put on Sale Modal States
+  const [isPutOnSaleModalOpen, setIsPutOnSaleModalOpen] = useState(false)
+  const [selectedNFTForSale, setSelectedNFTForSale] = useState<any>(null)
+  const [selectedMethod, setSelectedMethod] = useState<string>("")
+  const [fixedPrice, setFixedPrice] = useState<string>("")
+  const [postToFeed, setPostToFeed] = useState<boolean>(true)
+  const [freeMinting, setFreeMinting] = useState<boolean>(false)
+  const [putOnMarketplace, setPutOnMarketplace] = useState<boolean>(true)
+  const [unlockOncePurchased, setUnlockOncePurchased] = useState<boolean>(false)
+  const [selectedCollection, setSelectedCollection] = useState<string>("")
+  const [selectedCollectionAddress, setSelectedCollectionAddress] = useState<string>("")
+  const [startingDate, setStartingDate] = useState<Dayjs | null>(null)
+  const [expirationDate, setExpirationDate] = useState<Dayjs | null>(null)
+  const [collections, setCollections] = useState<any[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false)
+  const { getCoinPrice, coinAmount } = useMarketDataStore()
   // const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -115,6 +134,65 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, userId, address])
 
+  // Fetch AVAX price in USD
+  useEffect(() => {
+    const fetchAvaxPrice = async () => {
+      try {
+        await getCoinPrice('AVAX')
+      } catch (error) {
+        console.error("Error fetching AVAX price:", error)
+      }
+    }
+    fetchAvaxPrice()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Fetch collections for Put on Sale modal
+  const fetchCollections = useCallback(async () => {
+    try {
+      setIsLoadingCollections(true)
+      const walletAddress = address || ""
+
+      const queryParams = new URLSearchParams()
+      if (walletAddress) {
+        queryParams.append('walletAddress', walletAddress)
+      }
+      queryParams.append('page', '1')
+      queryParams.append('limit', '100')
+      queryParams.append('blocked', 'false')
+
+      const url = `${authRoutes.getCollections}?${queryParams.toString()}`
+
+      const [userCollectionsResponse, systemCollectionResponse] = await Promise.all([
+        apiCaller('GET', url, null, true),
+        apiCaller('GET', authRoutes.getSystemCollection, null, true).catch(() => null)
+      ])
+
+      const allCollections: any[] = []
+
+      if (systemCollectionResponse?.success && systemCollectionResponse?.data) {
+        const systemCollection = systemCollectionResponse.data.collection || systemCollectionResponse.data
+        if (systemCollection) {
+          allCollections.push(systemCollection)
+        }
+      }
+
+      if (userCollectionsResponse.success && userCollectionsResponse.data) {
+        const collectionsData = Array.isArray(userCollectionsResponse.data)
+          ? userCollectionsResponse.data
+          : (userCollectionsResponse.data.collections || userCollectionsResponse.data.data || [])
+        allCollections.push(...collectionsData)
+      }
+
+      setCollections(allCollections)
+    } catch (error: any) {
+      console.error("❌ Error fetching collections:", error)
+      setCollections([])
+    } finally {
+      setIsLoadingCollections(false)
+    }
+  }, [address])
+
   // Fetch user NFTs (both created and purchased)
   const fetchUserNFTs = async () => {
     try {
@@ -154,6 +232,222 @@ export default function ProfilePage() {
     }
     return nfts.filter(nft => nft.nftStatus === nftStatusFilter)
   }, [nfts, nftStatusFilter])
+
+  // Helper function to safely parse date from timestamp
+  const parseDateFromTimestamp = (timestamp: any): Dayjs | null => {
+    if (!timestamp) return null
+    
+    try {
+      const numTimestamp = Number(timestamp)
+      if (isNaN(numTimestamp) || numTimestamp <= 0) return null
+      
+      const date = dayjs.unix(numTimestamp)
+      // Check if date is valid
+      if (!date.isValid()) return null
+      
+      return date
+    } catch (error) {
+      console.error('Error parsing date:', error)
+      return null
+    }
+  }
+
+  // Open Put on Sale Modal
+  const handleOpenPutOnSaleModal = async (nft: any, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    
+    setSelectedNFTForSale(nft)
+    
+    // Fetch collections
+    await fetchCollections()
+    
+    // Pre-fill form with existing NFT data
+    const existingPrice = nft.price ? nft.price.toString() : "0"
+    setFixedPrice(existingPrice)
+    
+    // Set collection from NFT
+    const nftCollectionId = nft.collectionId?._id || nft.collectionId?.id || nft.collectionId
+    const nftCollectionAddress = nft.collectionId?.collectionAddress || ""
+    setSelectedCollection(nftCollectionId || "")
+    setSelectedCollectionAddress(nftCollectionAddress)
+    
+    // Set auction type based on existing data
+    if (nft.auctionType === 1) {
+      setSelectedMethod("Fixed Rate")
+      // Clear dates for Fixed Rate
+      setStartingDate(null)
+      setExpirationDate(null)
+    } else if (nft.auctionType === 2) {
+      setSelectedMethod("Time Auction")
+      // Set dates if available and valid
+      const startingDateParsed = parseDateFromTimestamp(nft.startingTime)
+      const expirationDateParsed = parseDateFromTimestamp(nft.endingTime)
+      
+      setStartingDate(startingDateParsed)
+      setExpirationDate(expirationDateParsed)
+    } else {
+      setSelectedMethod("")
+      // Clear dates for None
+      setStartingDate(null)
+      setExpirationDate(null)
+    }
+    
+    // Set toggles from existing data
+    setPostToFeed(nft.postToFeed !== false)
+    setFreeMinting(nft.isLazyMint === true)
+    setPutOnMarketplace(true) // Default to true for put on sale
+    setUnlockOncePurchased(nft.isUnlockable === true)
+    
+    setIsPutOnSaleModalOpen(true)
+  }
+
+  // Close Put on Sale Modal
+  const handleClosePutOnSaleModal = () => {
+    setIsPutOnSaleModalOpen(false)
+    setSelectedNFTForSale(null)
+    setSelectedMethod("")
+    setFixedPrice("")
+    setPostToFeed(true)
+    setFreeMinting(false)
+    setPutOnMarketplace(true)
+    setUnlockOncePurchased(false)
+    setSelectedCollection("")
+    setSelectedCollectionAddress("")
+    setStartingDate(null)
+    setExpirationDate(null)
+  }
+
+  // Calculate USDT equivalent
+  const convertedUsdtValue = useMemo(() => {
+    const avaxValue = parseFloat(fixedPrice)
+    const avaxRate = Number(coinAmount)
+
+    if (!fixedPrice || isNaN(avaxValue) || !avaxRate) {
+      return ""
+    }
+
+    return (avaxValue * avaxRate).toFixed(2)
+  }, [fixedPrice, coinAmount])
+
+  // Handle Update NFT (Put on Sale)
+  const handleUpdateNFT = async () => {
+    if (!selectedNFTForSale) return
+
+    // Validation
+    if ((!fixedPrice || fixedPrice.trim() === "") && selectedMethod === "Fixed Rate") {
+      message.error("Please enter a fixed price")
+      return
+    }
+    if (selectedMethod === "Time Auction") {
+      if (!startingDate) {
+        message.error("Please select a starting date and time")
+        return
+      }
+      if (!expirationDate) {
+        message.error("Please select an expiration date and time")
+        return
+      }
+      if (expirationDate.isBefore(startingDate) || expirationDate.isSame(startingDate)) {
+        message.error("Expiration date and time must be after starting date and time")
+        return
+      }
+    }
+    if (!selectedCollection) {
+      message.error("Please select a collection")
+      return
+    }
+
+    const nftId = selectedNFTForSale._id || selectedNFTForSale.id
+    if (!nftId) {
+      message.error("NFT ID not found")
+      return
+    }
+
+    setUpdatingNFTId(nftId)
+
+    try {
+      // Map auction type
+      let auctionType = 0
+      if (selectedMethod === "Fixed Rate") {
+        auctionType = 1
+      } else if (selectedMethod === "Time Auction") {
+        auctionType = 2
+      }
+
+      // Calculate starting and ending times
+      let startingTime: string | undefined
+      let endingTime: string | undefined
+
+      if (selectedMethod === "Time Auction") {
+        if (startingDate) {
+          startingTime = Math.floor(startingDate.toDate().getTime() / 1000).toString()
+        }
+        if (expirationDate) {
+          endingTime = Math.floor(expirationDate.toDate().getTime() / 1000).toString()
+        }
+      }
+
+      // Calculate total days for auction
+      const totalDays = selectedMethod === "Time Auction" && expirationDate
+        ? Math.ceil((expirationDate.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        : 0
+
+      // Prepare update payload
+      const payload: any = {
+        price: fixedPrice ? parseFloat(fixedPrice) || 0 : 0,
+        totalDays: totalDays,
+        putOnSale: putOnMarketplace ? 1 : 0,
+        auctionType: auctionType,
+        startingTime: startingTime,
+        endingTime: endingTime,
+        isLazyMint: freeMinting,
+        isUnlockable: unlockOncePurchased,
+        postToFeed: postToFeed,
+        collectionId: selectedCollection,
+      }
+
+      // Remove undefined fields
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined) {
+          delete payload[key]
+        }
+      })
+
+      // Call update API
+      const response = await apiCaller('PUT', `${authRoutes.updateNFT}/${nftId}`, payload, true)
+
+      if (response.success) {
+        message.success("NFT updated successfully!")
+        
+        // Update local state
+        setNfts(prevNfts =>
+          prevNfts.map(nft =>
+            (nft._id || nft.id) === nftId
+              ? {
+                  ...nft,
+                  price: payload.price,
+                  auctionType: payload.auctionType,
+                  startingTime: payload.startingTime,
+                  endingTime: payload.endingTime,
+                  putOnSale: payload.putOnSale,
+                  nftStatus: payload.putOnSale ? 3 : nft.nftStatus,
+                }
+              : nft
+          )
+        )
+
+        handleClosePutOnSaleModal()
+      } else {
+        message.error(response.message || "Failed to update NFT")
+      }
+    } catch (error: any) {
+      console.error("❌ Error updating NFT:", error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update NFT"
+      message.error(errorMessage)
+    } finally {
+      setUpdatingNFTId(null)
+    }
+  }
 
   // Reset NFT status to 1 (Minted) from Put on Sale
   const handleNFTStatus = async (nftId: string, nftStatus: number, e: React.MouseEvent) => {
@@ -1076,6 +1370,7 @@ export default function ProfilePage() {
                     const nftImage = nft.imageUrl || nft.image || '/assets/card-icon.png'
                     const nftPrice = nft.price ? `${nft.price} AVAX` : '0 AVAX'
                     const statusLabel = nft.nftStatus === 1 ? 'Minted' : nft.nftStatus === 2 ? 'Approved' : nft.nftStatus === 3 ? 'Put on Sale' : 'Unknown'
+                    const collectionId = nft.collectionId?._id || nft.collectionId?.id || nft.collectionId || ''
 
                     return (
                       <div
@@ -1083,7 +1378,14 @@ export default function ProfilePage() {
                         className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] overflow-hidden hover:border-[#7E6BEF] transition-colors relative"
                       >
                         <div
-                          onClick={() => nftId && router.push(`/marketplace/nft/${nftId}`)}
+                          // onClick={() => {
+                          //   if (nftId) {
+                          //     const url = collectionId 
+                          //       ? `/marketplace/nft/${nftId}?collectionId=${collectionId}`
+                          //       : `/marketplace/nft/${nftId}`
+                          //     router.push(url)
+                          //   }
+                          // }}
                           className="relative w-full aspect-square bg-gradient-to-b from-[#4F01E6] to-[#020019] cursor-pointer"
                         >
                           <Image
@@ -1103,7 +1405,14 @@ export default function ProfilePage() {
                         </div>
                         <div className="p-4">
                           <h4
-                            onClick={() => nftId && router.push(`/marketplace/nft/${nftId}`)}
+                            onClick={() => {
+                              if (nftId) {
+                                const url = collectionId 
+                                  ? `/marketplace/nft/${nftId}?collectionId=${collectionId}`
+                                  : `/marketplace/nft/${nftId}`
+                                router.push(url)
+                              }
+                            }}
                             className="text-white font-semibold text-sm mb-1 truncate cursor-pointer hover:text-[#7E6BEF] transition-colors"
                           >
                             {nftName}
@@ -1121,7 +1430,7 @@ export default function ProfilePage() {
                                   type="primary"
                                   size="small"
                                   loading={updatingNFTId === nftId}
-                                  onClick={(e) => handleNFTStatus(nftId, nft?.nftStatus, e)}
+                                  onClick={(e) => handleOpenPutOnSaleModal(nft, e)}
                                   className="!flex-1 !bg-[#7E6BEF] !border-none !text-white !rounded-lg !h-8 !text-xs !font-semibold hover:!bg-[#6C5AE8] transition-colors"
                                 >
                                   {updatingNFTId === nftId ? 'Updating...' : 'Put on Sale'}
@@ -1445,6 +1754,416 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Put on Sale Modal */}
+      <Modal
+        open={isPutOnSaleModalOpen}
+        onCancel={handleClosePutOnSaleModal}
+        footer={null}
+        centered
+        width={800}
+        className="put-on-sale-modal"
+        styles={{
+          content: {
+            background: '#090721',
+            borderRadius: '16px',
+            border: '1px solid #6B7280',
+            padding: '24px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+          },
+          mask: {
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          },
+        }}
+      >
+        <div className="space-y-6 font-exo2">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold bg-gradient-to-b from-[#5A21FF] to-[#7E6BEF] bg-clip-text text-transparent">
+              Put NFT on Sale
+            </h2>
+            <button
+              onClick={handleClosePutOnSaleModal}
+              className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
+          </div>
+
+          {/* Select Method */}
+          <div className="w-full">
+            <h2 className="text-white text-sm font-medium mb-3">
+              Select Method <span className="text-[#884DFF] text-2xl">*</span>
+            </h2>
+            <div className="flex gap-3 sm:gap-5">
+              <button
+                onClick={() => setSelectedMethod("")}
+                className={`flex-1 px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                  selectedMethod === ""
+                    ? "bg-white text-black"
+                    : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
+                }`}
+              >
+                None
+              </button>
+              <button
+                onClick={() => setSelectedMethod("Fixed Rate")}
+                className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                  selectedMethod === "Fixed Rate"
+                    ? "bg-white text-black"
+                    : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
+                }`}
+              >
+                Fixed Rate
+              </button>
+              <button
+                onClick={() => setSelectedMethod("Time Auction")}
+                className={`flex-1 px-4 sm:px-6 py-4 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                  selectedMethod === "Time Auction"
+                    ? "bg-white text-black"
+                    : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
+                }`}
+              >
+                Auction
+              </button>
+            </div>
+          </div>
+
+          {/* Price (AVAX) */}
+          <div>
+            <h2 className="text-white text-sm font-medium mb-2">
+              Price (AVAX)
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-[#9BA3AF] text-xs font-semibold mb-2">Enter AVAX Price</p>
+                <div className="h-12 bg-[#0B0926] border border-[#A3AED033] rounded-lg flex items-center justify-between px-4">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={fixedPrice || ""}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                        setFixedPrice(value)
+                      }
+                    }}
+                    onKeyPress={(e) => {
+                      const char = String.fromCharCode(e.which || e.keyCode)
+                      if (!/[0-9.]/.test(char) && !e.ctrlKey && !e.metaKey && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab' && e.key !== 'Enter') {
+                        e.preventDefault()
+                      }
+                      if (char === '.' && (e.currentTarget.value.includes('.') || e.currentTarget.value === '')) {
+                        e.preventDefault()
+                      }
+                    }}
+                    placeholder="Enter the price"
+                    className="flex-1 bg-transparent border-none outline-none text-white text-base font-semibold font-exo2 placeholder:text-[#6B7280] pr-2"
+                  />
+                  <span className="text-[#6B7280] text-sm">AVAX</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-[#9BA3AF] text-xs font-semibold mb-2">USDT Equivalent</p>
+                <div className="h-12 bg-[#0B0926] border border-[#A3AED033] rounded-lg flex items-center justify-between px-4">
+                  <span className="text-white text-base font-semibold">
+                    {convertedUsdtValue ? convertedUsdtValue : "0.00"}
+                  </span>
+                  <span className="text-[#6B7280] text-sm">USDT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Time Auction Date Fields */}
+          {selectedMethod === "Time Auction" && (
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Starting Date & Time */}
+                <div>
+                  <h2 className="text-white text-sm font-medium mb-2">Starting Date & Time</h2>
+                  <DatePicker
+                    value={startingDate && startingDate.isValid() ? startingDate : null}
+                    onChange={(date) => setStartingDate(date)}
+                    showTime={{
+                      format: 'HH:mm',
+                      minuteStep: 1,
+                    }}
+                    disabledDate={(current) => {
+                      return current && current < dayjs().startOf('day')
+                    }}
+                    disabledTime={(current) => {
+                      if (!current) return {}
+                      const now = dayjs()
+                      if (current.isSame(now, 'day')) {
+                        return {
+                          disabledHours: () => {
+                            const hours = []
+                            for (let i = 0; i < now.hour(); i++) {
+                              hours.push(i)
+                            }
+                            return hours
+                          },
+                          disabledMinutes: (selectedHour: number) => {
+                            if (selectedHour === now.hour()) {
+                              const minutes = []
+                              for (let i = 0; i <= now.minute(); i++) {
+                                minutes.push(i)
+                              }
+                              return minutes
+                            }
+                            return []
+                          },
+                        }
+                      }
+                      return {}
+                    }}
+                    format="DD/MM/YYYY HH:mm"
+                    placeholder="Select starting date & time"
+                    className="!w-full !h-12 [&_.ant-picker-input]:!bg-[#0B0926] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input]:!font-exo2 [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#0B0926] !border-[#A3AED033] !rounded-lg [&_.ant-picker-suffix]:!text-white"
+                    popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30"
+                    suffixIcon={<Calendar className="h-4 w-4 text-white" />}
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                  />
+                </div>
+
+                {/* Expiration Date & Time */}
+                <div>
+                  <h2 className="text-white text-sm font-medium mb-2">Expiration Date & Time</h2>
+                  <DatePicker
+                    value={expirationDate && expirationDate.isValid() ? expirationDate : null}
+                    onChange={(date) => setExpirationDate(date)}
+                    showTime={{
+                      format: 'HH:mm',
+                      minuteStep: 1,
+                    }}
+                    disabledDate={(current) => {
+                      if (!current) return false
+                      if (current < dayjs().startOf('day')) return true
+                      if (startingDate && startingDate.isValid() && current < startingDate.startOf('day')) return true
+                      return false
+                    }}
+                    disabledTime={(current) => {
+                      if (!current || !startingDate || !startingDate.isValid()) return {}
+                      if (current.isSame(startingDate, 'day')) {
+                        return {
+                          disabledHours: () => {
+                            const hours = []
+                            for (let i = 0; i < startingDate.hour(); i++) {
+                              hours.push(i)
+                            }
+                            return hours
+                          },
+                          disabledMinutes: (selectedHour: number) => {
+                            if (selectedHour === startingDate.hour()) {
+                              const minutes = []
+                              for (let i = 0; i <= startingDate.minute(); i++) {
+                                minutes.push(i)
+                              }
+                              return minutes
+                            }
+                            return []
+                          },
+                        }
+                      }
+                      const now = dayjs()
+                      if (current.isSame(now, 'day')) {
+                        return {
+                          disabledHours: () => {
+                            const hours = []
+                            for (let i = 0; i < now.hour(); i++) {
+                              hours.push(i)
+                            }
+                            return hours
+                          },
+                          disabledMinutes: (selectedHour: number) => {
+                            if (selectedHour === now.hour()) {
+                              const minutes = []
+                              for (let i = 0; i <= now.minute(); i++) {
+                                minutes.push(i)
+                              }
+                              return minutes
+                            }
+                            return []
+                          },
+                        }
+                      }
+                      return {}
+                    }}
+                    format="DD/MM/YYYY HH:mm"
+                    placeholder="Select ending date & time"
+                    className="!w-full !h-12 [&_.ant-picker-input]:!bg-[#0B0926] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input]:!font-exo2 [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#0B0926] !border-[#A3AED033] !rounded-lg [&_.ant-picker-suffix]:!text-white"
+                    popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30"
+                    suffixIcon={<Calendar className="h-4 w-4 text-white" />}
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Toggle Options */}
+          <div>
+            <div className="space-y-3 sm:space-y-4">
+              {/* Post To Feed */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-white text-sm sm:text-base font-[400] mb-1">Post To Feed</h3>
+                  <p className="text-[#A3AED0] text-xs sm:text-sm">Item will display in Feed</p>
+                </div>
+                <Switch
+                  checked={postToFeed}
+                  onChange={setPostToFeed}
+                  className="[&.ant-switch-checked]:!bg-[#4E00E5]"
+                  style={{
+                    backgroundColor: postToFeed ? '#4E00E5' : '#26017059',
+                  }}
+                />
+              </div>
+
+              {/* Free Minting */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-white text-sm sm:text-base font-[400] mb-1">Free Minting</h3>
+                  <p className="text-[#A3AED0] text-xs sm:text-sm">Buyer will pay gas fees for minting</p>
+                </div>
+                <Switch
+                  checked={freeMinting}
+                  onChange={setFreeMinting}
+                  className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
+                  style={{
+                    backgroundColor: freeMinting ? '#4E00E5' : '#26017059'
+                  }}
+                />
+              </div>
+
+              {/* Put on marketplace */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-white text-sm sm:text-base font-[400] mb-1">Put on marketplace</h3>
+                  <p className="text-[#A3AED0] text-xs sm:text-sm">You'll receive bids on this item</p>
+                </div>
+                <Switch
+                  checked={putOnMarketplace}
+                  onChange={setPutOnMarketplace}
+                  className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
+                  style={{
+                    backgroundColor: putOnMarketplace ? '#4E00E5' : '#26017059'
+                  }}
+                />
+              </div>
+
+              {/* Unlock once purchased */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-white text-sm sm:text-base font-[400] mb-1">Unlock once purchased</h3>
+                  <p className="text-[#A3AED0] text-xs sm:text-sm">Content will be unlocked after successful transaction</p>
+                </div>
+                <Switch
+                  checked={unlockOncePurchased}
+                  onChange={setUnlockOncePurchased}
+                  className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
+                  style={{
+                    backgroundColor: unlockOncePurchased ? '#4E00E5' : '#26017059'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Choose Collection */}
+          <div>
+            <h2 className="text-white text-sm font-medium mb-2">Collection <span className="text-[#884DFF] text-2xl">*</span></h2>
+            <p className="text-[#A3AED0] text-xs mb-4">Choose a collection.</p>
+
+            <div
+              className={collections.length > 4 ? "collections-scroll pr-2" : ""}
+              style={{
+                height: collections.length > 4 ? '300px' : 'auto',
+                maxHeight: collections.length > 4 ? '300px' : 'none',
+                overflowY: collections.length > 4 ? 'auto' : 'visible',
+                overflowX: 'hidden',
+                scrollbarWidth: collections.length > 4 ? 'thin' : 'none',
+                scrollbarColor: collections.length > 4 ? '#5A21FF #0B0926' : 'transparent transparent',
+              }}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full">
+                {isLoadingCollections ? (
+                  <div className="col-span-5 text-center py-8">
+                    <p className="text-[#A3AED0]">Loading collections...</p>
+                  </div>
+                ) : collections.length > 0 ? (
+                  collections.map((collection) => {
+                    const collectionId = collection._id || collection.collectionId || collection.id
+                    const collectionAddress = collection.collectionAddress
+                    const isSelected = selectedCollection === collectionId
+                    const collectionImage = collection.imageUrl || collection.coverPhoto || collectionOneImage
+                    const collectionName = collection.collectionName || collection.name || "Unnamed Collection"
+                    const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
+
+                    return (
+                      <button
+                        key={collectionId}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCollection(collectionId)
+                          setSelectedCollectionAddress(collectionAddress)
+                        }}
+                        className={`group relative flex h-full overflow-hidden rounded-2xl duration-300 border-2 ${
+                          isSelected
+                            ? "border-[#6C4DFF] shadow-[0_12px_30px_rgba(108,77,255,0.35)]"
+                            : "border-transparent hover:border-[#6C4DFF]/60"
+                        }`}
+                      >
+                        <div className="relative h-[120px] sm:h-[140px] w-full rounded-xl sm:rounded-2xl">
+                          <Image
+                            src={collectionImage}
+                            alt={collectionName}
+                            fill
+                            className="object-cover rounded-xl sm:rounded-2xl"
+                            sizes="(max-width: 800px) 100vw, 20vw"
+                            onError={(e) => {
+                              e.currentTarget.src = collectionOneImage.src
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B0729]/20 to-[#0B0729]/90 opacity-90 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3">
+                            <p className="text-white text-xs sm:text-sm font-semibold truncate">{collectionName}</p>
+                            <p className="text-[10px] sm:text-xs text-[#C5C9FF]/80">{itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })
+                ) : (
+                  <div className="col-span-5 text-center py-8">
+                    <p className="text-[#9BA3AF]">No collections found.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
+            <Button
+              onClick={handleClosePutOnSaleModal}
+              className="!flex-1 !h-12 !bg-transparent !border-[#6B7280] !text-white !rounded-xl hover:!bg-[#1a1a2e]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateNFT}
+              loading={updatingNFTId === (selectedNFTForSale?._id || selectedNFTForSale?.id)}
+              disabled={updatingNFTId === (selectedNFTForSale?._id || selectedNFTForSale?.id)}
+              className="!flex-1 !h-12 !bg-gradient-to-r !from-[#5A21FF] !to-[#7E6BEF] !border-none !text-white !rounded-xl hover:!opacity-90 !font-semibold"
+            >
+              {updatingNFTId === (selectedNFTForSale?._id || selectedNFTForSale?.id) ? 'Updating...' : 'Update Item'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
