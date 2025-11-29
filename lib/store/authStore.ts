@@ -6,6 +6,7 @@ import { apiCaller } from '@/app/interceptors/apicall/apicall'
 import authRoutes from '@/lib/routes'
 import { useCreateWallet } from '@privy-io/react-auth'
 
+
 type PrivyUserLike = {
   id?: string
   userId?: string
@@ -18,10 +19,10 @@ interface AuthState {
   isLoading: boolean
 
   sendOtp: (data: OTPData) => Promise<void>
-  login: (data: LoginData) => Promise<void>
+  login: (data: LoginData, createWallet?: () => Promise<void>) => Promise<void>
   loginWithPrivy: (privyUser: unknown, accessToken?: string | null, createWallet?: () => Promise<void>) => Promise<void>
   signup: (data: SignUpData) => Promise<void>
-  verifyOTP: (data: OTPData) => Promise<void>
+  verifyOTP: (data: OTPData, createWallet?: () => Promise<void>) => Promise<void>
   // Forgot password
   requestPasswordReset: (data: { phoneNumber: string; countryCode: string }) => Promise<void>
   resetPassword: (data: { phoneNumber: string; countryCode: string; otp: string; newPassword: string }) => Promise<void>
@@ -285,11 +286,16 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: (typeof window !== 'undefined' ? localStorage.getItem('token') !== null : false),
       isLoading: false,
 
-      login: async (data: LoginData) => {
+      login: async (data: LoginData, createWallet?: () => Promise<void>) => {
         set({ isLoading: true })
         try {
           const response = await apiCaller('POST', authRoutes.login, data )
           if (response.success) {
+            // Call createWallet if new user
+            if(response?.data?.newUser && createWallet){
+              await createWallet()
+            }
+            
             // Save token to localStorage
             if (response.data.token) {
               localStorage.setItem('token', response.data.token)
@@ -406,7 +412,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      verifyOTP: async (data: OTPData | { phoneNumber: string; countryCode?: string; otp: string }) => {
+      verifyOTP: async (data: OTPData | { phoneNumber: string; countryCode?: string; otp: string }, createWallet?: () => Promise<void>) => {
         set({ isLoading: true })
         try {
           // Transform data to match backend API expectations
@@ -449,9 +455,13 @@ export const useAuthStore = create<AuthState>()(
           
           const response = await apiCaller('POST', authRoutes.verifyOtp, payload)
           if (response.success) {
+            // Call createWallet if new user
+            if(response?.data?.newUser && createWallet){
+              await createWallet()
+            }
+            
             // Save token to localStorage
             if (response.data.token) {
-              // await createWallet()
               localStorage.setItem('token', response.data.token)
             }
             // Persist user to localStorage

@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import Image from 'next/image'
 import image21 from '@/components/assets/image21.png'
+import { useCreateWallet } from '@privy-io/react-auth'
 
 export default function PhoneOTPVerification() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const phone = searchParams.get('phone') || ''
   const { verifyOTP, isLoading, isAuthenticated } = useAuthStore()
+  const { createWallet } = useCreateWallet()
 
   const [code, setCode] = useState(['', '', '', ''])
   const [verifying, setVerifying] = useState(false)
@@ -47,8 +49,11 @@ export default function PhoneOTPVerification() {
     }
     try {
       setVerifying(true)
+      const createWalletWrapper = async () => {
+        await createWallet()
+      }
       // Call API to verify OTP
-      await verifyOTP({ phone, otp: codeValue })
+      await verifyOTP({ phone, otp: codeValue }, createWalletWrapper)
       
       // Show success popup
       setVerifying(false)
