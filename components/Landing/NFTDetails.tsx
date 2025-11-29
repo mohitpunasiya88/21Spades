@@ -817,7 +817,7 @@ const currentNftIdentifier = useMemo(() => {
   }, [id, cachedNfts, collectionId, loadFromCache, fetchNftDetails])
 
 
-  const { bid, getBrokerage, decimalPrecision, auctions,buy,auctionNonceStatus } = useMarketplace()
+  const { bid, getBrokerage, decimalPrecision, auctions, buy, auctionNonceStatus, collect } = useMarketplace()
   const { address, chainId } = useWallet()
   const resolvedChainId = chainId ?? Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? '11155111')
   const fetchBids = useCallback(
@@ -874,11 +874,13 @@ const currentNftIdentifier = useMemo(() => {
                       name: createdBy?.name || createdBy?.username,
                       profilePicture: createdBy?.profilePicture || null,
                       walletAddress: createdBy?.walletAddress,
+                      userId: createdBy?._id,
                     }
                   : {
                       name: entry?.userName || entry?.username,
                       profilePicture: entry?.avatar || entry?.profilePicture || null,
                       walletAddress: entry?.walletAddress,
+                      userId: entry?.userId,
                     }),
             }
           })
@@ -987,6 +989,7 @@ const currentNftIdentifier = useMemo(() => {
       const payload = {
         price: bidAmount,
         nftId: currentNftIdentifier,   /// _id pass ho rahi hai
+        walletAddress: address,
       }
       // call blockchain bid hook 
 
@@ -1107,6 +1110,7 @@ while (isValid) {
 }
 
 const payload = {
+  price: placedBidAmount,
   walletAddress: address,
 }
 
@@ -1169,8 +1173,67 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
     }
   }
 
-  const handleCollect = () => {
-    message.info('Collect feature coming soon')
+  const handleCollect = async () => {
+    try {
+      if (!address) {
+        message.error('Please connect your wallet to collect')
+        return
+      }
+      if (!id) {
+        message.error('NFT id missing')
+        return
+      }
+
+      // Fetch NFT details to get collectionAddress and nftId
+      const response = await apiCaller('GET', `${authRoutes.getNFTsByCollection}/${id}`, null, true)
+      const NFTDetails = response?.data?.nft
+      if (!NFTDetails) {
+        message.error('NFT details not found')
+        return
+      }
+
+
+      const response_highestBid = await apiCaller('GET', `${authRoutes.getHighestBid}/${response?.data?.nft?._id}`, null, true)
+
+
+      // Get NFT ID and collection address
+      const tokenId = Number(NFTDetails?.nftId)
+      const erc721 = NFTDetails?.collectionId?.collectionAddress as string
+      
+      if (!tokenId || isNaN(tokenId)) {
+        message.error('NFT ID not found')
+        return
+      }
+      if (!erc721) {
+        message.error('Collection address not found')
+        return
+      }
+
+      // Call collect hook
+      const receipt = await collect(BigInt(tokenId), erc721)
+
+      const payload = {
+        userId: response_highestBid?.data?.bid?.createdBy?._id,
+        price: response_highestBid?.data?.bid?.price,
+        walletAddress: response_highestBid?.data?.bid?.walletAddress,
+      }
+      
+      if (receipt) {
+        const collectTxHash = Array.isArray(receipt) ? receipt[0]?.transactionHash : receipt?.hash
+        await logWalletActivity({
+          walletAddress: address,
+          hash: collectTxHash,
+          chainId: resolvedChainId,
+        })
+        const response_2 = await apiCaller('POST', `${authRoutes.collect}/${NFTDetails?._id}/collect`, payload, true)
+        message.success('Collect transaction submitted successfully')
+        router.push(`/marketplace`)
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to collect', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to collect'
+      message.error(errorMessage)
+    }
   }
 
   const handleOfferConfirm = () => {
@@ -1404,6 +1467,46 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
     }
   }, [isAuction, auctionStartTime, auctionEndTime, timeLeft])
 
+  // Fetch bids when auction ends
+  useEffect(() => {
+    if (hasAuctionEnded && currentNftIdentifier && isAuction) {
+      void fetchBids(1, bidsOrder)
+    }
+  }, [hasAuctionEnded, currentNftIdentifier, isAuction, bidsOrder, fetchBids])
+
+  // Infinite scroll with debounce for bids
+  useEffect(() => {
+    if (!isBidsOpen || !bidsHasMore || bidsLoadingMore) return
+
+    const bidsContainer = document.querySelector('.bids-scroll-container')
+    if (!bidsContainer) return
+
+    let debounceTimer: NodeJS.Timeout | null = null
+
+    const handleScroll = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
+
+      debounceTimer = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = bidsContainer
+        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px threshold
+
+        if (isNearBottom && bidsHasMore && !bidsLoadingMore) {
+          void fetchBids(bidsPage + 1, bidsOrder)
+        }
+      }, 300) // 300ms debounce
+    }
+
+    bidsContainer.addEventListener('scroll', handleScroll)
+    return () => {
+      bidsContainer.removeEventListener('scroll', handleScroll)
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
+    }
+  }, [isBidsOpen, bidsHasMore, bidsLoadingMore, bidsPage, bidsOrder, fetchBids])
+
   if (!currentNft && isLoadingDetails) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
@@ -1552,7 +1655,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                 {isAuction ? (
                   // Auction (auctionType = 2): Bid Now + Make an Offer
                   <>
-                    {hasAuctionEnded ? (
+                    {hasAuctionEnded && bids?.length > 0 ? (
                       <button
                         onClick={handleCollect}
                         className="px-6 sm:px-10 py-2 sm:py-2.5 w-full sm:min-w-[200px] lg:min-w-[200px] rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base"
@@ -1720,7 +1823,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                     <p>No bids yet. Be the first to place a bid!</p>
                   </div>
                 ) : (
-                  <div className="max-h-72 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+                  <div className="max-h-72 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20 bids-scroll-container">
                     {bids.map((bid) => {
                       const avaxAmount = parseNumericValue(bid.price)
                       const usdText = formatBidUsdValue(avaxAmount)
@@ -1746,20 +1849,8 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                         </div>
                       )
                     })}
-                    {bidsLoading && bids.length > 0 && (
-                      <div className="text-center text-sm text-gray-400">Loading more bids…</div>
-                    )}
-                    {bidsHasMore && (
-                      <div className="text-center">
-                        <button
-                          onClick={() => fetchBids(bidsPage + 1, bidsOrder)}
-                          disabled={bidsLoadingMore}
-                          className="px-4 py-2 text-sm font-exo2 text-white border border-white/20 rounded-full hover:bg-white/5 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {bidsLoadingMore ? 'Loading…' : 'Load more bids'}
-                        </button>
-                      </div>
+                    {bidsLoadingMore && (
+                      <div className="text-center text-sm text-gray-400 py-2">Loading more bids…</div>
                     )}
                   </div>
                 )}
