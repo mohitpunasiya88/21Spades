@@ -234,7 +234,7 @@ export default function Trending() {
           {/* <div className={`${filteredNfts.length > 0 && filteredNfts.length < 3 ? 'flex justify-center' : ''}`}> */}
           <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 w-full">
             {isLoadingNfts ? (
-              [1, 2, 3, 4, 5, 6].map((n) => (
+              [1, 2, 3].map((n) => (
                 <div key={n} className="overflow-hidden rounded-[10px] bg-white shadow-lg">
                   <div className="w-full h-[160px] sm:h-[280px] md:h-[300px]">
                     <SkeletonBox width="100%" height="100%" radius="10px 10px 0 0" />

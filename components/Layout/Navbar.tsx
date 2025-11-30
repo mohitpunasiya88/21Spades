@@ -1003,7 +1003,7 @@ export default function Navbar() {
                     await fetchNotifInitial(5)
                   }
                 }}
-                className="relative text-white w-12 h-12 rounded-full border border-white/30 bg-[#A3AED033] flex items-center justify-center hover:opacity-80 transition-all"
+                className="relative text-white w-12 h-12 rounded-full border border-white/30 bg-[#A3AED033] flex items-center justify-center hover:opacity-80 transition-all cursor-pointer"
               >
                 <Bell className="w-5 h-5" />
               </button>
@@ -1321,7 +1321,7 @@ export default function Navbar() {
                     setIsProfileHovered(false)
                     setIsProfileOpen(false)
                   }}
-                  className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden ${isProfileHovered ? 'px-3 py-2' : 'p-0'
+                  className={`flex items-center gap-2 rounded-full bg-transparent border border-white/30 hover:border-white/50 transition-all overflow-hidden cursor-pointer ${isProfileHovered ? 'px-3 py-2' : 'p-0'
                     }`}
                 >
                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={
@@ -1417,7 +1417,7 @@ export default function Navbar() {
                         </div>
                         <button
                           onClick={handleclick}
-                          className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 rounded-lg transition-colors"
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 rounded-lg transition-colors cursor-pointer"
                         >
                           View Profile
                         </button>
@@ -1426,7 +1426,7 @@ export default function Navbar() {
                       {/* Logout */}
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                        className="w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3 cursor-pointer"
                       >
                         <LogOut className="w-5 h-5" />
                         <span>Logout</span>

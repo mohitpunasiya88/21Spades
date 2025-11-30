@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuthStore, useMarketDataStore } from "@/lib/store/authStore"
-import { Button, Form, Input, Select, Tabs, Dropdown, Spin, Modal, Switch, DatePicker } from "antd"
+import { Button, Form, Input, Select, Tabs, Dropdown, Spin, Modal, Switch, DatePicker, Tooltip } from "antd"
 import { useMessage } from "@/lib/hooks/useMessage"
 import { Share2, Camera,PencilLine , MessageSquareText, ChevronDown, Search, Calendar, X } from "lucide-react"
 import defaultCoverImage from "@/public/assets/BgCover.png"
@@ -1209,19 +1209,18 @@ export default function ProfilePage() {
           {/* Cover image upload button - Only show for own profile */}
           {!isViewingOtherUser && (
             <>
-              <button
-                onClick={() => coverInputRef.current?.click()}
-                className="absolute top-4 right-4 z-20 px-3 py-2 backdrop-blur-sm text-white rounded-lg hover:bg-black/30 transition-all duration-300 flex items-center gap-2 text-sm cursor-pointer group"
-                disabled={uploadingCover}
-              >
-                <PencilLine 
-                  size={16} 
-                  className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:text-purple-300"
-                />
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                  Change Cover
-                </span>
-              </button>
+              <Tooltip title="Change Cover" placement="left">
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  className="absolute top-4 right-4 z-20 px-3 py-2 backdrop-blur-sm text-white rounded-lg hover:bg-black/30 transition-all duration-300 flex items-center gap-2 text-sm cursor-pointer group"
+                  disabled={uploadingCover}
+                >
+                  <PencilLine 
+                    size={16} 
+                    className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:text-purple-300"
+                  />
+                </button>
+              </Tooltip>
               <input
                 ref={coverInputRef}
                 type="file"
@@ -1516,7 +1515,7 @@ export default function ProfilePage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap ${activeTab === tab
+                className={`text-sm sm:text-base font-medium transition-colors font-exo2 whitespace-nowrap cursor-pointer ${activeTab === tab
                   ? 'text-white border-b-2 border-[#7E6BEF] pb-2'
                   : 'text-gray-400 hover:text-white'
                   }`}
@@ -1581,49 +1580,17 @@ export default function ProfilePage() {
             <div className="space-y-6">
               {/* Filter Section */}
               <div className="rounded-xl border border-[#FFFFFF1A] bg-[#090721] p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white text-lg font-semibold">Filter by Status</h3>
-                </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <h3 className="text-white text-lg font-semibold whitespace-nowrap">Filter by Status : </h3>
                   <button
                     onClick={() => setNftStatusFilter(null)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${nftStatusFilter === null
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 cursor-pointer ${nftStatusFilter === null
                       ? 'bg-[#7E6BEF] text-white'
-                      : 'bg-[#1A183A] text-gray-400 hover:text-white'
+                      : 'bg-[#1A183A] text-gray-400 hover:text-white cursor-pointer'
                       }`}
                   >
                     All
                   </button>
-                  {/* <button
-                    onClick={() => setNftStatusFilter(1)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      nftStatusFilter === 1
-                        ? 'bg-[#7E6BEF] text-white'
-                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    Minted
-                  </button>
-                  <button
-                    onClick={() => setNftStatusFilter(2)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      nftStatusFilter === 2
-                        ? 'bg-[#7E6BEF] text-white'
-                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    Approved
-                  </button>
-                  <button
-                    onClick={() => setNftStatusFilter(3)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      nftStatusFilter === 3
-                        ? 'bg-[#7E6BEF] text-white'
-                        : 'bg-[#1A183A] text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    Put on Sale
-                  </button> */}
                 </div>
               </div>
 
@@ -2193,7 +2160,7 @@ export default function ProfilePage() {
                     format="DD/MM/YYYY HH:mm"
                     placeholder="Select starting date & time"
                     className="!w-full !h-12 [&_.ant-picker-input]:!bg-[#0B0926] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input]:!font-exo2 [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#0B0926] !border-[#A3AED033] !rounded-lg [&_.ant-picker-suffix]:!text-white"
-                    popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30"
+                    popupClassName="date-picker-custom [&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30 [&_.ant-picker-week-panel-header]:!bg-[#090721] [&_.ant-picker-week-panel-header>th]:!text-white [&_thead.ant-picker-week-panel-header>tr>th]:!text-white [&_thead.ant-picker-week-panel-header>tr>th>span]:!text-white [&_.ant-picker-week-panel-header>th>span]:!text-white [&_.ant-picker-week-panel-row>th]:!text-white"
                     suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                   />
@@ -2265,7 +2232,7 @@ export default function ProfilePage() {
                     format="DD/MM/YYYY HH:mm"
                     placeholder="Select ending date & time"
                     className="!w-full !h-12 [&_.ant-picker-input]:!bg-[#0B0926] [&_.ant-picker-input>input]:!text-white [&_.ant-picker-input>input]:!font-exo2 [&_.ant-picker-input>input::placeholder]:!text-[#6B7280] !bg-[#0B0926] !border-[#A3AED033] !rounded-lg [&_.ant-picker-suffix]:!text-white"
-                    popupClassName="[&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30"
+                    popupClassName="date-picker-custom [&_.ant-picker-dropdown]:!bg-[#090721] [&_.ant-picker-panel]:!bg-[#090721] [&_.ant-picker-header]:!bg-[#090721] [&_.ant-picker-header]:!border-[#A3AED033] [&_.ant-picker-content]:!bg-[#090721] [&_.ant-picker-cell]:!text-white [&_.ant-picker-cell-in-view.ant-picker-cell-selected_.ant-picker-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-cell-in-view.ant-picker-cell-today_.ant-picker-cell-inner]:!border-[#5A21FF] [&_.ant-picker-time-panel]:!bg-[#090721] [&_.ant-picker-time-panel-column]:!bg-[#090721] [&_.ant-picker-time-panel-cell]:!text-white [&_.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-header-view]:!text-white [&_.ant-picker-month-btn]:!text-white [&_.ant-picker-year-btn]:!text-white [&_.ant-picker-decade-btn]:!text-white [&_.ant-picker-time-panel-column>li]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!bg-[#5A21FF] [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected]:!text-white [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!bg-[#5A21FF] [&_.ant-picker-time-panel-column>li.ant-picker-time-panel-cell-selected_.ant-picker-time-panel-cell-inner]:!text-white [&_.ant-picker-time-panel-column>li:hover]:!bg-[#5A21FF]/30 [&_.ant-picker-week-panel-header]:!bg-[#090721] [&_.ant-picker-week-panel-header>th]:!text-white [&_thead.ant-picker-week-panel-header>tr>th]:!text-white [&_thead.ant-picker-week-panel-header>tr>th>span]:!text-white [&_.ant-picker-week-panel-header>th>span]:!text-white [&_.ant-picker-week-panel-row>th]:!text-white"
                     suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                   />
