@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import NFTCard from "./NFTcard";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { PiArrowBendUpRightBold } from "react-icons/pi";
@@ -7,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore, useCategoriesStore } from '@/lib/store/authStore';
 import { apiCaller } from '@/app/interceptors/apicall/apicall';
 import authRoutes from '@/lib/routes';
-import Image from "next/image";
+import NFTNotFoundBanner from "../Common/NFTNotFoundBanner";
 
 // Icon mapping for categories
 const categoryIconMap: Record<string, string> = {
@@ -22,17 +21,17 @@ const categoryIconMap: Record<string, string> = {
   'A I': '🤖'
 };
 
-// Static categories for non-authenticated users
-const staticCategories = [
-  { name: 'ALL', icon: null },
-  { name: 'CRYPTO', icon: '💰' },
-  { name: 'GAMING', icon: '🎮' },
-  { name: 'TICKETING', icon: '🎫' },
-  { name: 'FASHION', icon: '👗' },
-  { name: 'ART', icon: '🎨' },
-  { name: 'REAL ESTATE', icon: '🏢' },
-  { name: 'A.I.', icon: '🤖' }
-];
+// // Static categories for non-authenticated users
+// const staticCategories = [
+//   { name: 'ALL', icon: null },
+//   { name: 'CRYPTO', icon: '💰' },
+//   { name: 'GAMING', icon: '🎮' },
+//   { name: 'TICKETING', icon: '🎫' },
+//   { name: 'FASHION', icon: '👗' },
+//   { name: 'ART', icon: '🎨' },
+//   { name: 'REAL ESTATE', icon: '🏢' },
+//   { name: 'A.I.', icon: '🤖' }
+// ];
 
 export default function Trending() {
   const router = useRouter();
@@ -105,9 +104,9 @@ export default function Trending() {
 
   // Map API categories to include icons and format
   const categories = useMemo(() => {
-    if (!isAuthenticated || !apiCategories || apiCategories.length === 0) {
-      return staticCategories;
-    }
+    // if (!isAuthenticated || !apiCategories || apiCategories.length === 0) {
+    //   return staticCategories;
+    // }
 
     // Map API categories to include icons
     const mappedCategories = apiCategories
@@ -124,21 +123,21 @@ export default function Trending() {
     return [{ name: 'ALL', icon: null }, ...mappedCategories];
   }, [isAuthenticated, apiCategories]);
 
-  // Static NFTs for non-authenticated users
-  const staticNfts = [
-    { title: 'Aether Guardian', creator: '21Spades NFTs', price: '3.5 ETH', edition: '1 of 321', category: 'Crypto' },
-    { title: 'Cyber Warrior', creator: 'GameVerse', price: '2.8 ETH', edition: '1 of 500', category: 'GAMING' },
-    { title: 'VIP Concert Pass', creator: 'EventChain', price: '1.2 ETH', edition: '1 of 1000', category: 'Ticketing' },
-    { title: 'Digital Couture', creator: 'MetaFashion', price: '4.1 ETH', edition: '1 of 150', category: 'FASHION' },
-    { title: 'Abstract Dreams', creator: 'ArtDAO', price: '5.5 ETH', edition: '1 of 50', category: 'ART' },
-    { title: 'Virtual Tower', creator: 'RealtyVerse', price: '10.0 ETH', edition: '1 of 25', category: 'Real Estate' },
-    { title: 'Bitcoin Genesis', creator: 'CryptoLegends', price: '6.2 ETH', edition: '1 of 200', category: 'Crypto' },
-    { title: 'AI Consciousness', creator: 'NeuralArts', price: '3.9 ETH', edition: '1 of 300', category: 'A I' },
-    { title: 'Dragon Quest NFT', creator: 'FantasyGames', price: '2.5 ETH', edition: '1 of 750', category: 'GAMING' },
-    { title: 'Museum Entry', creator: 'CulturePass', price: '0.8 ETH', edition: '1 of 2000', category: 'Ticketing' },
-    { title: 'Haute Dress', creator: 'LuxuryLab', price: '7.3 ETH', edition: '1 of 100', category: 'FASHION' },
-    { title: 'Renaissance Redux', creator: 'ClassicArts', price: '8.1 ETH', edition: '1 of 75', category: 'ART' }
-  ];
+  // // Static NFTs for non-authenticated users
+  // const staticNfts = [
+  //   { title: 'Aether Guardian', creator: '21Spades NFTs', price: '3.5 ETH', edition: '1 of 321', category: 'Crypto' },
+  //   { title: 'Cyber Warrior', creator: 'GameVerse', price: '2.8 ETH', edition: '1 of 500', category: 'GAMING' },
+  //   { title: 'VIP Concert Pass', creator: 'EventChain', price: '1.2 ETH', edition: '1 of 1000', category: 'Ticketing' },
+  //   { title: 'Digital Couture', creator: 'MetaFashion', price: '4.1 ETH', edition: '1 of 150', category: 'FASHION' },
+  //   { title: 'Abstract Dreams', creator: 'ArtDAO', price: '5.5 ETH', edition: '1 of 50', category: 'ART' },
+  //   { title: 'Virtual Tower', creator: 'RealtyVerse', price: '10.0 ETH', edition: '1 of 25', category: 'Real Estate' },
+  //   { title: 'Bitcoin Genesis', creator: 'CryptoLegends', price: '6.2 ETH', edition: '1 of 200', category: 'Crypto' },
+  //   { title: 'AI Consciousness', creator: 'NeuralArts', price: '3.9 ETH', edition: '1 of 300', category: 'A I' },
+  //   { title: 'Dragon Quest NFT', creator: 'FantasyGames', price: '2.5 ETH', edition: '1 of 750', category: 'GAMING' },
+  //   { title: 'Museum Entry', creator: 'CulturePass', price: '0.8 ETH', edition: '1 of 2000', category: 'Ticketing' },
+  //   { title: 'Haute Dress', creator: 'LuxuryLab', price: '7.3 ETH', edition: '1 of 100', category: 'FASHION' },
+  //   { title: 'Renaissance Redux', creator: 'ClassicArts', price: '8.1 ETH', edition: '1 of 75', category: 'ART' }
+  // ];
 
   // Map API NFTs to the format expected by NFTCard
   const mappedApiNfts = useMemo(() => {
@@ -166,7 +165,7 @@ export default function Trending() {
   }, [apiNfts, isAuthenticated]);
 
   // Use API NFTs if authenticated, otherwise use static
-  const allNfts = isAuthenticated && mappedApiNfts.length > 0 ? mappedApiNfts : staticNfts;
+  const allNfts = isAuthenticated && mappedApiNfts.length > 0 ? mappedApiNfts : [];
 
   // Filter by category
   const filteredNfts = activeCategory === 'ALL'
@@ -191,19 +190,19 @@ export default function Trending() {
           </p>
         </div>
 
-        <div className="mb-8 md:mb-12 max-w-6xl mx-auto font-exo2">
+        <div className="mb-8 md:mb-12 w-full md:max-w-4xl mx-auto font-exo2 relative z-20">
           <div 
-            className="flex items-center justify-center gap-0 overflow-x-auto rounded-full py-2.5 px-4 w-full backdrop-blur-sm"
+            className="flex flex-nowrap items-center justify-start md:justify-center gap-0 overflow-x-auto overflow-y-hidden rounded-full py-2.5 px-4 w-full max-w-full backdrop-blur-sm scrollbar-hide relative z-20"
             style={{
               background: 'linear-gradient(to right, rgba(79, 1, 30, 0.1) 0%, rgba(20, 25, 45, 0.1) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              border: '1px solid rgba(255, 255, 255, 0.1)', zIndex: 20, touchAction: 'pan-x', WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth'
             }}
           >
             {categories.map((category, index) => (
-              <div key={index} className="flex items-center">
+              <div key={index} className="flex flex-nowrap items-center flex-shrink-0 relative z-30">
                 <button
                   onClick={() => setActiveCategory(category.name)}
-                  className={`h-9 md:h-10 px-4 md:px-6 rounded-full font-semibold transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm whitespace-nowrap ${
+                  className={`h-9 md:h-10 px-4 md:px-6 rounded-full font-semibold transition-all flex flex-nowrap items-center gap-1.5 md:gap-2 text-xs md:text-sm whitespace-nowrap cursor-pointer pointer-events-auto relative z-30 ${
                     activeCategory === category.name
                       ? 'text-white'
                       : 'text-white hover:text-white'
@@ -213,9 +212,9 @@ export default function Trending() {
                       ? {
                           background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
                           border: '2px solid #25016E',
-                          boxShadow: '0 0 12px rgba(79, 1, 230, 0.35)'
+                          boxShadow: '0 0 12px rgba(79, 1, 230, 0.35)', zIndex: 30
                         }
-                      : { background: 'transparent', border: 'none' }
+                      : { background: 'transparent', border: 'none', zIndex: 30 }
                   }
                 >
                   {category.icon && <span className="text-base md:text-lg">{category.icon}</span>}
@@ -226,12 +225,14 @@ export default function Trending() {
                 )}
               </div>
             ))}
+            <div className="flex-shrink-0 w-4 sm:hidden"></div>
           </div>
         </div>
 
         <div className="w-full max-w-6xl mx-auto mb-12 relative z-10">
           <img src="/assets/bg-ball.png" alt="Background" className="absolute top-0 left-0 opacity-70 blur-md z-0 w-170 h-170 -translate-x-1/2 translate-y-1/3" />
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+          <div className={`${filteredNfts.length > 0 && filteredNfts.length < 3 ? 'flex justify-center' : ''}`}>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 w-full">
             {isLoadingNfts ? (
               // Loading skeletons
               [1, 2, 3, 4, 5, 6].map((n) => (
@@ -245,26 +246,19 @@ export default function Trending() {
                 </div>
               ))
             ) : filteredNfts.length > 0 ? (
-              filteredNfts.slice(0, 6).map((nft, index) => (
-                <NFTCard key={(nft as any).nftId || `nft-${index}`} {...nft} />
-              ))
+              <>
+                {(filteredNfts.length === 1) && <div className="hidden lg:block"></div>}
+                {filteredNfts.slice(0, 6).map((nft, index) => (
+                  <div key={(nft as any).nftId || `nft-${index}`}>
+                    <NFTCard {...nft} />
+                  </div>
+                ))}
+                {(filteredNfts.length === 1 || filteredNfts.length === 2) && <div className="hidden lg:block"></div>}
+              </>
             ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-12 px-4">
-                <div className="relative w-full h-auto mb-6">
-                  <Image
-                    src="/assets/page-not-found.png"
-                    alt="No NFTs found"
-                    width={500}
-                    height={400}
-                    className="w-full h-auto object-contain"
-                    priority
-                  />
-                </div>
-                <p className="text-gray-400 text-lg font-semibold mt-4">
-                  No NFTs found in this category
-                </p>
-              </div>
+              <NFTNotFoundBanner className="min-h-[350px] w-full" />
             )}
+          </div>
           </div>
           <img src="/assets/bg-ball.png" alt="Background" className="absolute z-0 bottom-0 right-0 opacity-50 blur-md z-0 w-300 h-300 translate-x-1/2 translate-y-1/6" />
         </div>
@@ -272,7 +266,7 @@ export default function Trending() {
         <div className="text-center px-4">
           <button 
             onClick={() => router.push('/marketplace')}
-            className="inline-flex md:inline-flex items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white" 
+            className="inline-flex md:inline-flex flex-nowrap items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white" 
             style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
           >
             <span>Explore All</span>

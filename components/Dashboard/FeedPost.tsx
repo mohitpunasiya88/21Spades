@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, RefreshCcwIcon, Smile, Send, UserIcon, MoreVertical, Edit, Trash2, X, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useFeedStore, useAuthStore } from '@/lib/store/authStore'
-import { Avatar, Button, Collapse, Tooltip as AntTooltip, Steps } from 'antd'
+import { Avatar, Button, Collapse, Tooltip as AntTooltip, Steps, Carousel } from 'antd'
 import EmojiPicker from 'emoji-picker-react'
 import { useChatStore } from '@/lib/store/chatStore'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -74,7 +74,7 @@ const UserList = ['U', 'Lucy', 'Tom', 'Edward'];
 const ColorList = ['#f56a00', '#7265e6', '#ffbf00', '#00a2ae'];
 const GapList = [4, 3, 2, 1];
 
-// Simple carousel component for post media (supports multiple images like Instagram)
+// Simple carousel component for post media using Ant Design Carousel
 function PostMediaCarousel({
   images,
   maxHeight = 500,
@@ -82,168 +82,53 @@ function PostMediaCarousel({
   images: string[]
   maxHeight?: number
 }) {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState<number | null>(null)
-  const [dragOffset, setDragOffset] = useState(0)
+  const carouselRef = useRef<any>(null)
+  const [currentSlide, setCurrentSlide] = useState(0)
 
   if (!images || images.length === 0) return null
 
-  // Minimum swipe distance (in pixels)
-  const minSwipeDistance = 50
-
-  const handlePrev = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation()
-    setActiveIndex((prev) => (prev - 1 + images.length) % images.length)
+  const handlePrev = () => {
+    carouselRef.current?.prev()
   }
 
-  const handleNext = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation()
-    setActiveIndex((prev) => (prev + 1) % images.length)
+  const handleNext = () => {
+    carouselRef.current?.next()
   }
 
-  // Touch handlers for mobile swipe
-  const onTouchStart = (e: React.TouchEvent) => {
-    e.stopPropagation()
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
+  const handleBeforeChange = (from: number, to: number) => {
+    setCurrentSlide(to)
   }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    e.stopPropagation()
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-
-  const onTouchEnd = (e: React.TouchEvent) => {
-    e.stopPropagation()
-    if (!touchStart || !touchEnd) return
-    
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-
-    if (isLeftSwipe) {
-      handleNext()
-    } else if (isRightSwipe) {
-      handlePrev()
-    }
-    
-    setTouchStart(null)
-    setTouchEnd(null)
-  }
-
-  // Mouse handlers for desktop drag
-  const onMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setIsDragging(true)
-    setDragStart(e.clientX)
-    setDragOffset(0)
-  }
-
-  const onMouseMove = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!isDragging || dragStart === null) return
-    const offset = e.clientX - dragStart
-    setDragOffset(offset)
-  }
-
-  const onMouseUp = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!isDragging || dragStart === null) return
-    
-    const distance = dragOffset
-    const isLeftSwipe = distance < -minSwipeDistance
-    const isRightSwipe = distance > minSwipeDistance
-
-    if (isLeftSwipe) {
-      handleNext()
-    } else if (isRightSwipe) {
-      handlePrev()
-    }
-    
-    setIsDragging(false)
-    setDragStart(null)
-    setDragOffset(0)
-  }
-
-  const onMouseLeave = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isDragging) {
-      setIsDragging(false)
-      setDragStart(null)
-      setDragOffset(0)
-    }
-  }
-
-  const currentImage = images[activeIndex]
 
   return (
-    <div 
-      className="relative flex justify-center items-center overflow-hidden rounded-lg sm:rounded-xl mb-3 sm:mb-4 bg-black/40 cursor-grab active:cursor-grabbing select-none"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
-      style={{
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-      }}
-    >
-      <div 
-        className="flex transition-transform duration-300 ease-out"
-        style={{
-          transform: `translateX(${dragOffset}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-        }}
+    <div className="relative w-full mb-3 sm:mb-4 rounded-lg sm:rounded-xl overflow-hidden bg-black/40">
+      <Carousel
+        ref={carouselRef}
+        autoplay
+        autoplaySpeed={3000}
+        dots={images.length > 1}
+        infinite
+        effect="scrollx"
+        arrows={true}
+        beforeChange={handleBeforeChange}
       >
-        <img
-          src={currentImage}
-          alt={`Post image ${activeIndex + 1}`}
-          className="max-w-full h-auto object-contain"
-          style={{ maxHeight }}
-          draggable={false}
-        />
-      </div>
-
+        {images.map((image, index) => (
+          <div key={`image-${index}-${image}`} className="flex items-center justify-center">
+            <img
+              src={image}
+              alt={`Post image ${index + 1}`}
+              className="w-full h-auto object-contain"
+              style={{ maxHeight }}
+              draggable={false}
+            />
+          </div>
+        ))}
+      </Carousel>
+      
       {images.length > 1 && (
         <>
-          {/* Left arrow */}
-          <button
-            onClick={handlePrev}
-            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-10"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* Right arrow */}
-          <button
-            onClick={handleNext}
-            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-10"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* Dots indicator */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
-            {images.map((_, index) => (
-              <span
-                key={index}
-                className={`rounded-full transition-all ${
-                  index === activeIndex
-                    ? 'w-2.5 h-2.5 bg-white'
-                    : 'w-2 h-2 bg-white/40'
-                }`}
-              />
-            ))}
-          </div>
-          {/* Counter top-right (like Instagram) */}
+          {/* Counter top-right - shows current/total format */}
           <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] sm:text-xs font-medium z-10">
-            {activeIndex + 1}/{images.length}
+            {currentSlide + 1}/{images.length}
           </div>
         </>
       )}
@@ -1194,7 +1079,7 @@ export default function FeedPost({ post }: FeedPostProps) {
                 message.error('NFT information not available')
               }
             }}
-            className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold hover:opacity-90 transition text-sm sm:text-base whitespace-nowrap flex-shrink-0"
+            className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-[0_0_20px_rgba(79,1,230,0.6)] hover:shadow-[#4F01E6] active:scale-95 text-sm sm:text-base whitespace-nowrap flex-shrink-0 cursor-pointer"
           >
             Buy
           </button>
@@ -1206,7 +1091,7 @@ export default function FeedPost({ post }: FeedPostProps) {
       <div className="flex justify-between items-center gap-1.5 sm:gap-2 md:gap-3 text-gray-400 flex-wrap">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${liked ? 'text-[#FF5500]' : ''}`}
+          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] cursor-pointer ${liked ? 'text-[#FF5500]' : ''}`}
         >
           <Heart className="w-4 h-4 sm:w-5 sm:h-5" fill={liked ? '#FF5500' : 'none'} />
           <span className="text-xs sm:text-sm">{localLikes >= 1000 ? (localLikes / 1000).toFixed(1) + 'k' : localLikes}</span>
@@ -1216,7 +1101,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         {/* <div className='border-s-4'></div> */}
         <button
           onClick={handleCommentClick}
-          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] hover:text-blue-400"
+          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] hover:text-blue-400 cursor-pointer"
         >
           <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-xs sm:text-sm">{localComments}</span>
@@ -1226,7 +1111,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         <button
           onClick={handleRepost}
           disabled={reposted || isReposting}
-          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed ${reposted ? 'text-green-400' : 'hover:text-green-400'}`}
+          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${reposted ? 'text-green-400' : 'hover:text-green-400'}`}
         >
           <RefreshCcwIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-xs sm:text-sm">{localReposts}</span>
@@ -1236,7 +1121,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         <button
           onClick={handleShare}
           disabled={isSharing}
-          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed hover:text-green-400"
+          className="flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] disabled:opacity-50 disabled:cursor-not-allowed hover:text-green-400 cursor-pointer"
         >
           <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-xs sm:text-sm">{localShares}</span>
@@ -1245,7 +1130,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${saved ? 'text-yellow-400' : 'hover:text-yellow-400'}`}
+          className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${saved ? 'text-yellow-400' : 'hover:text-yellow-400'} cursor-pointer`}
         >
           <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" fill={saved ? 'currentColor' : 'none'} />
           <span className="text-xs sm:text-sm">{localSaves}</span>
