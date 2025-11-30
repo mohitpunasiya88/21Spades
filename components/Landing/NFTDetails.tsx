@@ -1119,9 +1119,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
       const nonceNum = Number(NFTDetails?.nonce)
       // const nonceNum = Number(nonceResponse.data.nonce)
       // const nonceNum =203
-      console.log(nonceNum,'nonceNum');
       const sign = NFTDetails?.signature as `0x${string}`
-      console.log(sign,'sign');
       const erc20Token = NFTDetails?.erc20Token === undefined ? ethers.ZeroAddress : NFTDetails?.erc20Token as string
       const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
       

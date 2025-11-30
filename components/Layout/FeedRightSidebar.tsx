@@ -50,13 +50,11 @@ export default function FeedRightSidebar() {
           
           if (!isExpired) {
             // Use cached data - no API call needed
-            console.log('Using cached market cap data')
             return
           }
         }
         
         // Cache expired or doesn't exist - fetch new data
-        console.log('Fetching fresh market cap data')
         const marketCapData:any = await getMarketCap("bitcoin")
         
         // Store in cache with timestamp
@@ -324,7 +322,6 @@ export default function FeedRightSidebar() {
   const isPositive = dummyPriceChange >= 0
   const marketCapFormatted = formatMarketCap(marketCap?.marketCap || 0)
 
-  // console.log(newCollections,'newCollections')
 
   return (
     <aside
@@ -704,12 +701,10 @@ export default function FeedRightSidebar() {
           ) : liveNFTsWithTime.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 mb-4">
               {liveNFTsWithTime.map((nft, index) => {
-                console.log(nft,'nft');
                 const nftId = nft._id || nft.id
                 const nftName = nft.itemName || nft.name || 'Unnamed NFT'
                 const nftImage = nft.imageUrl || nft.image || '/assets/nft-card-icon.png'
                 const collectionId = nft.collectionId?._id
-                console.log(collectionId,'collectionId');
                 const timeLeft = nft.timeLeft || 'N/A'
 
                 return (

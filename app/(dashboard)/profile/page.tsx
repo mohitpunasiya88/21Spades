@@ -339,7 +339,6 @@ export default function ProfilePage() {
 // cons
   // Handle Update NFT (Put on Sale)
   const handleUpdateNFT = async () => {
-    console.log("selectedNFTForSale1111111111111", selectedNFTForSale)
     // return;
     if (!selectedNFTForSale) return
 
