@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Badge } from 'antd'
-import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet, User, Image as ImageIcon, FileText, Folder } from 'lucide-react'
+import { Search, Bell, ChevronDown, Plus, Languages, Menu, X, LogOut, Wallet, User, Image as ImageIcon, FileText, Folder, Check } from 'lucide-react'
 
 import { useNotificationStore } from '@/lib/store/notificationStore'
 import NotificationDropdown from '@/components/Notifications/NotificationDropdown'
@@ -56,6 +56,7 @@ export default function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null)
   const mobileSearchRef = useRef<HTMLDivElement>(null)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isNotificationsHovered, setIsNotificationsHovered] = useState(false)
   const [isMyWalletsOpen, setIsMyWalletsOpen] = useState(false)
   const hasFetchedNotificationsRef = useRef(false)
   const {isConnected,address,balance,walletAddresses } = useWallet()
@@ -654,8 +655,8 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* 21SPADES */}
-        <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-6 absolute left-1/2 -translate-x-1/2 sm:relative sm:left-auto sm:translate-x-0 z-10 flex-1 sm:flex-initial justify-center sm:justify-start min-w-0">
+        {/* 21SPADES Logo - Left Side */}
+        <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-6 flex-shrink-0 z-10">
           <div className="flex items-center gap-1">
             <img src="/assets/Group 27.png" alt="group" />
 
@@ -668,10 +669,10 @@ export default function Navbar() {
             </div>
             <img src="/assets/Group 18.png" alt="group" />
           </div>
+        </div>
 
-
-          {/* Search Bar - Hidden on Mobile, Visible on Desktop */}
-          <div className="hidden sm:block relative" ref={searchRef}>
+        {/* Search Bar - Centered on Desktop */}
+        <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 z-10" ref={searchRef}>
             <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 border border-gray-700 rounded-lg px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 w-40 md:w-48 lg:w-64 xl:w-80">
               <Search className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 flex-shrink-0" />
               {/* vertical line */}
@@ -694,9 +695,8 @@ export default function Navbar() {
             </div>
             {isSearchOpen && searchTerm.trim().length > 0 && (
               <div
-                className="absolute top-full mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[500px] overflow-y-auto"
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[500px] overflow-y-auto"
                 style={{
-                  right: 0,
                   width: "400px",
                   background: "rgba(17, 24, 39, 0.98)",
                   border: "1px solid rgba(139, 92, 246, 0.3)",
@@ -913,7 +913,6 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        </div>
 
         {/* Right Side */}
         <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
@@ -986,6 +985,17 @@ export default function Navbar() {
           <div className="relative hidden sm:block" ref={notificationsRef}>
             <Badge count={unreadCount} offset={[-2, 2]} className="[&_.ant-badge-count]:!bg-red-500 [&_.ant-badge-count]:!text-white  [&_.ant-badge-count]:!min-w-[18px] [&_.ant-badge-count]:!h-[18px] [&_.ant-badge-count]:!text-xs [&_.ant-badge-count]:!leading-none">
               <button
+                onMouseEnter={async () => {
+                  setIsNotificationsHovered(true)
+                  setIsNotificationsOpen(true)
+                  if (!Array.isArray(notifItems) || notifItems.length === 0) {
+                    await fetchNotifInitial(5)
+                  }
+                }}
+                onMouseLeave={() => {
+                  setIsNotificationsHovered(false)
+                  setIsNotificationsOpen(false)
+                }}
                 onClick={async () => {
                   const nextOpen = !isNotificationsOpen
                   setIsNotificationsOpen(nextOpen)
@@ -999,20 +1009,39 @@ export default function Navbar() {
               </button>
             </Badge>
             {isNotificationsOpen && (
-              <div
-                className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-                style={{
-                  background: 'rgba(17, 24, 39, 0.98)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
-                  minWidth: '360px',
-                  maxWidth: '420px',
-                  zIndex: 1000,
-                }}
-              >
-                <NotificationDropdown open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
-              </div>
+              <>
+                {/* Invisible bridge to prevent gap issue */}
+                <div
+                  onMouseEnter={() => {
+                    setIsNotificationsHovered(true)
+                    setIsNotificationsOpen(true)
+                  }}
+                  className="absolute top-full right-0 w-full h-1"
+                  style={{ zIndex: 1001 }}
+                />
+                <div
+                  onMouseEnter={() => {
+                    setIsNotificationsHovered(true)
+                    setIsNotificationsOpen(true)
+                  }}
+                  onMouseLeave={() => {
+                    setIsNotificationsHovered(false)
+                    setIsNotificationsOpen(false)
+                  }}
+                  className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                  style={{
+                    background: 'rgba(17, 24, 39, 0.98)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                    minWidth: '360px',
+                    maxWidth: '420px',
+                    zIndex: 1000,
+                  }}
+                >
+                  <NotificationDropdown open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+                </div>
+              </>
             )}
           </div>
 
@@ -1084,23 +1113,28 @@ export default function Navbar() {
                     }}
                     className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group"
                   >
-                    <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                    <span 
+                    <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors flex-shrink-0" />
+                    <div 
                       onClick={(e) => {
                         e.stopPropagation()
                         const textToCopy = address as string
                         navigator.clipboard.writeText(textToCopy).then(() => {
-                          message.success('Copied to clipboard!')
+                          message.success('Address copied to clipboard!')
                         }).catch(() => {
                           message.error('Failed to copy')
                         })
                       }}
-                      className="group-hover:text-purple-300 transition-colors cursor-pointer hover:underline whitespace-nowrap"
+                      className="flex-1 flex flex-col cursor-pointer "
                     >
-                      {shortAddress(address as string) } Balance: {Number(balance).toFixed(4)} AVAX
-                    </span>
+                      <span className="group-hover:text-purple-300 transition-colors whitespace-nowrap truncate hover:underline min-w-0">
+                        {shortAddress(address as string)}
+                      </span>
+                      <span className="text-gray-400 text-xs group-hover:text-purple-300/70 transition-colors">
+                        Balance: {Number(balance || 0).toFixed(4)} AVAX
+                      </span>
+                    </div>
                     {selectedWalletOption === 'Wallet' && (
-                      <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
+                      <span className="ml-auto text-green-400 text-sm font-bold flex-shrink-0"> <Check className="w-4 h-4" /></span>
                     )}
                   </button>
                   <button
@@ -1115,7 +1149,7 @@ export default function Navbar() {
                     <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                     <span className="group-hover:text-purple-300 transition-colors">My Wallets</span>
                     {selectedWalletOption === 'My Wallets' && (
-                      <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
+                      <span className="ml-auto text-green-400 text-sm font-bold"> <Check className="w-4 h-4" /></span>
                     )}
                   
                   </button>
@@ -1126,13 +1160,13 @@ export default function Navbar() {
                       setIsWalletHovered(false)
                       router.push('/transaction-history')
                     }}
-                    className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A]"
+                    className="w-full text-left px-5 py-3 text-sm text-white transition-all hover:bg-purple-600/30 flex items-center gap-3 group border-t border-[#2A2F4A] cursor-pointer"
                   >
                     <Wallet className="w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
                     <span className="group-hover:text-purple-300 transition-colors">Transaction History</span>
                     {/* get the tx history using api  save the tx of user when he do tx of blockchain , save user wallet and tx hash and chain id , */}
                     {selectedWalletOption === 'Transaction History' && (
-                      <span className="ml-auto text-green-400 text-sm font-bold">✓</span>
+                      <span className="ml-auto text-green-400 text-sm font-bold"> <Check className="w-4 h-4" /></span>
                     )}
                   </button>
                 </div>
@@ -1155,11 +1189,11 @@ export default function Navbar() {
                 }}
               >
                 {/* Header */}
-                <div className="p-4 border-b border-[#2A2F4A] mt-16 flex items-center justify-between">
+                <div className="p-4 border-b border-[#2A2F4A] flex items-center justify-between">
                   <h3 className="text-white font-semibold text-lg">My Wallets</h3>
                   <button
                     onClick={() => setIsMyWalletsOpen(false)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>

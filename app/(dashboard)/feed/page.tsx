@@ -551,8 +551,8 @@ export default function FeedPage() {
                     className="flex items-center gap-1 text-blue-400 cursor-pointer hover:text-blue-300 transition-colors"
                   >
                     <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="text-[#FFFFFF4D] hidden xs:inline">Image/Videos</span>
-                    <span className="text-[#FFFFFF4D] xs:hidden">Photos/Videos</span>
+                    <span className="text-[#FFFFFF4D] hidden xs:inline">Images</span>
+                    <span className="text-[#FFFFFF4D] xs:hidden">Photos</span>
                   </button>
                   <input
                     ref={fileInputRef}
@@ -685,7 +685,7 @@ export default function FeedPage() {
             </div> 
 
             {/* Category Filter Tabs */} 
-            <div className="flex gap-2 mb-3 sm:mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2"> 
+            <div className="flex gap-2 mb-3 sm:mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2 justify-center"> 
               {categoriesList.map((cat) => ( 
                 <button 
                   key={cat} 
