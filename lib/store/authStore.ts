@@ -35,7 +35,7 @@ interface AuthState {
   // Profile management methods
   getProfile: () => Promise<any>
   getProfileByUserId: (userId: string) => Promise<any>
-  updateProfile: (data: any) => Promise<void>
+  updateProfile: (data: any, setLoading?: boolean) => Promise<void>
   incrementProfileView: () => Promise<void>
 }
 
@@ -675,8 +675,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      updateProfile: async (data: any) => {
-        set({ isLoading: true })
+      updateProfile: async (data: any, setLoading: boolean = true) => {
+        if (setLoading) {
+          set({ isLoading: true })
+        }
         try {
           const response = await apiCaller('PUT', authRoutes.profileUpdate, data)
           if (response.success) {
@@ -688,14 +690,20 @@ export const useAuthStore = create<AuthState>()(
               }
               set({ user: updatedUser, isLoading: false })
             } else {
-              set({ isLoading: false })
+              if (setLoading) {
+                set({ isLoading: false })
+              }
             }
           } else {
-            set({ isLoading: false })
+            if (setLoading) {
+              set({ isLoading: false })
+            }
           }
         } catch (error) {
           console.error('Error updating profile:', error)
-          set({ isLoading: false })
+          if (setLoading) {
+            set({ isLoading: false })
+          }
           throw error
         }
       },
