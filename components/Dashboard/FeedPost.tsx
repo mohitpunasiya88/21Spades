@@ -46,6 +46,9 @@ interface FeedPostProps {
         _id?: string
         id?: string
       }
+      auctionType?: number
+      startingTime?: number | string
+      endingTime?: number | string
     }
     // For reposts - original post data
     repostCaption?: string // Caption added when reposting
@@ -304,6 +307,155 @@ export default function FeedPost({ post }: FeedPostProps) {
   const [likers, setLikers] = useState<any[]>([])
   const [likersTotal, setLikersTotal] = useState<number>(0)
   const [isSharing, setIsSharing] = useState(false)
+  
+  // Auction time calculation
+  const [isAuctionLive, setIsAuctionLive] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState<string>('')
+  
+  // Parse timestamp helper
+  const parseTime = (timeValue: number | string | undefined): number | null => {
+    if (timeValue === undefined || timeValue === null || timeValue === '') return null
+    if (typeof timeValue === 'string') {
+      const numericValue = Number(timeValue)
+      if (!isNaN(numericValue) && isFinite(numericValue)) {
+        // It's a numeric string, treat as timestamp
+        if (timeValue.length <= 10) { // Likely seconds
+          return numericValue * 1000
+        } else { // Likely milliseconds
+          return numericValue
+        }
+      } else {
+        // Try parsing as date string
+        const parsed = new Date(timeValue).getTime()
+        return isNaN(parsed) ? null : parsed
+      }
+    } else if (typeof timeValue === 'number') {
+      if (timeValue.toString().length <= 10) { // Likely seconds
+        return timeValue * 1000
+      } else { // Already in milliseconds
+        return timeValue
+      }
+    }
+    return null
+  }
+  
+  // Calculate auction time
+  useEffect(() => {
+    const auctionType = post.nft?.auctionType
+    const startingTime = post.nft?.startingTime
+    const endingTime = post.nft?.endingTime
+    
+    console.log('🔍 FeedPost Auction Debug:', {
+      postId: post.id,
+      auctionType,
+      startingTime,
+      endingTime,
+      'auctionType type': typeof auctionType,
+      'startingTime type': typeof startingTime,
+      'endingTime type': typeof endingTime,
+      'isAuction (auctionType === 2)': Number(auctionType) === 2,
+      'nft object': post.nft,
+    })
+    
+    if (Number(auctionType) !== 2) {
+      console.log('❌ Not an auction (auctionType !== 2), clearing state')
+      setIsAuctionLive(false)
+      setTimeRemaining('')
+      return
+    }
+    
+    const checkAuctionStatus = () => {
+      const now = Date.now()
+      const startTime = parseTime(startingTime)
+      const endTime = parseTime(endingTime)
+      
+      console.log('⏰ Auction Time Calculation:', {
+        now,
+        startTime,
+        endTime,
+        'startTime formatted': startTime ? new Date(startTime).toLocaleString() : null,
+        'endTime formatted': endTime ? new Date(endTime).toLocaleString() : null,
+        'now formatted': new Date(now).toLocaleString(),
+      })
+      
+      if (!startTime && !endTime) {
+        setIsAuctionLive(false)
+        setTimeRemaining('')
+        return
+      }
+      
+      // Check if auction has ended
+      if (endTime && now >= endTime) {
+        console.log('✅ Auction Ended')
+        setIsAuctionLive(false)
+        setTimeRemaining('Ended')
+        return
+      }
+      
+      // Check if auction hasn't started yet (scheduled)
+      if (startTime && now < startTime) {
+        setIsAuctionLive(false)
+        const timeUntilStart = startTime - now
+        const days = Math.floor(timeUntilStart / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((timeUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60))
+        
+        let timeStr = ''
+        if (days > 0) {
+          timeStr = `${days}d ${hours}h`
+        } else if (hours > 0) {
+          timeStr = `${hours}h ${minutes}m`
+        } else if (minutes > 0) {
+          timeStr = `${minutes}m`
+        } else {
+          timeStr = 'Starting soon'
+        }
+        
+        console.log('⏳ Auction Scheduled - Starts in:', timeStr)
+        setTimeRemaining(timeStr)
+        return
+      }
+      
+      // Auction is live (now is between start and end, or after start if no end)
+      setIsAuctionLive(true)
+      
+      // Calculate time remaining until end
+      if (endTime && endTime > now) {
+        const timeUntilEnd = endTime - now
+        const days = Math.floor(timeUntilEnd / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((timeUntilEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((timeUntilEnd % (1000 * 60)) / 1000)
+        
+        let timeStr = ''
+        if (days > 0) {
+          timeStr = `${days}d ${hours}h`
+        } else if (hours > 0) {
+          timeStr = `${hours}h ${minutes}m`
+        } else if (minutes > 0) {
+          timeStr = `${minutes}m ${seconds}s`
+        } else if (seconds > 0) {
+          timeStr = `${seconds}s`
+        } else {
+          timeStr = 'Ending soon'
+        }
+        
+        console.log('🟢 Auction Live - Ends in:', timeStr, { isAuctionLive: true, timeRemaining: timeStr })
+        setTimeRemaining(timeStr)
+      } else if (!endTime) {
+        // No end time but auction is live
+        console.log('🟢 Auction Live - No end time')
+        setTimeRemaining('')
+      } else {
+        console.log('🟢 Auction Live - Ending soon')
+        setTimeRemaining('Ending soon')
+      }
+    }
+    
+    checkAuctionStatus()
+    const intervalId = setInterval(checkAuctionStatus, 1000)
+    return () => clearInterval(intervalId)
+  }, [post.nft?.auctionType, post.nft?.startingTime, post.nft?.endingTime])
   const [isReposting, setIsReposting] = useState(false)
   const [showRepostModal, setShowRepostModal] = useState(false)
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
@@ -1045,7 +1197,70 @@ export default function FeedPost({ post }: FeedPostProps) {
         </>
       )}
       
-      {/* Price and Buy Button Section - Only show if price exists */}
+      {/* Auction Status Section - Show if auction type */}
+      {(() => {
+        const isAuction = Number(post.nft?.auctionType) === 2
+        const shouldShow = isAuction && (timeRemaining || timeRemaining === 'Ended' || isAuctionLive)
+        
+        console.log('🎨 Auction Status Render Check:', {
+          postId: post.id,
+          isAuction,
+          auctionType: post.nft?.auctionType,
+          timeRemaining,
+          isAuctionLive,
+          shouldShow,
+          'nft object': post.nft,
+        })
+        
+        if (!shouldShow) {
+          console.log('❌ Not rendering auction status - conditions not met')
+          return null
+        }
+        
+        console.log('✅ Rendering auction status section')
+        
+        return (
+        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2 flex-wrap">
+          {/* Left side: Live Badge */}
+          {isAuctionLive ? (
+            <span className="inline-flex items-center gap-1 text-[#33E030] text-[11px] font-semibold uppercase tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#33E030] animate-pulse" />
+              Live
+            </span>
+          ) : timeRemaining === 'Ended' ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-gray-400 bg-gray-400/10 border border-gray-400/30 text-xs font-semibold font-exo2">
+              Auction Ended
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/40 text-[11px] font-semibold uppercase tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
+              Scheduled
+            </span>
+          )}
+          
+          {/* Right side: Time Display */}
+          {isAuctionLive && timeRemaining ? (
+            // Live Auction - Show end time
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[#FFB600] bg-[#FFB600]/10 border border-[#FFB600]/30 text-xs font-semibold font-exo2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FFB600] animate-pulse" />
+              Ends in {timeRemaining}
+            </span>
+          ) : timeRemaining && timeRemaining !== 'Ended' ? (
+            // Scheduled Auction - Show start time
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 text-xs font-semibold font-exo2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
+              Starts in {timeRemaining}
+            </span>
+          ) : timeRemaining === 'Ended' ? null : (
+            // Live but no time data
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[#33E030] bg-[#33E030]/10 border border-[#33E030]/30 text-xs font-semibold font-exo2">
+              Live Auction
+            </span>
+          )}
+        </div>
+        )
+      })()}
+      
       {!isOwner && (
         <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
           {/* Price Section - Single line format: "Price: 1.34 AVAX" */}

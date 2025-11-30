@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { Heart, AlertTriangle, ArrowUp } from 'lucide-react'
-import { Carousel, Dropdown, Space, Spin } from 'antd'
+import { Carousel, Dropdown, Space, Spin, Tooltip } from 'antd'
 import { DownOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useRouter } from 'next/navigation'
@@ -262,7 +262,11 @@ function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, co
         </div>
 
         {/* Title - API se aayega - White text */}
-        <h3 className="text-white text-[1.25rem] sm:text-[1.35rem] font-bold font-exo2">{title || 'Aether Guardian'}</h3>
+        <Tooltip title={title || 'NA'} placement="top">
+          <h3 className="text-white text-[1.25rem] sm:text-[1.35rem] font-bold font-exo2 cursor-pointer">
+            {title && title.length > 20 ? `${title.substring(0, Math.floor(title.length / 2))}...` : (title || 'NA')}
+          </h3>
+        </Tooltip>
 
         {/* Divider - White/transparent */}
         <div className="h-px w-full bg-white/10" />

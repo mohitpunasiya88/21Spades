@@ -246,7 +246,7 @@ function PlaceBidModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5 text-white" />
         </button>
@@ -368,7 +368,7 @@ function PlaceBidModal({
             <button
               onClick={handleInputBitAmount}
               disabled={isBelowMinBid}
-              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Procced for Bid
             </button>
@@ -376,7 +376,7 @@ function PlaceBidModal({
             <button
               onClick={handleConfirm}
               disabled={isConfirming}
-              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
               {isConfirming && (
                 <span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
@@ -1640,10 +1640,20 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                   <MessageSquareText className="w-4 h-4" />
                 </button>
               </div>
-              <button className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-full border border-white/15 hover:border-white/40 transition" style={{ cursor: 'pointer' }}>
-                <Share className="w-4 h-4" />
-                Share
-              </button>
+              <Tooltip title="This feature is coming soon!" placement="top">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  disabled
+                  className="flex items-center gap-2 text-white/50 text-sm font-medium px-4 py-2 rounded-full border border-white/15 hover:border-white/40 transition opacity-60 cursor-not-allowed disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ cursor: 'not-allowed' }}
+                >
+                  <Share className="w-4 h-4" />
+                  Share
+                </button>
+              </Tooltip>
             </div>
 
             <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{displayName}</h1>
@@ -1715,14 +1725,20 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                         </button>
                       </Tooltip>
                     )}
-                    <button
-                      onClick={() => setIsMakeOfferOpen(true)}
-                      className="px-5 py-2.5 justify-center items-center  rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white hover:bg-white/5 transition flex items-center gap-2 font-exo2"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Make an Offer
-                    </button>
+                    <Tooltip title="This feature is coming soon!" placement="top">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                        disabled
+                        className="px-5 py-2.5 justify-center items-center rounded-full w-full sm:min-w-[200px] lg:min-w-[200px] border border-gray-700 bg-[#0A0D1F] text-white/50 hover:bg-white/5 transition flex items-center gap-2 font-exo2 opacity-60 cursor-not-allowed disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{ cursor: 'not-allowed' }}
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        Make an Offer
+                      </button>
+                    </Tooltip>
                   </>
                 ) : isFixedRate ? (
                   // Fixed Rate (auctionType = 1): Only Buy Now button

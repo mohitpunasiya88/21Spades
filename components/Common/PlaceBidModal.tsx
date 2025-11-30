@@ -48,7 +48,7 @@ export default function PlaceBidModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5 text-white" />
         </button>
@@ -114,7 +114,7 @@ export default function PlaceBidModal({
             onClick={() => {
               // Handle bid submission
             }}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold text-base hover:opacity-90 transition-opacity shadow-lg cursor-pointer"
           >
             Add AVAX
           </button>
