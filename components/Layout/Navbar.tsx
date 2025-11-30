@@ -59,7 +59,7 @@ export default function Navbar() {
   const [isNotificationsHovered, setIsNotificationsHovered] = useState(false)
   const [isMyWalletsOpen, setIsMyWalletsOpen] = useState(false)
   const hasFetchedNotificationsRef = useRef(false)
-  const {isConnected,address,balance,walletAddresses } = useWallet()
+  const { isConnected, address, balance, walletAddresses } = useWallet()
   const myWalletsRef = useRef<HTMLDivElement>(null)
 
 

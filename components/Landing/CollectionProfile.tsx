@@ -806,7 +806,7 @@ export default function CollectionProfile({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           {/* Tabs */}
           <div className="flex justify-center items-center gap-8 sm:gap-8 md:gap-10 w-full sm:w-auto overflow-x-auto">
-            {['Items', 'Live', 'Activity'].map((tab) => (
+            {['Items', 'Live'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
