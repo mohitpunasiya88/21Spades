@@ -1261,7 +1261,7 @@ export default function FeedPost({ post }: FeedPostProps) {
         )
       })()}
       
-      {!isOwner && (
+      {!isOwner && hasPrice && (
         <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
           {/* Price Section - Single line format: "Price: 1.34 AVAX" */}
           <div className="flex items-center gap-1.5 sm:gap-2">
