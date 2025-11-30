@@ -27,10 +27,8 @@ export function useWallet() {
       try {
         if (embeddedWallet && embeddedWallets.length > 0) {
 
-          embeddedWallets.forEach(wallet => {
-            
-            setWalletAddresses(wallet.address);
-          })
+          const addresses = embeddedWallets.map(wallet => wallet.address);
+          setWalletAddresses(addresses);
           // Use getEthereumProvider to get the provider
           const ethereumProvider = await embeddedWallet.getEthereumProvider();
           const provider = new ethers.BrowserProvider(ethereumProvider);
