@@ -1524,6 +1524,19 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
     }
   }, [isBidsOpen, bidsHasMore, bidsLoadingMore, bidsPage, bidsOrder, fetchBids])
 
+  // Navigate to chat with current owner when clicking the message icon
+  const handleOwnerChatClick = useCallback(() => {
+    const ownerId =
+      rawNftData?.currentOwner?._id ||
+      rawNftData?.currentOwner?.id ||
+      (currentNft as any)?.currentOwner?._id ||
+      (currentNft as any)?.currentOwner?.id
+
+    if (!ownerId) return
+
+    router.push(`/messages?userId=${ownerId}`)
+  }, [rawNftData, currentNft, router])
+
   if (!currentNft && isLoadingDetails) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
@@ -1619,7 +1632,11 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                     {displayOwner}
                   </button>
                 </div>
-                <button className="ml-2 flex items-center justify-center w-9 h-9 rounded-full border border-white/15 bg-white/5 text-white hover:border-white/40 transition" style={{ cursor: 'pointer' }}>
+                <button
+                  onClick={handleOwnerChatClick}
+                  className="ml-2 flex items-center justify-center w-9 h-9 rounded-full border border-white/15 bg-white/5 text-white hover:border-white/40 transition"
+                  style={{ cursor: 'pointer' }}
+                >
                   <MessageSquareText className="w-4 h-4" />
                 </button>
               </div>
