@@ -22,6 +22,7 @@ import { CONTRACTS } from "@/app/utils/contracts/contractConfig"
 import { useNFTCollection } from "@/app/hooks/contracts/useNFTCollection"
 import { useMarketplace } from "@/app/hooks/contracts/useMarketplace"
 import { ethers } from "ethers"
+import ImageCropModal from "@/components/Common/ImageCropModal"
 
 const countries = [
   "United States",
@@ -82,6 +83,9 @@ export default function ProfilePage() {
   const [coverStatus, setCoverStatus] = useState<'uploading' | 'finished' | null>(null)
   const [avatarProgress, setAvatarProgress] = useState(0)
   const [avatarStatus, setAvatarStatus] = useState<'uploading' | 'finished' | null>(null)
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState<string>("")
+  const [cropType, setCropType] = useState<'avatar' | 'cover' | null>(null)
   const [countryCode, setCountryCode] = useState('+1')
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [countrySearchQuery, setCountrySearchQuery] = useState('')
@@ -863,7 +867,7 @@ export default function ProfilePage() {
     })
   }
 
-  // Handle avatar upload
+  // Handle avatar upload - show crop modal first
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -880,6 +884,23 @@ export default function ProfilePage() {
       return
     }
 
+    // Convert to base64 and show crop modal
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string)
+      setCropType('avatar')
+      setCropModalOpen(true)
+    }
+    reader.readAsDataURL(file)
+
+    // Reset input
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = ''
+    }
+  }
+
+  // Handle cropped avatar image upload
+  const handleCroppedAvatarUpload = async (croppedImage: string) => {
     setUploadingAvatar(true)
     setAvatarStatus('uploading')
     setAvatarProgress(0)
@@ -898,9 +919,6 @@ export default function ProfilePage() {
     }, 150)
 
     try {
-      // Convert to base64 for preview
-      const base64 = await fileToBase64(file)
-
       // Update profile with new avatar - setLoading: false to prevent full page loading
       await updateProfile({
         email: profile.email || user?.email || "",
@@ -916,7 +934,7 @@ export default function ProfilePage() {
         discord: user?.discord || "",
         twitter: profile.links.x || user?.twitter || "",
         bio: profile.bio || user?.bio || "",
-        profilePicture: base64,
+        profilePicture: croppedImage,
         projects: profile.stats.projects || user?.projects || 0,
         contributions: profile.stats.contributions || user?.contributions || 0,
         profileView: profile.stats.posts || user?.profileView || 0,
@@ -928,8 +946,8 @@ export default function ProfilePage() {
       setAvatarStatus('finished')
 
       // Update preview and local state only after successful upload
-      setAvatarPreview(base64)
-      setProfile(prev => ({ ...prev, avatar: base64 }))
+      setAvatarPreview(croppedImage)
+      setProfile(prev => ({ ...prev, avatar: croppedImage }))
       message.success('Avatar updated successfully!')
 
       // Hide progress indicator after 2 seconds
@@ -945,14 +963,10 @@ export default function ProfilePage() {
       message.error('Failed to upload avatar. Please try again.')
     } finally {
       setUploadingAvatar(false)
-      // Reset input
-      if (avatarInputRef.current) {
-        avatarInputRef.current.value = ''
-      }
     }
   }
 
-  // Handle cover image upload
+  // Handle cover image upload - show crop modal first
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -969,6 +983,23 @@ export default function ProfilePage() {
       return
     }
 
+    // Convert to base64 and show crop modal
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string)
+      setCropType('cover')
+      setCropModalOpen(true)
+    }
+    reader.readAsDataURL(file)
+
+    // Reset input
+    if (coverInputRef.current) {
+      coverInputRef.current.value = ''
+    }
+  }
+
+  // Handle cropped cover image upload
+  const handleCroppedCoverUpload = async (croppedImage: string) => {
     setUploadingCover(true)
     setCoverStatus('uploading')
     setCoverProgress(0)
@@ -987,10 +1018,6 @@ export default function ProfilePage() {
     }, 150)
 
     try {
-      // Convert to base64 for preview
-      const base64 = await fileToBase64(file)
-      debugger;
-
       // Update profile with new cover - setLoading: false to prevent full page loading
       await updateProfile({
         email: profile.email || user?.email || "",
@@ -1007,13 +1034,11 @@ export default function ProfilePage() {
         twitter: profile.links.x || user?.twitter || "",
         bio: profile.bio || user?.bio || "",
         profilePicture: user?.profilePicture || user?.avatar || profile.avatar || "",
-        coverPicture: base64,
+        coverPicture: croppedImage,
         projects: profile.stats.projects || user?.projects || 0,
         contributions: profile.stats.contributions || user?.contributions || 0,
         profileView: profile.stats.posts || user?.profileView || 0,
       }, false) // setLoading: false to prevent full page loading
-
-      debugger;
 
       // Complete progress
       clearInterval(progressInterval)
@@ -1021,8 +1046,8 @@ export default function ProfilePage() {
       setCoverStatus('finished')
 
       // Update preview and local state only after successful upload
-      setCoverPreview(base64)
-      setProfile(prev => ({ ...prev, coverPicture: base64 }))
+      setCoverPreview(croppedImage)
+      setProfile(prev => ({ ...prev, coverPicture: croppedImage }))
       message.success('Cover image updated successfully!')
 
       // Hide progress indicator after 2 seconds
@@ -1038,10 +1063,15 @@ export default function ProfilePage() {
       message.error('Failed to upload cover image. Please try again.')
     } finally {
       setUploadingCover(false)
-      // Reset input
-      if (coverInputRef.current) {
-        coverInputRef.current.value = ''
-      }
+    }
+  }
+
+  // Handle crop complete - route to appropriate upload function
+  const handleCropComplete = (croppedImage: string) => {
+    if (cropType === 'avatar') {
+      handleCroppedAvatarUpload(croppedImage)
+    } else if (cropType === 'cover') {
+      handleCroppedCoverUpload(croppedImage)
     }
   }
 
@@ -1181,11 +1211,16 @@ export default function ProfilePage() {
             <>
               <button
                 onClick={() => coverInputRef.current?.click()}
-                className="absolute top-4 right-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-sm text-white rounded-lg hover:bg-black/70 transition-colors flex items-center gap-2 text-sm"
+                className="absolute top-4 right-4 z-20 px-3 py-2 backdrop-blur-sm text-white rounded-lg hover:bg-black/30 transition-all duration-300 flex items-center gap-2 text-sm cursor-pointer group"
                 disabled={uploadingCover}
               >
-                <PencilLine  size={16} />
-                Change Cover
+                <PencilLine 
+                  size={16} 
+                  className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:text-purple-300"
+                />
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                  Change Cover
+                </span>
               </button>
               <input
                 ref={coverInputRef}
@@ -1240,69 +1275,92 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Overlapping 21 Spade Cards - Right Side */}
-          <div className="absolute top-1/2 md:top-3/5 right-6 md:right-20 lg:right-28 -translate-y-1/2 flex items-center z-10">
+          {/* Overlapping 21 Spade Cards - Right Side - Only show when default cover image is displayed */}
+          {(() => {
+            const currentCover = coverPreview || profile.coverPicture || defaultCoverImage.src
+            const isDefaultCover = !coverPreview && (
+              !profile.coverPicture || 
+              profile.coverPicture === defaultCoverImage.src ||
+              profile.coverPicture.includes('BgCover.png')
+            )
+            
+            if (!isDefaultCover) return null
+            
+            return (
+              <div className="absolute top-1/2 md:top-3/5 right-6 md:right-20 lg:right-28 -translate-y-1/2 flex items-center z-10">
+                {/* Card 1 - Back */}
+                <div className="relative w-14 h-20 sm:w-14 sm:h-20 md:w-20 md:h-32 lg:w-24 lg:h-36 -mr-8 sm:-mr-8 md:-mr-14">
+                  <Image
+                    src="/assets/21-card-img.png"
+                    alt="21 Card"
+                    fill
+                    className="object-contain drop-shadow-lg"
+                  />
+                </div>
 
-            {/* Card 1 - Back */}
-            <div className="relative w-14 h-20 sm:w-14 sm:h-20 md:w-20 md:h-32 lg:w-24 lg:h-36 -mr-8 sm:-mr-8 md:-mr-14">
-              <Image
-                src="/assets/21-card-img.png"
-                alt="21 Card"
-                fill
-                className="object-contain drop-shadow-lg"
-              />
-            </div>
+                {/* Card 2 - Middle */}
+                <div className="relative w-16 h-24 sm:w-16 sm:h-24 md:w-24 md:h-36 lg:w-28 lg:h-44 z-20">
+                  <Image
+                    src="/assets/21-card-img.png"
+                    alt="21 Card"
+                    fill
+                    className="object-contain drop-shadow-lg"
+                  />
+                </div>
 
-            {/* Card 2 - Middle */}
-            <div className="relative w-16 h-24 sm:w-16 sm:h-24 md:w-24 md:h-36 lg:w-28 lg:h-44 z-20">
-              <Image
-                src="/assets/21-card-img.png"
-                alt="21 Card"
-                fill
-                className="object-contain drop-shadow-lg"
-              />
-            </div>
-
-            {/* Card 3 - Front */}
-            <div className="relative w-16 h-24 sm:w-14 sm:h-20 md:w-20 md:h-32 lg:w-24 lg:h-36 -ml-8 sm:-ml-8 md:-ml-14">
-              <Image
-                src="/assets/21-card-img.png"
-                alt="21 Card"
-                fill
-                className="object-contain drop-shadow-lg"
-              />
-            </div>
-
-          </div>
+                {/* Card 3 - Front */}
+                <div className="relative w-16 h-24 sm:w-14 sm:h-20 md:w-20 md:h-32 lg:w-24 lg:h-36 -ml-8 sm:-ml-8 md:-ml-14">
+                  <Image
+                    src="/assets/21-card-img.png"
+                    alt="21 Card"
+                    fill
+                    className="object-contain drop-shadow-lg"
+                  />
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
             <a
-              href={profile.links.instagram || "NA"}
+              href={profile.links.instagram || "#"}
               target={profile.links.instagram ? "_blank" : "_self"}
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full border border-white/30 bg-black/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/30 bg-black/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors relative group"
               aria-label="Instagram"
+              title={profile.links.instagram || "Instagram"}
             >
               <FaInstagram className="text-xl text-white" />
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+                {profile.links.instagram || "No link available"}
+              </span>
             </a>
             <a
-              href={profile.links.x || "NA"}
+              href={profile.links.x || "#"}
               target={profile.links.x ? "_blank" : "_self"}
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors relative group"
               aria-label="X (Twitter)"
+              title={profile.links.x || "X (Twitter)"}
             >
               <FaXTwitter className="text-xl text-white" />
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+                {profile.links.x || "No link available"}
+              </span>
             </a>
             <a
-              href={profile.links.facebook || "NA"}
+              href={profile.links.facebook || "#"}
               target={profile.links.facebook ? "_blank" : "_self"}
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
+              className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors relative group"
               aria-label="Facebook"
+              title={profile.links.facebook || "Facebook"}
             >
               <FaFacebookF className="text-xl text-white" />
+              <span className="absolute bottom-full mb-2 left-0 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+                {profile.links.facebook || "No link available"}
+              </span>
             </a>
           </div>
         </div>
@@ -2377,6 +2435,21 @@ export default function ProfilePage() {
           </div>
         </div>
       </Modal>
+
+      {/* Image Crop Modal */}
+      <ImageCropModal
+        open={cropModalOpen}
+        imageSrc={cropImageSrc}
+        onClose={() => {
+          setCropModalOpen(false)
+          setCropImageSrc("")
+          setCropType(null)
+        }}
+        onCropComplete={handleCropComplete}
+        aspectRatio={cropType === 'avatar' ? 1 : 3 / 1}
+        cropShape={cropType === 'avatar' ? 'round' : 'rect'}
+        title={cropType === 'avatar' ? 'Crop Profile Picture' : 'Crop Cover Photo'}
+      />
     </div>
   )
 }
