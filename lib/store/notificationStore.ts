@@ -152,8 +152,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
                 try {
                     await apiCaller('POST', 'notifications/mark-all-read')
                 } catch (e2) {
-                    // If both fail, just update local state
-                    console.log('Mark read API not available, updating local state only')
+                    console.error('Error marking notifications as read:', e2)
                 }
             }
             

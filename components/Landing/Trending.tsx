@@ -7,6 +7,7 @@ import { useAuthStore, useCategoriesStore } from '@/lib/store/authStore';
 import { apiCaller } from '@/app/interceptors/apicall/apicall';
 import authRoutes from '@/lib/routes';
 import NFTNotFoundBanner from "../Common/NFTNotFoundBanner";
+import SkeletonBox from "../Common/SkeletonBox";
 
 // Icon mapping for categories
 const categoryIconMap: Record<string, string> = {
@@ -57,22 +58,22 @@ export default function Trending() {
       queryParams.append('page', '1');
       queryParams.append('limit', '100'); // Fetch more to filter by category
       queryParams.append('blocked', 'false');
-      
+
       // Fetch all NFTs (without collectionId to get all NFTs)
       const url = `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`;
-      
+
       const response = await apiCaller('GET', url, null, true);
-      
+
       if (response.success && response.data) {
-        const nftsData = Array.isArray(response.data) 
-          ? response.data 
+        const nftsData = Array.isArray(response.data)
+          ? response.data
           : (response.data.items || response.data.nfts || response.data.data || []);
-        
+
         if (nftsData.length === 0) {
           setApiNfts([]);
           return;
         }
-        
+
         // Sort by createdAt (latest first) and take latest 6
         const sortedNfts = nftsData
           .sort((a: any, b: any) => {
@@ -81,7 +82,7 @@ export default function Trending() {
             return dateB - dateA; // Latest first
           })
           .slice(0, 6);
-        
+
         setApiNfts(sortedNfts);
       } else {
         console.warn("⚠️ No NFTs found or invalid response:", response);
@@ -171,9 +172,9 @@ export default function Trending() {
   const filteredNfts = activeCategory === 'ALL'
     ? allNfts
     : allNfts.filter(nft => {
-        const nftCategory = nft.category?.toUpperCase() || '';
-        return nftCategory === activeCategory || nftCategory.includes(activeCategory);
-      });
+      const nftCategory = nft.category?.toUpperCase() || '';
+      return nftCategory === activeCategory || nftCategory.includes(activeCategory);
+    });
 
   return (
     <section className="relative w-[100%] mx-auto mt-10">
@@ -191,7 +192,7 @@ export default function Trending() {
         </div>
 
         <div className="mb-8 md:mb-12 w-full md:max-w-4xl mx-auto font-exo2 relative z-20">
-          <div 
+          <div
             className="flex flex-nowrap items-center justify-start md:justify-center gap-0 overflow-x-auto overflow-y-hidden rounded-full py-2.5 px-4 w-full max-w-full backdrop-blur-sm scrollbar-hide relative z-20"
             style={{
               background: 'linear-gradient(to right, rgba(79, 1, 30, 0.1) 0%, rgba(20, 25, 45, 0.1) 100%)',
@@ -202,18 +203,17 @@ export default function Trending() {
               <div key={index} className="flex flex-nowrap items-center flex-shrink-0 relative z-30">
                 <button
                   onClick={() => setActiveCategory(category.name)}
-                  className={`h-9 md:h-10 px-4 md:px-6 rounded-full font-semibold transition-all flex flex-nowrap items-center gap-1.5 md:gap-2 text-xs md:text-sm whitespace-nowrap cursor-pointer pointer-events-auto relative z-30 ${
-                    activeCategory === category.name
-                      ? 'text-white'
-                      : 'text-white hover:text-white'
-                  }`}
+                  className={`h-9 md:h-10 px-4 md:px-6 rounded-full font-semibold transition-all flex flex-nowrap items-center gap-1.5 md:gap-2 text-xs md:text-sm whitespace-nowrap cursor-pointer pointer-events-auto relative z-30 ${activeCategory === category.name
+                    ? 'text-white'
+                    : 'text-white hover:text-white'
+                    }`}
                   style={
                     activeCategory === category.name
                       ? {
-                          background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
-                          border: '2px solid #25016E',
-                          boxShadow: '0 0 12px rgba(79, 1, 230, 0.35)', zIndex: 30
-                        }
+                        background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
+                        border: '2px solid #25016E',
+                        boxShadow: '0 0 12px rgba(79, 1, 230, 0.35)', zIndex: 30
+                      }
                       : { background: 'transparent', border: 'none', zIndex: 30 }
                   }
                 >
@@ -231,42 +231,55 @@ export default function Trending() {
 
         <div className="w-full max-w-6xl mx-auto mb-12 relative z-10">
           <img src="/assets/bg-ball.png" alt="Background" className="absolute top-0 left-0 opacity-70 blur-md z-0 w-170 h-170 -translate-x-1/2 translate-y-1/3" />
-          <div className={`${filteredNfts.length > 0 && filteredNfts.length < 3 ? 'flex justify-center' : ''}`}>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 w-full">
+          {/* <div className={`${filteredNfts.length > 0 && filteredNfts.length < 3 ? 'flex justify-center' : ''}`}> */}
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 w-full">
             {isLoadingNfts ? (
-              // Loading skeletons
               [1, 2, 3, 4, 5, 6].map((n) => (
-                <div key={n} className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full animate-pulse">
-                  <div className="w-full h-[160px] sm:h-[280px] md:h-[300px] rounded-t-[10px] bg-gray-300"></div>
+                <div key={n} className="overflow-hidden rounded-[10px] bg-white shadow-lg">
+                  <div className="w-full h-[160px] sm:h-[280px] md:h-[300px]">
+                    <SkeletonBox width="100%" height="100%" radius="10px 10px 0 0" />
+                  </div>
                   <div className="px-3 py-3 sm:px-4 sm:py-4">
-                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-6 bg-gray-300 rounded mb-3"></div>
-                    <div className="h-4 bg-gray-300 rounded"></div>
+                    <div className="mb-2">
+                      <SkeletonBox width="60%" height={16} radius={4} />
+                    </div>
+                    <div className="mb-3">
+                      <SkeletonBox width="80%" height={24} radius={4} />
+                    </div>
+                    <SkeletonBox width="40%" height={16} radius={4} />
                   </div>
                 </div>
               ))
             ) : filteredNfts.length > 0 ? (
-              <>
-                {(filteredNfts.length === 1) && <div className="hidden lg:block"></div>}
+              <div className="flex flex-wrap justify-center gap-6 w-full max-w-[1100px] mx-auto">
                 {filteredNfts.slice(0, 6).map((nft, index) => (
-                  <div key={(nft as any).nftId || `nft-${index}`}>
+                  <div
+                    key={(nft as any).nftId || `nft-${index}`}
+                    className="flex justify-center"
+                    style={{ width: "300px" }}   // fixed card width
+                  >
                     <NFTCard {...nft} />
                   </div>
                 ))}
-                {(filteredNfts.length === 1 || filteredNfts.length === 2) && <div className="hidden lg:block"></div>}
-              </>
+              </div>
+
             ) : (
-              <NFTNotFoundBanner className="min-h-[350px] w-full" />
+              <NFTNotFoundBanner
+                title="NFTs"
+                subtitle="LOOKS LIKE THIS NFT ISN'T HERE ANYMORE."
+                className="min-h-[350px] w-full"
+              />
             )}
           </div>
-          </div>
+
+          {/* </div> */}
           <img src="/assets/bg-ball.png" alt="Background" className="absolute z-0 bottom-0 right-0 opacity-50 blur-md z-0 w-300 h-300 translate-x-1/2 translate-y-1/6" />
         </div>
 
         <div className="text-center px-4">
-          <button 
+          <button
             onClick={() => router.push('/marketplace')}
-            className="inline-flex md:inline-flex flex-nowrap items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white" 
+            className="inline-flex md:inline-flex flex-nowrap items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white"
             style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
           >
             <span>Explore All</span>

@@ -9,12 +9,12 @@ interface NFTNotFoundBannerProps {
 }
 
 export default function NFTNotFoundBanner({ 
-  title = "OOPS! NFT NOT FOUND :(",
+  title = "",
   subtitle = ". LOOKS LIKE THIS ASSET ISN'T HERE ANYMORE.",
   className = ""
 }: NFTNotFoundBannerProps) {
   return (
-    <div className={`relative w-full col-span-full rounded-lg border border-gray-400 overflow-hidden ${className}`}>
+    <div className={`relative w-full col-span-full rounded-lg shadow-lg overflow-hidden ${className}`}>
       {/* Cosmic Background with Gradient - Vertical gradient (lighter in center, darker at edges) */}
       <div 
         className="absolute inset-0"
@@ -103,7 +103,7 @@ export default function NFTNotFoundBanner({
         {/* Main Title - Split into 3 lines */}
         <div className="text-center mb-4 sm:mb-6">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight font-audiowide">
-            <span className="block">OOPS! NFT</span>
+            <span className="block">OOPS! {title}</span>
             <span className="block">NOT FOUND :(</span>
             {/* <span className="block"></span> */}
           </h1>
