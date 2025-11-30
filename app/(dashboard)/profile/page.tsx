@@ -78,6 +78,10 @@ export default function ProfilePage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [coverProgress, setCoverProgress] = useState(0)
+  const [coverStatus, setCoverStatus] = useState<'uploading' | 'finished' | null>(null)
+  const [avatarProgress, setAvatarProgress] = useState(0)
+  const [avatarStatus, setAvatarStatus] = useState<'uploading' | 'finished' | null>(null)
   const [countryCode, setCountryCode] = useState('+1')
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [countrySearchQuery, setCountrySearchQuery] = useState('')
@@ -811,8 +815,8 @@ export default function ProfilePage() {
         updatePayload.phoneNumber = phoneNumber
       }
 
-      // Call profile update API
-      await updateProfile(updatePayload)
+      // Call profile update API - setLoading: false to prevent full page loading
+      await updateProfile(updatePayload, false)
 
       // Update local profile state
       setProfile(prev => ({
@@ -876,14 +880,28 @@ export default function ProfilePage() {
       return
     }
 
-    try {
-      setUploadingAvatar(true)
+    setUploadingAvatar(true)
+    setAvatarStatus('uploading')
+    setAvatarProgress(0)
 
+    // Simulate smooth progress
+    const progressInterval = setInterval(() => {
+      setAvatarProgress((prev) => {
+        if (prev >= 85) {
+          clearInterval(progressInterval)
+          return 85
+        }
+        // Smooth increment: start fast, slow down as we approach 85%
+        const increment = (85 - prev) * 0.15 + Math.random() * 3
+        return Math.min(85, prev + increment)
+      })
+    }, 150)
+
+    try {
       // Convert to base64 for preview
       const base64 = await fileToBase64(file)
-      setAvatarPreview(base64)
 
-      // Update profile with new avatar
+      // Update profile with new avatar - setLoading: false to prevent full page loading
       await updateProfile({
         email: profile.email || user?.email || "",
         name: profile.name || user?.name || "",
@@ -898,17 +916,32 @@ export default function ProfilePage() {
         discord: user?.discord || "",
         twitter: profile.links.x || user?.twitter || "",
         bio: profile.bio || user?.bio || "",
-        profilePicture: base64, // In production, upload to server and get URL
+        profilePicture: base64,
         projects: profile.stats.projects || user?.projects || 0,
         contributions: profile.stats.contributions || user?.contributions || 0,
         profileView: profile.stats.posts || user?.profileView || 0,
-      })
+      }, false) // setLoading: false to prevent full page loading
 
-      // Update local state
+      // Complete progress
+      clearInterval(progressInterval)
+      setAvatarProgress(100)
+      setAvatarStatus('finished')
+
+      // Update preview and local state only after successful upload
+      setAvatarPreview(base64)
       setProfile(prev => ({ ...prev, avatar: base64 }))
       message.success('Avatar updated successfully!')
+
+      // Hide progress indicator after 2 seconds
+      setTimeout(() => {
+        setAvatarStatus(null)
+        setAvatarProgress(0)
+      }, 2000)
     } catch (error: any) {
+      clearInterval(progressInterval)
       console.error('Error uploading avatar:', error)
+      setAvatarStatus(null)
+      setAvatarProgress(0)
       message.error('Failed to upload avatar. Please try again.')
     } finally {
       setUploadingAvatar(false)
@@ -936,14 +969,29 @@ export default function ProfilePage() {
       return
     }
 
-    try {
-      setUploadingCover(true)
+    setUploadingCover(true)
+    setCoverStatus('uploading')
+    setCoverProgress(0)
 
+    // Simulate smooth progress
+    const progressInterval = setInterval(() => {
+      setCoverProgress((prev) => {
+        if (prev >= 85) {
+          clearInterval(progressInterval)
+          return 85
+        }
+        // Smooth increment: start fast, slow down as we approach 85%
+        const increment = (85 - prev) * 0.15 + Math.random() * 3
+        return Math.min(85, prev + increment)
+      })
+    }, 150)
+
+    try {
       // Convert to base64 for preview
       const base64 = await fileToBase64(file)
-      setCoverPreview(base64)
+      debugger;
 
-      // Update profile with new cover
+      // Update profile with new cover - setLoading: false to prevent full page loading
       await updateProfile({
         email: profile.email || user?.email || "",
         name: profile.name || user?.name || "",
@@ -963,13 +1011,30 @@ export default function ProfilePage() {
         projects: profile.stats.projects || user?.projects || 0,
         contributions: profile.stats.contributions || user?.contributions || 0,
         profileView: profile.stats.posts || user?.profileView || 0,
-      })
+      }, false) // setLoading: false to prevent full page loading
 
-      // Update local state
+      debugger;
+
+      // Complete progress
+      clearInterval(progressInterval)
+      setCoverProgress(100)
+      setCoverStatus('finished')
+
+      // Update preview and local state only after successful upload
+      setCoverPreview(base64)
       setProfile(prev => ({ ...prev, coverPicture: base64 }))
       message.success('Cover image updated successfully!')
+
+      // Hide progress indicator after 2 seconds
+      setTimeout(() => {
+        setCoverStatus(null)
+        setCoverProgress(0)
+      }, 2000)
     } catch (error: any) {
+      clearInterval(progressInterval)
       console.error('Error uploading cover:', error)
+      setCoverStatus(null)
+      setCoverProgress(0)
       message.error('Failed to upload cover image. Please try again.')
     } finally {
       setUploadingCover(false)
@@ -1120,7 +1185,7 @@ export default function ProfilePage() {
                 disabled={uploadingCover}
               >
                 <PencilLine  size={16} />
-                {uploadingCover ? 'Uploading...' : 'Change Cover'}
+                Change Cover
               </button>
               <input
                 ref={coverInputRef}
@@ -1131,8 +1196,8 @@ export default function ProfilePage() {
               />
             </>
           )}
-          {/* Fallback cover image */}
-          {(!uploadingCover && (coverPreview || profile.coverPicture)) ? (
+          {/* Cover image - Always show existing image, update only after upload completes */}
+          {(coverPreview || profile.coverPicture) ? (
             <img
               src={coverPreview || profile.coverPicture}
               alt="Cover"
@@ -1142,7 +1207,7 @@ export default function ProfilePage() {
                 e.currentTarget.src = defaultCoverImage.src;
               }}
             />
-          ) : !uploadingCover ? (
+          ) : (
             <Image
               src={defaultCoverImage.src}
               alt="Cover"
@@ -1151,7 +1216,29 @@ export default function ProfilePage() {
               className="object-cover rounded-xl"
               sizes="100vw"
             />
-          ) : null}
+          )}
+
+          {/* Progress Bar Overlay - Show only when uploading */}
+          {coverStatus && (
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center z-30 rounded-xl">
+              <div className="w-full max-w-md px-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white font-exo2 font-medium">
+                    {coverStatus === 'uploading' ? 'Uploading...' : 'Finished'}
+                  </span>
+                  <span className="text-gray-300 font-exo2">
+                    {Math.round(coverProgress)}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-[#FFFFFF10] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#4F01E6] to-[#7E6BEF] transition-all duration-300 ease-out rounded-full"
+                    style={{ width: `${Math.min(100, Math.max(0, coverProgress))}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Overlapping 21 Spade Cards - Right Side */}
           <div className="absolute top-1/2 md:top-3/5 right-6 md:right-20 lg:right-28 -translate-y-1/2 flex items-center z-10">
@@ -1191,7 +1278,7 @@ export default function ProfilePage() {
           {/* Social Media Icons on Right Side */}
           <div className="absolute bottom-4 right-4 flex items-center gap-3 z-10">
             <a
-              href={profile.links.instagram || "https://www.instagram.com/21spades.io"}
+              href={profile.links.instagram || "NA"}
               target={profile.links.instagram ? "_blank" : "_self"}
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full border border-white/30 bg-black/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -1200,7 +1287,7 @@ export default function ProfilePage() {
               <FaInstagram className="text-xl text-white" />
             </a>
             <a
-              href={profile.links.x || "https://twitter.com/@21SpadesDPR"}
+              href={profile.links.x || "NA"}
               target={profile.links.x ? "_blank" : "_self"}
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -1209,7 +1296,7 @@ export default function ProfilePage() {
               <FaXTwitter className="text-xl text-white" />
             </a>
             <a
-              href={profile.links.facebook || "https://t.me/+XyKl3RHYu-QxNWMx"}
+              href={profile.links.facebook || "NA"}
               target={profile.links.facebook ? "_blank" : "_self"}
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -1225,9 +1312,12 @@ export default function ProfilePage() {
           <div className="relative flex-shrink-0 w-[120px] h-[120px] md:w-[160px] md:h-[160px]">
             <div className="relative w-full h-full rounded-full p-[1px] md:p-[3px] shadow-xl" style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}>
               {(() => {
-                const hasAvatarImage = Boolean((avatarPreview || profile.avatar)?.trim())
+                // Always show existing avatar during upload, only update after upload completes
+                const existingAvatar = profile.avatar
+                const hasAvatarImage = Boolean((avatarPreview || existingAvatar)?.trim())
                 const fallbackSrc = '/post/card-21.png'
-                const avatarSrc = hasAvatarImage ? (avatarPreview || profile.avatar) : fallbackSrc
+                // Use preview if available (after upload), otherwise use existing avatar
+                const avatarSrc = hasAvatarImage ? (avatarPreview || existingAvatar) : fallbackSrc
                 return (
                   <div
                     className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
@@ -1249,6 +1339,28 @@ export default function ProfilePage() {
                 )
               })()}
             </div>
+            
+            {/* Avatar Progress Bar Overlay - Show only when uploading */}
+            {avatarStatus && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-40 rounded-full">
+                <div className="w-full max-w-[100px] px-2 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-white font-exo2 font-medium">
+                      {avatarStatus === 'uploading' ? 'Uploading...' : 'Finished'}
+                    </span>
+                    <span className="text-gray-300 font-exo2 text-xs">
+                      {Math.round(avatarProgress)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#FFFFFF10] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#4F01E6] to-[#7E6BEF] transition-all duration-300 ease-out rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(0, avatarProgress))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Avatar upload button - Only show for own profile */}
             {!isViewingOtherUser && (
               <>
@@ -1461,6 +1573,7 @@ export default function ProfilePage() {
               {isLoadingNFTs ? (
                 <div className="flex justify-center items-center py-20">
                   <Spin size="large" />
+                  <p className="text-white text-lg font-semibold">Loading NFTs...</p>
                 </div>
               ) : filteredNFTs.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
