@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, ArrowLeft } from 'lucide-react'
-import { Dropdown, Space, Avatar, Spin } from 'antd'
+import { Dropdown, Space, Avatar, Spin, Tooltip } from 'antd'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { apiCaller } from '@/app/interceptors/apicall/apicall'
@@ -25,6 +25,8 @@ interface NFT {
   auctionType?: number
   startingTime?: number | string
   endingTime?: number | string
+  createdAt?: string | number | Date
+  listedAt?: string | number | Date
 }
 
 interface CollectionProfileProps {
@@ -66,6 +68,7 @@ function NFTCard({
   const [isFavorite, setIsFavorite] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [isAuctionLive, setIsAuctionLive] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState<string>('')
   const router = useRouter()
   
   const nftId = _id || propNftId || id || name
@@ -74,43 +77,164 @@ function NFTCard({
   const auctionTypeText = getAuctionTypeText(auctionType)
   const isAuction = auctionType === 2
   
-  // Determine if auction is live or scheduled
+  // Determine if auction is live or scheduled and calculate time remaining
   useEffect(() => {
     if (!isAuction) {
       setIsAuctionLive(false)
+      setTimeRemaining('')
       return
     }
     
     const checkAuctionStatus = () => {
       const now = Date.now()
-      const startTime = startingTime ? (typeof startingTime === 'string' ? new Date(startingTime).getTime() : startingTime) : null
-      const endTime = endingTime ? (typeof endingTime === 'string' ? new Date(endingTime).getTime() : endingTime) : null
       
-      // If no start/end times, consider it live
+      // Parse start time - handle multiple formats
+      let startTime: number | null = null
+      if (startingTime !== undefined && startingTime !== null && startingTime !== '') {
+        if (typeof startingTime === 'string') {
+          // Check if it's a numeric string (Unix timestamp)
+          const numericValue = Number(startingTime)
+          if (!isNaN(numericValue) && isFinite(numericValue)) {
+            // It's a numeric string, treat as timestamp
+            if (numericValue.toString().length <= 10) {
+              startTime = numericValue * 1000 // Convert seconds to milliseconds
+            } else {
+              startTime = numericValue // Already in milliseconds
+            }
+          } else {
+            // Try parsing as date string
+            const parsed = new Date(startingTime).getTime()
+            startTime = isNaN(parsed) ? null : parsed
+          }
+        } else if (typeof startingTime === 'number') {
+          // Check if it's Unix timestamp in seconds (10 digits or less) or milliseconds (13 digits)
+          if (startingTime.toString().length <= 10) {
+            // It's in seconds, convert to milliseconds
+            startTime = startingTime * 1000
+          } else {
+            // It's already in milliseconds
+            startTime = startingTime
+          }
+        }
+      }
+      
+      // Parse end time - handle multiple formats
+      let endTime: number | null = null
+      if (endingTime !== undefined && endingTime !== null && endingTime !== '') {
+        if (typeof endingTime === 'string') {
+          // Check if it's a numeric string (Unix timestamp)
+          const numericValue = Number(endingTime)
+          if (!isNaN(numericValue) && isFinite(numericValue)) {
+            // It's a numeric string, treat as timestamp
+            if (numericValue.toString().length <= 10) {
+              endTime = numericValue * 1000 // Convert seconds to milliseconds
+            } else {
+              endTime = numericValue // Already in milliseconds
+            }
+          } else {
+            // Try parsing as date string
+            const parsed = new Date(endingTime).getTime()
+            endTime = isNaN(parsed) ? null : parsed
+          }
+        } else if (typeof endingTime === 'number') {
+          // Check if it's Unix timestamp in seconds (10 digits or less) or milliseconds (13 digits)
+          if (endingTime.toString().length <= 10) {
+            // It's in seconds, convert to milliseconds
+            endTime = endingTime * 1000
+          } else {
+            // It's already in milliseconds
+            endTime = endingTime
+          }
+        }
+      }
+      
+      // Debug logging - Always log for debugging
+      console.log('🔍 Auction Time Debug:', {
+        displayName,
+        'startingTime (raw)': startingTime,
+        'endingTime (raw)': endingTime,
+        'startingTime type': typeof startingTime,
+        'endingTime type': typeof endingTime,
+        'startTime (parsed)': startTime,
+        'endTime (parsed)': endTime,
+        'now': now,
+        'startTimeFormatted': startTime ? new Date(startTime).toLocaleString() : 'null',
+        'endTimeFormatted': endTime ? new Date(endTime).toLocaleString() : 'null',
+        'nowFormatted': new Date(now).toLocaleString(),
+        'isAuction': isAuction,
+        'isAuctionLive': isAuctionLive,
+        'timeRemaining': timeRemaining,
+        'startTime > now': startTime ? startTime > now : 'N/A',
+        'endTime > now': endTime ? endTime > now : 'N/A',
+        'now < startTime': startTime ? now < startTime : 'N/A',
+        'now >= endTime': endTime ? now >= endTime : 'N/A'
+      })
+      
+      // If no start/end times, consider it live but no time to show
       if (!startTime && !endTime) {
         setIsAuctionLive(true)
+        setTimeRemaining('')
         return
       }
       
-      // If current time is before start time, it's scheduled
-      if (startTime && now < startTime) {
-        setIsAuctionLive(false)
-        return
-      }
-      
-      // If current time is after end time, it's ended (not live)
+      // Check if auction has ended
       if (endTime && now >= endTime) {
         setIsAuctionLive(false)
+        setTimeRemaining('Ended')
         return
       }
       
-      // If current time is between start and end (or after start if no end), it's live
-      if ((!startTime || now >= startTime) && (!endTime || now < endTime)) {
-        setIsAuctionLive(true)
+      // Check if auction hasn't started yet (scheduled)
+      if (startTime && now < startTime) {
+        setIsAuctionLive(false)
+        const timeUntilStart = startTime - now
+        const days = Math.floor(timeUntilStart / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((timeUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((timeUntilStart % (1000 * 60)) / 1000)
+        
+        if (days > 0) {
+          setTimeRemaining(`${days}d ${hours}h`)
+        } else if (hours > 0) {
+          setTimeRemaining(`${hours}h ${minutes}m`)
+        } else if (minutes > 0) {
+          setTimeRemaining(`${minutes}m ${seconds}s`)
+        } else if (seconds > 0) {
+          setTimeRemaining(`${seconds}s`)
+        } else {
+          setTimeRemaining('Starting soon')
+        }
         return
       }
       
-      setIsAuctionLive(false)
+      // Auction is live (now is between start and end, or after start if no end)
+      setIsAuctionLive(true)
+      
+      // Calculate time remaining until end
+      if (endTime && endTime > now) {
+        const timeUntilEnd = endTime - now
+        const days = Math.floor(timeUntilEnd / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((timeUntilEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((timeUntilEnd % (1000 * 60)) / 1000)
+        
+        if (days > 0) {
+          setTimeRemaining(`${days}d ${hours}h`)
+        } else if (hours > 0) {
+          setTimeRemaining(`${hours}h ${minutes}m`)
+        } else if (minutes > 0) {
+          setTimeRemaining(`${minutes}m ${seconds}s`)
+        } else if (seconds > 0) {
+          setTimeRemaining(`${seconds}s`)
+        } else {
+          setTimeRemaining('Ending soon')
+        }
+      } else if (!endTime) {
+        // No end time but auction is live
+        setTimeRemaining('')
+      } else {
+        setTimeRemaining('Ending soon')
+      }
     }
     
     checkAuctionStatus()
@@ -119,9 +243,19 @@ function NFTCard({
   }, [isAuction, startingTime, endingTime])
   
   // Debug log
-  if (process.env.NODE_ENV === 'development') {
-    console.log('NFTCard auctionType:', { auctionType, auctionTypeText, displayName, isAuctionLive })
-  }
+  useEffect(() => {
+    if (isAuction) {
+      console.log('NFTCard Debug:', { 
+        displayName,
+        auctionType, 
+        auctionTypeText, 
+        isAuctionLive,
+        startingTime,
+        endingTime,
+        timeRemaining
+      })
+    }
+  }, [isAuction, isAuctionLive, timeRemaining, startingTime, endingTime, displayName, auctionType, auctionTypeText])
 
   return (
     <div 
@@ -129,7 +263,7 @@ function NFTCard({
       onClick={() => router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)}
     >
       <div 
-        className="relative rounded-2xl overflow-hidden transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30"
+        className="relative rounded-2xl overflow-y-auto transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30 nft-cards-scrollbar"
         style={{
           height: '380px',
           boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
@@ -192,37 +326,79 @@ function NFTCard({
         {/* Bottom Section */}
         <div className="px-4 pb-4 pt-3">
           {/* NFT Name */}
-          <h3 className="text-white text-lg font-bold tracking-tight mb-2 font-exo2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
-            {displayName}
-          </h3>
+          <Tooltip title={displayName} placement="top">
+            <h3 className="text-white text-lg font-bold tracking-tight mb-2 font-exo2 cursor-pointer" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
+              {displayName.length > 20 ? `${displayName.substring(0, Math.floor(displayName.length / 2))}...` : displayName}
+            </h3>
+          </Tooltip>
           
-          {/* Auction Type Badge and Live/Scheduled Status */}
-          <div className="mb-2.5 flex items-center gap-2 flex-wrap">
-            <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold font-exo2 ${
-              auctionType === 1 
-                ? 'bg-[#7E6BEF] text-white' 
-                : auctionType === 2
-                ? 'bg-[#3B82F6] text-white'
-                : 'bg-gray-600 text-white'
-            }`}>
-              {auctionTypeText}
-            </span>
-            
-            {/* Live/Scheduled Badge - Only show for Auctions */}
-            {isAuction && (
-              isAuctionLive ? (
-                <span className="inline-flex items-center gap-1 text-[#33E030] text-[11px] font-semibold uppercase tracking-wide">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#33E030] animate-pulse" />
-                  Live
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/40 text-[11px] font-semibold uppercase tracking-wide">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
-                  Scheduled
-                </span>
-              )
-            )}
-          </div>
+          {/* Auction Type Badge, Live/Scheduled Badge and Time Display - All in same row */}
+          {isAuction ? (
+            <div className="mb-2.5 flex items-center justify-between gap-2 flex-wrap">
+              {/* Left side: Auction Type Badge */}
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold font-exo2 ${
+                Number(auctionType) === 1 
+                  ? 'bg-[#7E6BEF] text-white' 
+                  : Number(auctionType) === 2
+                  ? 'bg-[#3B82F6] text-white'
+                  : 'bg-gray-600 text-white'
+              }`}>
+                {auctionTypeText}
+              </span>
+              
+              {/* Middle: Live/Scheduled Badge */}
+              <div className="flex items-center gap-2">
+                {isAuctionLive ? (
+                  <span className="inline-flex items-center gap-1 text-[#33E030] text-[11px] font-semibold uppercase tracking-wide">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#33E030] animate-pulse" />
+                    Live
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/40 text-[11px] font-semibold uppercase tracking-wide">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
+                    Scheduled
+                  </span>
+                )}
+                
+                {/* Right side: Time Display */}
+                {timeRemaining && timeRemaining !== '' && (
+                  <>
+                    {isAuctionLive ? (
+                      // Live Auction - Show end time
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[#FFB600] bg-[#FFB600]/10 border border-[#FFB600]/30 text-xs font-semibold font-exo2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFB600] animate-pulse" />
+                        Ends in {timeRemaining}
+                      </span>
+                    ) : timeRemaining === 'Ended' ? (
+                      // Ended Auction
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-gray-400 bg-gray-400/10 border border-gray-400/30 text-xs font-semibold font-exo2">
+                        Auction Ended
+                      </span>
+                    ) : (
+                      // Scheduled Auction - Show start time
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 text-xs font-semibold font-exo2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
+                        Starts in {timeRemaining}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            // Non-auction: Only show auction type badge
+            <div className="mb-2.5 flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold font-exo2 ${
+                Number(auctionType) === 1 
+                  ? 'bg-[#7E6BEF] text-white' 
+                  : Number(auctionType) === 2
+                  ? 'bg-[#3B82F6] text-white'
+                  : 'bg-gray-600 text-white'
+              }`}>
+                {auctionTypeText}
+              </span>
+            </div>
+          )}
           
           {/* Price */}
           <div className="flex items-center justify-between">
@@ -319,13 +495,22 @@ export default function CollectionProfile({
             imageUrl: nft.imageUrl || nft.image || null,
             image: nft.imageUrl || nft.image || null,
             auctionType: nft.auctionType !== undefined && nft.auctionType !== null ? Number(nft.auctionType) : undefined,
-            startingTime: nft.startingTime ? (typeof nft.startingTime === 'string' ? new Date(nft.startingTime).getTime() : Number(nft.startingTime)) : undefined,
-            endingTime: nft.endingTime ? (typeof nft.endingTime === 'string' ? new Date(nft.endingTime).getTime() : Number(nft.endingTime)) : undefined,
+            // Keep timestamps in original format - NFTCard will handle conversion
+            startingTime: nft.startingTime !== undefined && nft.startingTime !== null ? nft.startingTime : undefined,
+            endingTime: nft.endingTime !== undefined && nft.endingTime !== null ? nft.endingTime : undefined,
+            createdAt: nft.createdAt || nft.created_at || nft.created || undefined,
+            listedAt: nft.listedAt || nft.listed_at || nft.listed || undefined,
           }
           // Debug log
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Mapping NFT:', { original: nft.auctionType, mapped: mapped.auctionType, name: mapped.name })
-          }
+          console.log('📦 Mapping NFT:', { 
+            name: mapped.name,
+            auctionType: mapped.auctionType,
+            startingTime: mapped.startingTime,
+            endingTime: mapped.endingTime,
+            'startingTime type': typeof mapped.startingTime,
+            'endingTime type': typeof mapped.endingTime,
+            'original nft': nft
+          })
           return mapped
         })
         
@@ -391,11 +576,14 @@ export default function CollectionProfile({
     return cleaned > 1e12 ? cleaned : cleaned * 1000
   }
 
-  // Filter NFTs based on active tab
+  // Filter and sort NFTs based on active tab and selected sort
   const filteredNFTs = useMemo(() => {
+    let filtered: NFT[] = []
+    
+    // Filter NFTs based on active tab
     if (activeTab === 'Live') {
       const now = Date.now()
-      return nfts.filter((nft) => {
+      filtered = nfts.filter((nft) => {
         // Only show auction type NFTs (auctionType === 2)
         if (nft.auctionType !== 2) return false
         
@@ -410,10 +598,63 @@ export default function CollectionProfile({
         // If no time data but it's auction type, show it
         return true
       })
+    } else {
+      // For "Items" tab, show all NFTs
+      filtered = [...nfts]
     }
-    // For "Items" tab, show all NFTs
-    return nfts
-  }, [nfts, activeTab, timeUpdate])
+    
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (selectedSort) {
+        case 'Price High to Low': {
+          const priceA = parseFloat(a.price) || 0
+          const priceB = parseFloat(b.price) || 0
+          return priceB - priceA
+        }
+        case 'Price Low to High': {
+          const priceA = parseFloat(a.price) || 0
+          const priceB = parseFloat(b.price) || 0
+          return priceA - priceB
+        }
+        case 'Recently Listed': {
+          // Use listedAt, createdAt, or _id for sorting
+          const dateA = a.listedAt || a.createdAt
+          const dateB = b.listedAt || b.createdAt
+          
+          if (dateA && dateB) {
+            const timeA = typeof dateA === 'string' ? new Date(dateA).getTime() : (typeof dateA === 'number' ? dateA : 0)
+            const timeB = typeof dateB === 'string' ? new Date(dateB).getTime() : (typeof dateB === 'number' ? dateB : 0)
+            return timeB - timeA // Newest first
+          }
+          
+          // Fallback to _id comparison if no date available
+          const idA = a._id || a.id || ''
+          const idB = b._id || b.id || ''
+          return idB.localeCompare(idA)
+        }
+        case 'Oldest First': {
+          // Use listedAt, createdAt, or _id for sorting
+          const dateA = a.listedAt || a.createdAt
+          const dateB = b.listedAt || b.createdAt
+          
+          if (dateA && dateB) {
+            const timeA = typeof dateA === 'string' ? new Date(dateA).getTime() : (typeof dateA === 'number' ? dateA : 0)
+            const timeB = typeof dateB === 'string' ? new Date(dateB).getTime() : (typeof dateB === 'number' ? dateB : 0)
+            return timeA - timeB // Oldest first
+          }
+          
+          // Fallback to _id comparison if no date available
+          const idA = a._id || a.id || ''
+          const idB = b._id || b.id || ''
+          return idA.localeCompare(idB)
+        }
+        default:
+          return 0
+      }
+    })
+    
+    return sorted
+  }, [nfts, activeTab, timeUpdate, selectedSort])
 
   const sortItems: MenuProps['items'] = [
     { label: 'Price High to Low', key: 'price-high' },

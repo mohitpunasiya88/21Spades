@@ -1046,7 +1046,7 @@ export default function FeedPost({ post }: FeedPostProps) {
       )}
       
       {/* Price and Buy Button Section - Only show if price exists */}
-      {hasPrice && (
+      {!isOwner && (
         <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
           {/* Price Section - Single line format: "Price: 1.34 AVAX" */}
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1059,30 +1059,32 @@ export default function FeedPost({ post }: FeedPostProps) {
             </span>
           </div>
           
-          {/* Buy Button */}
-          <button
-            onClick={() => {
-              if (!isAuthenticated) {
-                setShowLoginModal(true)
-                return
-              }
-              
-              // Extract NFT ID and collection ID from post data
-              const nftId = post.nft?._id || post.nft?.id
-              const collectionId = typeof post.nft?.collectionId === 'string' 
-                ? post.nft.collectionId 
-                : post.nft?.collectionId?._id || post.nft?.collectionId?.id
-              
-              if (nftId && collectionId) {
-                router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)
-              } else {
-                message.error('NFT information not available')
-              }
-            }}
-            className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-[0_0_20px_rgba(79,1,230,0.6)] hover:shadow-[#4F01E6] active:scale-95 text-sm sm:text-base whitespace-nowrap flex-shrink-0 cursor-pointer"
-          >
-            Buy
-          </button>
+          {/* Buy Button - Only show if post is not owned by current user */}
+          
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setShowLoginModal(true)
+                  return
+                }
+                
+                // Extract NFT ID and collection ID from post data
+                const nftId = post.nft?._id || post.nft?.id
+                const collectionId = typeof post.nft?.collectionId === 'string' 
+                  ? post.nft.collectionId 
+                  : post.nft?.collectionId?._id || post.nft?.collectionId?.id
+                
+                if (nftId && collectionId) {
+                  router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)
+                } else {
+                  message.error('NFT information not available')
+                }
+              }}
+              className="px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-b from-[#4F01E6] to-[#25016E] text-white font-exo2 font-semibold transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-[0_0_20px_rgba(79,1,230,0.6)] hover:shadow-[#4F01E6] active:scale-95 text-sm sm:text-base whitespace-nowrap flex-shrink-0 cursor-pointer"
+            >
+              Buy
+            </button>
+          {/* )} */}
         </div>
       )}
       
