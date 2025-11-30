@@ -1129,8 +1129,8 @@ export default function Navbar() {
                       <span className="group-hover:text-purple-300 transition-colors whitespace-nowrap truncate hover:underline min-w-0">
                         {shortAddress(address as string)}
                       </span>
-                      <span className="text-gray-400 text-xs group-hover:text-purple-300/70 transition-colors">
-                        Balance: {Number(balance || 0).toFixed(4)} AVAX
+                      <span className="text-gray-400 text-xs group-hover:text-purple-300/70 transition-colors inline-flex items-center gap-1">
+                        Balance: {Number(balance || 0).toFixed(4)} <img src="/assets/Avax-logo.png" alt="avax" className="w-4 h-4 inline-block" />
                       </span>
                     </div>
                     {selectedWalletOption === 'Wallet' && (
