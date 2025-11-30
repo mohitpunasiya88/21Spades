@@ -1,25 +1,18 @@
 "use client";
-
-import Header from "@/components/Landing/Header";
-import Footer from "@/components/Landing/Footer";
 import Image from "next/image";
 import spadesImageRight from "@/components/assets/Spades-left-Right.png"
-
-
+import AboutusHeader from "../about-us/AboutusHeader";
 export default function ContactUsPage() {
   return (
     <div style={{ background: "#0F0F23", minHeight: "100vh", width: "100%", overflowX: "hidden" }} >
       {/* Header */}
       <div className="w-full">
-        <Header />
+        <AboutusHeader />
       </div>
 
       {/* Content */}
       <div className="w-full px-4 w-[100%]">
         <div className=" mx-auto w-[100%]">
-          {/* Banner */}
-        
-
           {/* Contact Form Card */}
           <div className="bg-[#090721] rounded-2xl md:rounded-3xl border border-white/10 px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
             <div className="relative rounded-xl  overflow-hidden bg-gradient-to-r from-[#4F01E6] to-[#020019] h-[120px] md:h-[160px]">

@@ -1,37 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Twitter, Instagram } from 'lucide-react';
 import { FaTelegram } from "react-icons/fa";
 
 export default function Footer() {
   const router = useRouter();
-  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
-  const mobileDropdownRef = useRef<HTMLDivElement>(null);
-  const desktopDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      const isOutsideMobile = mobileDropdownRef.current && !mobileDropdownRef.current.contains(target);
-      const isOutsideDesktop = desktopDropdownRef.current && !desktopDropdownRef.current.contains(target);
-      
-      if (isOutsideMobile && isOutsideDesktop) {
-        setShowCompanyDropdown(false);
-      }
-    };
-
-    if (showCompanyDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showCompanyDropdown]);
   return (
-    <footer className="h-[80vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
+    <footer className="h-[70vh] mb-5 w-[100%] md:w-[97%] mx-auto bg-gradient-to-t from-indigo-950 via-purple-950 to-black relative overflow-hidden mt-5 mx-3 sm:mx-5 md:rounded-xl py-15">
 
       {/* Background pattern overlay */}
       <div className="absolute flex justify-center items-center inset-0 opacity-20 translate-y-[15%]" style={{}} >
@@ -50,47 +26,30 @@ export default function Footer() {
           <img src="/assets/logo.png" alt="Logo" className="h-8 sm:h-auto" />
         </div>
 
-        {/* Navigation Links */}
-        <div className="flex md:hidden items-center justify-center md:justify-start items-center gap-4 sm:gap-8 flex-wrap font-exo2 mb-8 sm:mb-12">
-          <div className="relative" ref={mobileDropdownRef}>
-            <button 
-              onClick={() => setShowCompanyDropdown(!showCompanyDropdown)}
-              className="text-white hover:text-purple-400 transition-colors text-lg font-bold"
+        {/* Navigation Links - Mobile */}
+        <div className="flex md:hidden flex-col items-center justify-center md:justify-start gap-2 sm:gap-3 font-exo2 mb-8 sm:mb-12">
+          <span className="text-white text-lg font-bold">Company</span>
+          <div className="flex items-center gap-2 text-sm sm:text-base">
+            <button
+              type="button"
+              onClick={() => router.push('/about-us')}
+              className="text-white hover:text-purple-400 transition-colors cursor-pointer"
             >
-              Company
+              About us
             </button>
-            {showCompanyDropdown && (
-              <div className="absolute top-full left-0 mt-2 bg-purple-950 border border-purple-800 rounded-lg shadow-lg z-50 min-w-[150px]">
-                <a 
-                  href="/about-us" 
-                  className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowCompanyDropdown(false);
-                    router.push('/about-us');
-                  }}
-                >
-                  About us
-                </a>
-                <a 
-                  href="/contact-us" 
-                  className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowCompanyDropdown(false);
-                    router.push('/contact-us');
-                  }}
-                >
-                  Contact us
-                </a>
-              </div>
-            )}
+            <span className="text-white/60">|</span>
+            <button
+              type="button"
+              onClick={() => router.push('/contact-us')}
+              className="text-white hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              Contact us
+            </button>
           </div>
         </div>
 
-
         {/* CTA Section */}
-        <div className="mx-auto text-center md:mt-10 mb-8 sm:mb-16">
+        <div className="mx-auto text-center md:mt-10 mb-4 sm:mb-8">
           <h2 className="text-[#FFB600] font-audiowide text-xl sm:text-[42px] md:text-[48px] mb-6 sm:mb-8 leading-tight">
             JOIN THE WORLD<br className="md:hidden" /> OF WEB3 TODAY
           </h2>
@@ -99,7 +58,27 @@ export default function Footer() {
           </button>
         </div>
 
-        
+        {/* Company links centered under CTA - Desktop */}
+        {/* <div className="hidden md:flex flex-col  items-center gap-1 font-exo2 mb-10">
+          <span className="text-white text-lg font-bold">Company</span>
+          <div className="flex gap-2 justify-center text-sm md:text-base">
+            <button
+              type="button"
+              onClick={() => router.push('/about-us')}
+              className="text-white hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              About us
+            </button>
+            <span className="text-white/60">|</span>
+            <button
+              type="button"
+              onClick={() => router.push('/contact-us')}
+              className="text-white hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              Contact us
+            </button>
+          </div>
+        </div> */}
 
         {/* Bottom Section - Copyright and Legal */}
         <div className=" flex flex-col w-[98%] absolute bottom-0  font-exo2 ">
@@ -108,43 +87,25 @@ export default function Footer() {
             <div className="flex items-center justify-start md:justify-start">
               <img src="/assets/logo.png" alt="Logo" className="h-8 sm:h-auto" />
             </div>
-
-            <div className="flex justify-center md:justify-start items-center gap-4 sm:gap-8 flex-wrap font-exo2">
-              <div className="relative" ref={desktopDropdownRef}>
-                <button 
-                  onClick={() => setShowCompanyDropdown(!showCompanyDropdown)}
-                  className="text-white hover:text-purple-400 transition-colors text-lg font-bold"
-                >
-                  Company
-                </button>
-                {showCompanyDropdown && (
-                  <div className="absolute top-full left-0 mt-2 bg-purple-950 border border-purple-800 rounded-lg shadow-lg z-50 min-w-[150px]">
-                    <a 
-                      href="/about-us" 
-                      className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowCompanyDropdown(false);
-                        router.push('/about-us');
-                      }}
-                    >
-                      About us
-                    </a>
-                    <a 
-                      href="/contact-us" 
-                      className="block px-4 py-2 text-white hover:bg-purple-900 transition-colors text-sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowCompanyDropdown(false);
-                        router.push('/contact-us');
-                      }}
-                    >
-                      Contact us
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
+            
+            <div className="flex gap-2 justify-center text-sm md:text-base mr-16">
+              {/* <span className="text-white text-lg font-bold">Company</span> */}
+            <button
+              type="button"
+              onClick={() => router.push('/about-us')}
+              className="text-white hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              About us
+            </button>
+            <span className="text-white/60">|</span>
+            <button
+              type="button"
+              onClick={() => router.push('/contact-us')}
+              className="text-white hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              Contact us
+            </button>
+          </div>
 
             {/* Social Media Icons - Desktop Only */}
             <div className="hidden md:flex items-center justify-end gap-4">
