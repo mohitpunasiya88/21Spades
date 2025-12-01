@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins, ArrowLeft } from 'lucide-react'
+import { ArrowUp, Heart, ShoppingCart, ChevronDown, X, ChevronUp, Coins, ArrowLeft, ChartColumnBig } from 'lucide-react'
 import spadesImage from '../assets/21spades.png'
 import { Avatar, Spin, Tooltip } from 'antd'
 import { MessageSquareText, Share } from "lucide-react";
@@ -87,26 +87,39 @@ function MiniCard({ nft, onClick }: { nft: CollectionNFT; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 ring-1 ring-white/5 hover:ring-white/10 transition w-full text-left"
-      style={{ cursor: 'pointer' }}
+      className="relative bg-[#0A0D1F] rounded-xl p-3 sm:p-4 transition-all w-full text-left hover:scale-[1.02]"
+      style={{ 
+        cursor: 'pointer',
+        boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+      }}
     >
-      <div className="relative h-[280px] sm:h-[250px] w-full rounded-lg overflow-hidden ring-1 ring-white/10 bg-[#050616]">
-        <div className="absolute" style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }} />
-        <div className="absolute  ">
-          <Image src={imageSource} alt={nft.name} width={240} height={340} className="sm:w-[100%] h-[291px] sm:h-[250px] object-contain pointer-events-none select-none" />
+      <div className="relative h-[240px] sm:h-[220px] w-full rounded-lg overflow-hidden bg-gradient-to-b from-[#4F01E6] to-[#25016E]">
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <Image 
+            src={imageSource} 
+            alt={nft.name} 
+            width={240} 
+            height={340} 
+            className="w-full h-full object-contain pointer-events-none select-none" 
+          />
         </div>
-        <span className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-white/10 ring-1 ring-white/20 hover:bg-white/20 transition">
-          <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+        <span className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-transparent border border-white/30 hover:bg-white/10 transition">
+          <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-2" />
         </span>
       </div>
       <div className="mt-3 sm:mt-4">
-        <p className="text-white text-xs sm:text-sm font-exo2 mb-2 sm:mb-3">{nft.name}</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 fill-red-500" />
-            <span className="text-white text-xs sm:text-sm font-exo2 font-semibold">A. {nft.price}</span>
+        <p className="text-white text-xs sm:text-sm font-exo2 mb-2.5 sm:mb-3 line-clamp-1">{nft.name}</p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center">
+              <Image src={bidIcon} alt="detail" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+            </span>
+            <span className="text-white text-xs sm:text-sm font-exo2 font-semibold">{nft.price}</span>
           </div>
-          <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-lg font-exo2">Details</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-lg font-exo2 whitespace-nowrap hover:border-gray-500 transition-colors">
+            <ChartColumnBig className="w-3 h-3 sm:w-3.5 sm:h-3.5 object-contain" />
+            <span>Details</span>
+          </span>
         </div>
       </div>
     </button>
@@ -1577,7 +1590,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           {/* Media */}
           <div className="relative rounded-xl sm:rounded-2xl">
-            <div className={`relative h-[280px] sm:h-[350px] lg:h-[385px] rounded-xl overflow-hidden flex items-center justify-center ${currentImage ? 'bg-[#0A0D1F]' : 'bg-gradient-to-b from-[#4F01E6] to-[#25016E]'}`}>
+            <div className={`relative h-[280px] sm:h-[350px] lg:h-[385px] rounded-xl overflow-hidden flex items-center justify-center ${currentImage ? 'bg-gradient-to-b from-[#4F01E6] to-[#25016E]' : 'bg-gradient-to-b from-[#4F01E6] to-[#25016E]'}`}>
               {currentImage ? (
                 <Image
                   src={currentImage}
@@ -1640,7 +1653,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                   <MessageSquareText className="w-4 h-4" />
                 </button>
               </div>
-              <Tooltip title="This feature is coming soon!" placement="top">
+              {/* <Tooltip title="This feature is coming soon!" placement="top">
                 <button
                   onClick={(e) => {
                     e.preventDefault()
@@ -1653,7 +1666,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                   <Share className="w-4 h-4" />
                   Share
                 </button>
-              </Tooltip>
+              </Tooltip> */}
             </div>
 
             <h1 className="text-white text-xl sm:text-2xl lg:text-[32px] font-exo2 font-[600] mb-2">{displayName}</h1>

@@ -201,7 +201,7 @@ export default function OTPVerification() {
             <button
               type="submit"
               disabled={isLoading || otp.join('').length !== 4}
-              className="w-full py-3 bg-[#4A01D8] rounded-full text-lg font-extrabold hover:opacity-90 transition disabled:opacity-50"
+              className="cursor-pointer w-full py-3 bg-[#4A01D8] rounded-full text-lg font-extrabold hover:opacity-90 transition disabled:opacity-50"
             >
               {isLoading ? 'Verifying...' : 'Send Verification Code'}
             </button>
@@ -209,7 +209,7 @@ export default function OTPVerification() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="w-full py-3 border border-gray-800 rounded-full text-lg font-extrabold text-gray-300 hover:bg-[#1b0045] transition flex justify-center items-center gap-2"
+              className="cursor-pointer w-full py-3 border border-gray-800 rounded-full text-lg font-extrabold text-gray-300 hover:bg-[#1b0045] transition flex justify-center items-center gap-2"
             >
               <ArrowLeft className="w-5 h-5" /> Back
             </button>

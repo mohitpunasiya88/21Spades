@@ -164,7 +164,7 @@ export default function LoginForm() {
                 Not register yet?{' '}
                 <button
                   onClick={() => router.push('/signup')}
-                  className="text-white hover:underline font-exo2"
+                  className="text-white hover:underline font-exo2 cursor-pointer"
                 >
                   Create Account
                 </button>
@@ -174,7 +174,7 @@ export default function LoginForm() {
             <div className="flex w-[220px] sm:w-[260px] md:w-[300px] h-[50px] items-center justify-between gap-1.5 mb-6 sm:mb-8 bg-black/40 rounded-lg p-1 sm:p-1.5 mx-auto border border-gray-800">
               <button
                 onClick={() => setLoginMethod('email')}
-                className={`flex-1 whitespace-nowrap py-1.5 sm:py-2 px-2 font-exo2 rounded-md font-medium text-sm sm:text-base transition-all ${loginMethod === 'email'
+                className={`cursor-pointer flex-1 whitespace-nowrap py-1.5 sm:py-2 px-2 font-exo2 rounded-md font-medium text-sm sm:text-base transition-all ${loginMethod === 'email'
                     ? 'bg-white text-black'
                     : 'text-gray-400 hover:text-white bg-transparent'
                   }`}
@@ -187,7 +187,7 @@ export default function LoginForm() {
 
               <button
                 onClick={() => router.push('/send-verification')}
-                className={`flex-1 whitespace-nowrap py-1.5 sm:py-2 px-2 font-exo2 rounded-md font-medium text-sm sm:text-base transition-all ${loginMethod === 'phone'
+                className={`cursor-pointer flex-1 whitespace-nowrap py-1.5 sm:py-2 px-2 font-exo2 rounded-md font-medium text-sm sm:text-base transition-all ${loginMethod === 'phone'
                     ? 'bg-white text-black'
                     : 'text-gray-400 hover:text-white bg-transparent'
                   }`}
@@ -241,7 +241,7 @@ export default function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    className="cursor-pointer  absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
                     {showPassword ? <Eye size={16} /> : <img src="/assets/Eye Closed.png" alt="Eye closed" className="w-4 h-4" />}
                   </button>
@@ -249,19 +249,19 @@ export default function LoginForm() {
                 {errors.password && <p className="text-red-400 text-xs sm:text-sm mt-1 font-exo2">{errors.password}</p>}
               </div>
               <div className="flex mt-4 items-center justify-between mb-6 sm:mb-8 text-xs sm:text-sm">
-                <label className="flex items-center gap-2 cursor-pointer text-white">
+                <label className="flex items-center gap-2 cursor-pointer text-white font-exo2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-600 bg-black/40 accent-yellow-500"
+                    className="w-4 h-4 rounded border-gray-600 bg-black/40 accent-yellow-50 cursor-pointer"
                   />
                   Remember me
                 </label>
                 <button
                   type="button"
                   onClick={() => router.push('/forgot-password')}
-                  className="text-white hover:text-yellow-400 transition-colors"
+                  className="text-white hover:text-yellow-400 transition-colors font-exo2 cursor-pointer"
                 >
                   Forgot Password
                 </button>
@@ -282,7 +282,7 @@ export default function LoginForm() {
                   type="button"
                   onClick={() => handleOAuthLogin('twitter')}
                   disabled={oauthLoading}
-                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
+                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 cursor-pointer ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
                 >
                   <XIcon />
                   {oauthLoading && oauthProvider === 'twitter' ? 'Connecting...' : 'Continue with X'}
@@ -297,7 +297,7 @@ export default function LoginForm() {
                   type="button"
                   onClick={() => handleOAuthLogin('google')}
                   disabled={oauthLoading}
-                  className={`w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
+                  className={`cursor-pointer w-full mt-3 bg-black/40 border border-gray-700 rounded-full py-4 text-white font-medium transition-all flex items-center justify-center gap-3 ${oauthLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-500'}`}
                 >
                   <GoogleIcon />
                   {oauthLoading && oauthProvider === 'google' ? 'Connecting...' : 'Continue with Google'}
@@ -306,14 +306,14 @@ export default function LoginForm() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full mt-3 rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold transition-all duration-200 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
+                  className="cursor-pointer w-full mt-3 rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold transition-all duration-200 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
                 >
                   {isLoading ? 'Logging in...' : 'Log In'}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="w-full  mt-3 border border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2"
+                  className="cursor-pointer w-full  mt-3 border border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2"
                 >
                   Back
                 </button>

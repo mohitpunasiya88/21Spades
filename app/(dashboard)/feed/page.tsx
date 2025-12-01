@@ -690,7 +690,7 @@ export default function FeedPage() {
                 <button 
                   key={cat} 
                   onClick={() => setSelectedCategory(cat)} 
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium whitespace-nowrap transition-colors border-b-2 text-sm sm:text-base flex-shrink-0 ${selectedCategory === cat
+                  className={`cursor-pointer px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium whitespace-nowrap transition-colors border-b-2 text-sm sm:text-base flex-shrink-0 ${selectedCategory === cat
                       ? 'text-purple-400 border-purple-500' 
                       : 'text-gray-400 border-transparent hover:text-white hover:border-gray-600'
                     }`} 

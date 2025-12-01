@@ -44,12 +44,12 @@ export default function Trending() {
 
   // Fetch categories when user is authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    // if (isAuthenticated) {
       getCategories().catch(error => {
         console.error('Error fetching categories:', error);
       });
-    }
-  }, [isAuthenticated, getCategories]);
+    // }
+  }, [getCategories]);
 
   const fetchNFTs = useCallback(async () => {
     try {
@@ -98,10 +98,8 @@ export default function Trending() {
 
   // Fetch NFTs from API when user is authenticated
   useEffect(() => {
-    if (isAuthenticated) {
       fetchNFTs();
-    }
-  }, [isAuthenticated, fetchNFTs]);
+  }, [fetchNFTs]);
 
   // Map API categories to include icons and format
   const categories = useMemo(() => {
@@ -122,7 +120,7 @@ export default function Trending() {
 
     // Add 'ALL' at the beginning
     return [{ name: 'ALL', icon: null }, ...mappedCategories];
-  }, [isAuthenticated, apiCategories]);
+  }, [apiCategories]);
 
   // // Static NFTs for non-authenticated users
   // const staticNfts = [
@@ -142,9 +140,9 @@ export default function Trending() {
 
   // Map API NFTs to the format expected by NFTCard
   const mappedApiNfts = useMemo(() => {
-    if (!isAuthenticated || apiNfts.length === 0) {
-      return [];
-    }
+    // if (!isAuthenticated || apiNfts.length === 0) {
+    //   return [];
+    // }
 
     return apiNfts.map((nft: any) => {
       const categoryName = nft.category?.name || nft.category || nft.collectionCategory || 'ALL';
@@ -163,10 +161,10 @@ export default function Trending() {
         nftId: nft._id || nft.id
       };
     });
-  }, [apiNfts, isAuthenticated]);
+  }, [apiNfts]);
 
   // Use API NFTs if authenticated, otherwise use static
-  const allNfts = isAuthenticated && mappedApiNfts.length > 0 ? mappedApiNfts : [];
+  const allNfts = mappedApiNfts.length > 0 ? mappedApiNfts : [];
 
   // Filter by category
   const filteredNfts = activeCategory === 'ALL'
@@ -255,8 +253,8 @@ export default function Trending() {
                 {filteredNfts.slice(0, 6).map((nft, index) => (
                   <div
                     key={(nft as any).nftId || `nft-${index}`}
-                    className="flex justify-center"
-                    style={{ width: "300px" }}   // fixed card width
+                    className="flex justify-center w-full sm:w-[350px] md:w-[350px] max-w-[350px]"
+                    // style={{ width: "350px" }}   // fixed card width
                   >
                     <NFTCard {...nft} />
                   </div>

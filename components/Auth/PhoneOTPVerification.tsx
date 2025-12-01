@@ -276,14 +276,14 @@ export default function PhoneOTPVerification() {
                 type="button"
                 onClick={handleVerify}
                 disabled={verifying || codeValue.length !== 4}
-                className="w-full bg-[#4A01D8] border border-gray-600 text-white text-base sm:text-lg font-exo2 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition disabled:opacity-50 font-extrabold"
+                className="cursor-pointer w-full bg-[#4A01D8] border border-gray-600 text-white text-base sm:text-lg font-exo2 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition disabled:opacity-50 font-extrabold"
               >
                 {verifying ? 'Verifying...' : 'Send Verification Code'}
               </button>
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="w-full border  mt-3 border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2 font-extrabold"
+                className="cursor-pointer w-full border  mt-3 border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2 font-extrabold"
               >
                 Back
               </button>
