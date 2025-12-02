@@ -21,6 +21,7 @@ export default function Header() {
   const [selectedLanguage, setSelectedLanguage] = useState('English')
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isSearchHovered, setIsSearchHovered] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [searchResults, setSearchResults] = useState<{
     users: any[];
@@ -206,11 +207,55 @@ export default function Header() {
 
             {/* Desktop Search & Language - Hidden on mobile */}
             <div className="hidden md:flex items-center gap-4 md:gap-6">
-              {/* Search Input */}
+              {/* Search Input - Auto expand on hover/focus */}
               <div className="relative" ref={searchRef}>
-                <div className="flex items-center gap-2 border border-gray-700 rounded-lg px-3 py-2 w-64">
-                  <Search className="w-4 h-4 flex-shrink-0 text-gray-400" />
-                  <div className="w-px h-4 bg-[#787486]" />
+                <div 
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-300 ease-in-out overflow-hidden cursor-pointer ${
+                    isSearchOpen || searchTerm.trim().length > 0 || isSearchHovered 
+                      ? 'cursor-pointer w-64 border border-gray-700' 
+                      : 'w-auto border-0'
+                  }`}
+                  onMouseEnter={() => {
+                    setIsSearchHovered(true)
+                    if (!isSearchOpen && searchTerm.trim().length === 0) {
+                      setIsSearchOpen(true)
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setIsSearchHovered(false)
+                    if (searchTerm.trim().length === 0) {
+                      // Close after a small delay if no text
+                      setTimeout(() => {
+                        if (searchTerm.trim().length === 0 && document.activeElement !== searchRef.current?.querySelector('input')) {
+                          setIsSearchOpen(false)
+                        }
+                      }, 200)
+                    }
+                  }}
+                  onClick={() => {
+                    if (!isSearchOpen) {
+                      setIsSearchOpen(true)
+                      setIsSearchHovered(true)
+                      // Focus input after a brief delay to allow state update
+                      setTimeout(() => {
+                        const input = searchRef.current?.querySelector('input') as HTMLInputElement
+                        input?.focus()
+                      }, 50)
+                    }
+                  }}
+                >
+                  <Search className="w-4 h-4 flex-shrink-0 text-white" />
+                  <span 
+                    className={`text-white text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+                      isSearchOpen || searchTerm.trim().length > 0 || isSearchHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                    }`}
+                    style={{ fontFamily: 'var(--font-exo2)' }}
+                  >
+                    Search
+                  </span>
+                  <div className={`w-px h-4 bg-[#787486] transition-opacity duration-300 ${
+                    isSearchOpen || searchTerm.trim().length > 0 || isSearchHovered ? 'opacity-100' : 'opacity-0 w-0'
+                  }`} />
                   <input
                     type="text"
                     placeholder="Search"
@@ -220,11 +265,23 @@ export default function Header() {
                       setIsSearchOpen(e.target.value.trim().length > 0)
                     }}
                     onFocus={(e) => {
-                      if (e.target.value.trim().length > 0) {
-                        setIsSearchOpen(true)
+                      setIsSearchOpen(true)
+                      setIsSearchHovered(true)
+                    }}
+                    onBlur={(e) => {
+                      // Keep open if there's text or hovered
+                      if (e.target.value.trim().length === 0 && !isSearchHovered) {
+                        setTimeout(() => {
+                          if (searchTerm.trim().length === 0 && !isSearchHovered) {
+                            setIsSearchOpen(false)
+                          }
+                        }, 200)
                       }
                     }}
-                    className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm w-0 min-w-0"
+                    className={`bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm transition-all duration-300 ${
+                      isSearchOpen || searchTerm.trim().length > 0 || isSearchHovered ? 'opacity-100 w-auto min-w-0' : 'opacity-0 w-0 pointer-events-none'
+                    }`}
+                    style={{ fontFamily: 'var(--font-exo2)' }}
                   />
                 </div>
                 {isSearchOpen && searchTerm.trim().length > 0 && (
