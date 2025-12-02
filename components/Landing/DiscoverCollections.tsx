@@ -465,7 +465,7 @@ export default function DiscoverCollections() {
         <div className="flex justify-center mt-14">
           <button
             onClick={() => router.push('/marketplace')}
-            className="relative px-12 py-2 w-[220px] text-white rounded-full font-exo2 inline-flex items-center justify-center gap-3 text-lg hover:scale-105 transition-transform"
+            className="cursor-pointer relative px-12 py-2 w-[220px] text-white rounded-full font-exo2 inline-flex items-center justify-center gap-3 text-lg hover:scale-105 transition-transform"
             style={{
               background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)',
             }}

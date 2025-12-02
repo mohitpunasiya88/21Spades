@@ -3,6 +3,7 @@ import { ArrowRight, Heart } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { CiHeart } from 'react-icons/ci';
+import { useRouter } from 'next/navigation';
 import bidIcon from '@/components/assets/image.png';
 
 interface NFTCardProps {
@@ -13,11 +14,26 @@ interface NFTCardProps {
   category: string;
   verified?: boolean;
   imageUrl?: string;
+  nftId?: string;
+  collectionId?: string;
 }
 
-function NFTCard({ title, creator, price, edition, verified = true, imageUrl }: NFTCardProps) {
+function NFTCard({ title, creator, price, edition, verified = true, imageUrl, nftId, collectionId }: NFTCardProps) {
+  const router = useRouter();
+
+  const handleCardClick = () => {
+    if (nftId) {
+      if (collectionId) {
+        router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`);
+      } else {
+        router.push(`/marketplace/nft/${nftId}`);
+      }
+    }
+  };
+
   return (
     <div
+      onClick={handleCardClick}
       className="overflow-hidden rounded-[10px] bg-white shadow-lg w-full transition-all hover:scale-[1.03] cursor-pointer z-10"
     >
       {/* NFT Image Area */}
@@ -37,7 +53,10 @@ function NFTCard({ title, creator, price, edition, verified = true, imageUrl }: 
         />
 
         {/* Heart Icon */}
-        <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
+        <button 
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer"
+        >
           <CiHeart className="w-5 h-5 text-white" />
         </button>
       </div>
