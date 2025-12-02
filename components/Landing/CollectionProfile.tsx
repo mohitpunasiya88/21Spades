@@ -656,10 +656,10 @@ export default function CollectionProfile({
   }, [nfts, activeTab, timeUpdate, selectedSort])
 
   const sortItems: MenuProps['items'] = [
-    { label: 'Price High to Low', key: 'price-high' },
-    { label: 'Price Low to High', key: 'price-low' },
-    { label: 'Recently Listed', key: 'recent' },
-    { label: 'Oldest First', key: 'oldest' },
+    { label: 'Price High to Low', key: 'Price-high' },
+    { label: 'Price Low to High', key: 'Price-low' },
+    { label: 'Recently Listed', key: 'Recent' },
+    { label: 'Oldest First', key: 'Oldest' },
   ]
 
   const handleSortClick: MenuProps['onClick'] = (e) => {
