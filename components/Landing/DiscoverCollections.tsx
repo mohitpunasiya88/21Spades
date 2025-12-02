@@ -289,6 +289,12 @@ export default function DiscoverCollections() {
           .slice(0, 2);
         
         setCollections([response_system.data.collection,...activeCollections, ]);
+        // const allCollections = [response_system.data.collection, ...activeCollections];
+        
+        // // TEST: Change this number to test with 1, 2, or 3 cards (1 = 1 card, 2 = 2 cards, 3 = 3 cards)
+        // const TEST_CARD_COUNT = 3; // Change to 1 or 2 to test with fewer cards
+        
+        // setCollections(allCollections.slice(0, TEST_CARD_COUNT));
       } else {
         setCollections([]);
       }
@@ -354,7 +360,7 @@ export default function DiscoverCollections() {
           
           {/* Cards Grid */}
           {isLoading ? (
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center gap-6 sm:gap-8">
+            <div className="relative z-10 flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 w-full">
               {/* Loading state */}
               {[1, 2, 3].map((n) => (
                 <div
@@ -377,7 +383,7 @@ export default function DiscoverCollections() {
               ))}
             </div>
           ) : collections.length > 0 ? (
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center gap-6 sm:gap-8">
+            <div className="relative z-10 flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 w-full">
               {collections.map((collection, index) => {
                 const collectionName = collection.collectionName || collection.name || 'Unnamed Collection';
                 const imageUrl = collection.imageUrl || collection.coverPhoto || null;

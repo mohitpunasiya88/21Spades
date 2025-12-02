@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter,usePathname } from 'next/navigation'
-import { Search, ChevronDown, Bell, Settings, Languages, Menu, X } from 'lucide-react'
+import { Search, ChevronDown, Bell, Settings, Languages, Menu, X, User, Image as ImageIcon, Folder, FileText } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/authStore'
 import { usePrivy } from '@privy-io/react-auth'
 import { useMessage } from '@/lib/hooks/useMessage'
+import { apiCaller } from '@/app/interceptors/apicall/apicall'
+import authRoutes from '@/lib/routes'
+import SkeletonBox from '../Common/SkeletonBox'
 
 export default function Header() {
   const router = useRouter()
@@ -16,8 +19,27 @@ export default function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('English')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<{
+    users: any[];
+    nfts: any[];
+    collections: any[];
+    posts: any[];
+    totalResults: number;
+  }>({
+    users: [],
+    nfts: [],
+    collections: [],
+    posts: [],
+    totalResults: 0,
+  })
   const languageRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const mobileSearchRef = useRef<HTMLDivElement>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { logout: privyLogout, ready: privyReady } = usePrivy()
   // Get user's initial (first letter of name or username)
   const getUserInitial = () => {
@@ -33,6 +55,79 @@ export default function Header() {
     return 'User'
   }
 
+  // Search API call with debouncing
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    if (searchTerm.trim().length > 0) {
+      setIsLoading(true)
+      setSearchResults({
+        users: [],
+        nfts: [],
+        collections: [],
+        posts: [],
+        totalResults: 0,
+      })
+
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const response = await apiCaller(
+            'GET',
+            `${authRoutes.search}?q=${encodeURIComponent(searchTerm.trim())}`,
+            null,
+            true
+          )
+
+          if (response.success && response.data) {
+            setSearchResults({
+              users: response.data.users || [],
+              nfts: response.data.nfts || [],
+              collections: response.data.collections || [],
+              posts: response.data.posts || [],
+              totalResults: response.data.totalResults || 0,
+            })
+          } else {
+            setSearchResults({
+              users: [],
+              nfts: [],
+              collections: [],
+              posts: [],
+              totalResults: 0,
+            })
+          }
+        } catch (error) {
+          console.error('Search error:', error)
+          setSearchResults({
+            users: [],
+            nfts: [],
+            collections: [],
+            posts: [],
+            totalResults: 0,
+          })
+        } finally {
+          setIsLoading(false)
+        }
+      }, 500)
+    } else {
+      setIsLoading(false)
+      setSearchResults({
+        users: [],
+        nfts: [],
+        collections: [],
+        posts: [],
+        totalResults: 0,
+      })
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [searchTerm])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(event.target as Node)) {
@@ -40,6 +135,12 @@ export default function Header() {
       }
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false)
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false)
+      }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -105,18 +206,215 @@ export default function Header() {
 
             {/* Desktop Search & Language - Hidden on mobile */}
             <div className="hidden md:flex items-center gap-4 md:gap-6">
-              {/* Search (84x22, gap 10) */}
-              <button
-                className="flex items-center justify-start gap-[10px] text-white hover:text-gray-300 transition-colors w-[84px] h-[22px]"
-              >
-                <Search className="w-4 h-4" />
-                <span
-                  className="hidden md:inline font-semibold text-[18px] leading-none"
-                  style={{ fontFamily: 'var(--font-exo2)' }}
-                >
-                  Search
-                </span>
-              </button>
+              {/* Search Input */}
+              <div className="relative" ref={searchRef}>
+                <div className="flex items-center gap-2 border border-gray-700 rounded-lg px-3 py-2 w-64">
+                  <Search className="w-4 h-4 flex-shrink-0 text-gray-400" />
+                  <div className="w-px h-4 bg-[#787486]" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value)
+                      setIsSearchOpen(e.target.value.trim().length > 0)
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value.trim().length > 0) {
+                        setIsSearchOpen(true)
+                      }
+                    }}
+                    className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm w-0 min-w-0"
+                  />
+                </div>
+                {isSearchOpen && searchTerm.trim().length > 0 && (
+                  <div
+                    className="absolute top-full left-0 mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[500px] overflow-y-auto"
+                    style={{
+                      width: "400px",
+                      background: "rgba(17, 24, 39, 0.98)",
+                      border: "1px solid rgba(139, 92, 246, 0.3)",
+                      backdropFilter: "blur(20px)",
+                      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)",
+                      zIndex: 10000,
+                    }}
+                  >
+                    <div className="p-3 flex flex-col gap-2">
+                      {isLoading && (
+                        <div className="flex flex-col gap-2">
+                          <SkeletonBox width="100%" height={20} />
+                          <SkeletonBox width="70%" height={20} />
+                          <SkeletonBox width="50%" height={20} />
+                        </div>
+                      )}
+
+                      {!isLoading && (
+                        <>
+                          {searchResults.totalResults === 0 ? (
+                            <div className="py-4 text-center">
+                              <div className="w-12 h-12 rounded-full bg-[#A3AED033] flex items-center justify-center mx-auto mb-2">
+                                <Search className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <p className="text-white text-sm font-medium mb-1">No results found</p>
+                              <p className="text-gray-400 text-xs">Try searching with different keywords</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-3">
+                              {searchResults.users.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2 px-2">
+                                    <User className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-400 text-xs font-semibold uppercase">Users ({searchResults.users.length})</span>
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    {searchResults.users.map((userItem: any) => (
+                                      <button
+                                        key={userItem._id}
+                                        onClick={() => {
+                                          router.push(`/profile?userId=${userItem._id}`)
+                                          setIsSearchOpen(false)
+                                          setSearchTerm('')
+                                        }}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                      >
+                                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={
+                                          userItem.profilePicture ? undefined : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                                        }>
+                                          {userItem.profilePicture ? (
+                                            <img src={userItem.profilePicture} alt={userItem.name || userItem.username} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = '/post/card-21.png' }} />
+                                          ) : (
+                                            <img src="/post/card-21.png" alt="Avatar" className="w-full h-full object-cover" />
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-white text-sm font-medium truncate">{userItem.name || userItem.username}</p>
+                                          <p className="text-gray-400 text-xs truncate">@{userItem.username}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {searchResults.nfts.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2 px-2">
+                                    <ImageIcon className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-400 text-xs font-semibold uppercase">NFTs ({searchResults.nfts.length})</span>
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    {searchResults.nfts.map((nft: any) => (
+                                      <button
+                                        key={nft._id}
+                                        onClick={() => {
+                                          if (nft.collectionId?._id) {
+                                            router.push(`/marketplace/nft/${nft._id}?collectionId=${nft.collectionId._id}`)
+                                          } else {
+                                            router.push(`/marketplace/nft/${nft._id}`)
+                                          }
+                                          setIsSearchOpen(false)
+                                          setSearchTerm('')
+                                        }}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                      >
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                                          {nft.imageUrl ? (
+                                            <img src={nft.imageUrl} alt={nft.name || nft.itemName} className="w-full h-full object-cover" />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                              <ImageIcon className="w-5 h-5 text-gray-500" />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-white text-sm font-medium truncate">{nft.name || nft.itemName || 'Unnamed NFT'}</p>
+                                          <p className="text-gray-400 text-xs truncate">{nft.collectionId?.name || 'Collection'}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {searchResults.collections.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2 px-2">
+                                    <Folder className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-400 text-xs font-semibold uppercase">Collections ({searchResults.collections.length})</span>
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    {searchResults.collections.map((collection: any) => (
+                                      <button
+                                        key={collection._id}
+                                        onClick={() => {
+                                          router.push(`/marketplace/collection/${collection._id}`)
+                                          setIsSearchOpen(false)
+                                          setSearchTerm('')
+                                        }}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                      >
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                                          {collection.imageUrl ? (
+                                            <img src={collection.imageUrl} alt={collection.name} className="w-full h-full object-cover" />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                              <Folder className="w-5 h-5 text-gray-500" />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-white text-sm font-medium truncate">{collection.name}</p>
+                                          <p className="text-gray-400 text-xs truncate">{collection.description || 'Collection'}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {searchResults.posts.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2 px-2">
+                                    <FileText className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-400 text-xs font-semibold uppercase">Posts ({searchResults.posts.length})</span>
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    {searchResults.posts.map((post: any) => (
+                                      <button
+                                        key={post._id}
+                                        onClick={() => {
+                                          router.push(`/feed?postId=${post._id}`)
+                                          setIsSearchOpen(false)
+                                          setSearchTerm('')
+                                        }}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                      >
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                                          {post.imageUrl ? (
+                                            <img src={post.imageUrl} alt="Post" className="w-full h-full object-cover" />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                              <FileText className="w-5 h-5 text-gray-500" />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-white text-sm font-medium truncate">{post.content?.substring(0, 50) || 'Post'}</p>
+                                          <p className="text-gray-400 text-xs truncate">@{post.userId?.username || 'User'}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Separator (1x19) */}
               {/* <span className="w-px h-[19px] bg-white/60 rounded-full" /> */}
@@ -197,7 +495,7 @@ export default function Header() {
               /* Login | Sign-Up Button (when not logged in) */
               <button
                 onClick={() => router.push('/login')}
-                className="px-4 md:px-8 py-2 md:py-3 rounded-full text-white font-semibold text-xs md:text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
+                className="cursor-pointer px-4 md:px-8 py-2 md:py-3 rounded-full text-white font-semibold text-xs md:text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95 bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
                 style={{
                   fontFamily: 'var(--font-exo2)',
                 }}
@@ -370,10 +668,222 @@ export default function Header() {
               }}
             >
               {/* Search */}
-              <button className="w-full flex items-center gap-3 text-white hover:bg-purple-600/20 transition-all px-4 py-3 border-b border-white/10">
-                <Search className="w-4 h-4" />
-                <span className="font-medium text-sm" style={{ fontFamily: 'var(--font-exo2)' }}>Search</span>
-              </button>
+              <div className="p-4 border-b border-white/10" ref={mobileSearchRef}>
+                <div className="relative">
+                  <div className="flex items-center gap-2 bg-[#F5F5F50A] border border-gray-700 rounded-lg px-3 py-2.5">
+                    <Search className="w-4 h-4 flex-shrink-0 text-gray-400" />
+                    <div className="w-px h-4 bg-[#787486]" />
+                    <input
+                      type="text"
+                      placeholder="Search"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value)
+                        setIsSearchOpen(e.target.value.trim().length > 0)
+                      }}
+                      onFocus={(e) => {
+                        if (e.target.value.trim().length > 0) {
+                          setIsSearchOpen(true)
+                        }
+                      }}
+                      className="bg-transparent border-none outline-none text-white placeholder-[#787486] flex-1 text-sm w-0 min-w-0"
+                    />
+                  </div>
+                  {isSearchOpen && searchTerm.trim().length > 0 && (
+                    <div
+                      className="absolute top-full mt-2 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[400px] overflow-y-auto"
+                      style={{
+                        right: 0,
+                        width: 'calc(100vw - 2rem)',
+                        maxWidth: '320px',
+                        background: 'rgba(17, 24, 39, 0.98)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.2)',
+                        zIndex: 10000,
+                      }}
+                    >
+                      <div className="p-3 flex flex-col gap-2">
+                        {isLoading && (
+                          <div className="flex flex-col gap-2">
+                            <SkeletonBox width="100%" height={40} />
+                            <SkeletonBox width="80%" height={40} />
+                            <SkeletonBox width="60%" height={40} />
+                          </div>
+                        )}
+
+                        {!isLoading && (
+                          <>
+                            {searchResults.totalResults === 0 ? (
+                              <div className="py-4 text-center">
+                                <div className="w-12 h-12 rounded-full bg-[#A3AED033] flex items-center justify-center mx-auto mb-2">
+                                  <Search className="w-5 h-5 text-gray-400" />
+                                </div>
+                                <p className="text-white text-sm font-medium mb-1">No results found</p>
+                                <p className="text-gray-400 text-xs">Try searching with different keywords</p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-3">
+                                {searchResults.users.length > 0 && (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2 px-2">
+                                      <User className="w-4 h-4 text-gray-400" />
+                                      <span className="text-gray-400 text-xs font-semibold uppercase">Users ({searchResults.users.length})</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {searchResults.users.map((userItem: any) => (
+                                        <button
+                                          key={userItem._id}
+                                          onClick={() => {
+                                            router.push(`/profile?userId=${userItem._id}`)
+                                            setIsSearchOpen(false)
+                                            setSearchTerm('')
+                                            setIsMobileMenuOpen(false)
+                                          }}
+                                          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={
+                                            userItem.profilePicture ? undefined : { background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }
+                                          }>
+                                            {userItem.profilePicture ? (
+                                              <img src={userItem.profilePicture} alt={userItem.name || userItem.username} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = '/post/card-21.png' }} />
+                                            ) : (
+                                              <img src="/post/card-21.png" alt="Avatar" className="w-full h-full object-cover" />
+                                            )}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-white text-sm font-medium truncate">{userItem.name || userItem.username}</p>
+                                            <p className="text-gray-400 text-xs truncate">@{userItem.username}</p>
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {searchResults.nfts.length > 0 && (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2 px-2">
+                                      <ImageIcon className="w-4 h-4 text-gray-400" />
+                                      <span className="text-gray-400 text-xs font-semibold uppercase">NFTs ({searchResults.nfts.length})</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {searchResults.nfts.map((nft: any) => (
+                                        <button
+                                          key={nft._id}
+                                          onClick={() => {
+                                            if (nft.collectionId?._id) {
+                                              router.push(`/marketplace/nft/${nft._id}?collectionId=${nft.collectionId._id}`)
+                                            } else {
+                                              router.push(`/marketplace/nft/${nft._id}`)
+                                            }
+                                            setIsSearchOpen(false)
+                                            setSearchTerm('')
+                                            setIsMobileMenuOpen(false)
+                                          }}
+                                          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                                            {nft.imageUrl ? (
+                                              <img src={nft.imageUrl} alt={nft.name || nft.itemName} className="w-full h-full object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center">
+                                                <ImageIcon className="w-5 h-5 text-gray-500" />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-white text-sm font-medium truncate">{nft.name || nft.itemName || 'Unnamed NFT'}</p>
+                                            <p className="text-gray-400 text-xs truncate">{nft.collectionId?.name || 'Collection'}</p>
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {searchResults.collections.length > 0 && (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2 px-2">
+                                      <Folder className="w-4 h-4 text-gray-400" />
+                                      <span className="text-gray-400 text-xs font-semibold uppercase">Collections ({searchResults.collections.length})</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {searchResults.collections.map((collection: any) => (
+                                        <button
+                                          key={collection._id}
+                                          onClick={() => {
+                                            router.push(`/marketplace/collection/${collection._id}`)
+                                            setIsSearchOpen(false)
+                                            setSearchTerm('')
+                                            setIsMobileMenuOpen(false)
+                                          }}
+                                          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                                            {collection.imageUrl ? (
+                                              <img src={collection.imageUrl} alt={collection.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center">
+                                                <Folder className="w-5 h-5 text-gray-500" />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-white text-sm font-medium truncate">{collection.name}</p>
+                                            <p className="text-gray-400 text-xs truncate">{collection.description || 'Collection'}</p>
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {searchResults.posts.length > 0 && (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2 px-2">
+                                      <FileText className="w-4 h-4 text-gray-400" />
+                                      <span className="text-gray-400 text-xs font-semibold uppercase">Posts ({searchResults.posts.length})</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {searchResults.posts.map((post: any) => (
+                                        <button
+                                          key={post._id}
+                                          onClick={() => {
+                                            router.push(`/feed?postId=${post._id}`)
+                                            setIsSearchOpen(false)
+                                            setSearchTerm('')
+                                            setIsMobileMenuOpen(false)
+                                          }}
+                                          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-600/20 transition-colors text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                                            {post.imageUrl ? (
+                                              <img src={post.imageUrl} alt="Post" className="w-full h-full object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center">
+                                                <FileText className="w-5 h-5 text-gray-500" />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-white text-sm font-medium truncate">{post.content?.substring(0, 50) || 'Post'}</p>
+                                            <p className="text-gray-400 text-xs truncate">@{post.userId?.username || 'User'}</p>
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Language */}
               {/* <div className="flex items-center justify-between px-4 py-3 hover:bg-purple-600/20 transition-all">

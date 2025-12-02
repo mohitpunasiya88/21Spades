@@ -619,53 +619,53 @@ export default function FeedPost({ post }: FeedPostProps) {
     setIsShareModalOpen(true)
   }
 
-  const handleSave = async () => {
-    if (!isAuthenticated) {
-      setShowLoginModal(true)
-      return
-    }
+  // const handleSave = async () => {
+  //   if (!isAuthenticated) {
+  //     setShowLoginModal(true)
+  //     return
+  //   }
 
-    const newSaved = !saved
-    const isRepost = !!post.originalPostId
+  //   const newSaved = !saved
+  //   const isRepost = !!post.originalPostId
 
-    // For reposts, don't do optimistic update - wait for API response
-    if (!isRepost) {
-      setSaved(newSaved)
-      setLocalSaves(newSaved ? localSaves + 1 : Math.max(0, localSaves - 1))
-    }
+  //   // For reposts, don't do optimistic update - wait for API response
+  //   if (!isRepost) {
+  //     setSaved(newSaved)
+  //     setLocalSaves(newSaved ? localSaves + 1 : Math.max(0, localSaves - 1))
+  //   }
 
-    try {
-      // For reposts, save the original post, otherwise save the current post
-      const postIdToSave = post.originalPostId || post.id
-      await savePost(postIdToSave)
+  //   try {
+  //     // For reposts, save the original post, otherwise save the current post
+  //     const postIdToSave = post.originalPostId || post.id
+  //     await savePost(postIdToSave)
 
-      // Update from store - the savePost function already updated the store
-      const allPosts = useFeedStore.getState().posts
+  //     // Update from store - the savePost function already updated the store
+  //     const allPosts = useFeedStore.getState().posts
 
-      if (isRepost && post.originalPostId) {
-        // For reposts, find the original post in the store (which was just updated by savePost)
-        const originalPost = allPosts.find(p => p._id === post.originalPostId)
-        if (originalPost) {
-          setLocalSaves(originalPost.savesCount || 0)
-          setSaved(originalPost.isSaved || false)
-        }
-      } else {
-        // For regular posts, find the updated post
-        const updatedPost = allPosts.find(p => p._id === post.id)
-        if (updatedPost) {
-          setLocalSaves(updatedPost.savesCount || 0)
-          setSaved(updatedPost.isSaved || false)
-        }
-      }
-    } catch (error) {
-      // Revert on error
-      if (!isRepost) {
-        setSaved(!newSaved)
-        setLocalSaves(post.saves)
-      }
-      console.error('Error saving post:', error)
-    }
-  }
+  //     if (isRepost && post.originalPostId) {
+  //       // For reposts, find the original post in the store (which was just updated by savePost)
+  //       const originalPost = allPosts.find(p => p._id === post.originalPostId)
+  //       if (originalPost) {
+  //         setLocalSaves(originalPost.savesCount || 0)
+  //         setSaved(originalPost.isSaved || false)
+  //       }
+  //     } else {
+  //       // For regular posts, find the updated post
+  //       const updatedPost = allPosts.find(p => p._id === post.id)
+  //       if (updatedPost) {
+  //         setLocalSaves(updatedPost.savesCount || 0)
+  //         setSaved(updatedPost.isSaved || false)
+  //       }
+  //     }
+  //   } catch (error) {
+  //     // Revert on error
+  //     if (!isRepost) {
+  //       setSaved(!newSaved)
+  //       setLocalSaves(post.saves)
+  //     }
+  //     console.error('Error saving post:', error)
+  //   }
+  // }
 
   const handleCommentClick = async () => {
     // Toggle accordion
@@ -1344,14 +1344,14 @@ export default function FeedPost({ post }: FeedPostProps) {
           <span className="text-xs sm:text-sm">{localShares}</span>
         </button>
         {/* vertical line */}
-        <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" />
-        <button
+        {/* <div className="w-px h-[18px] bg-[#6B757E4D] hidden sm:block" /> */}
+        {/* <button
           onClick={handleSave}
           className={`flex items-center gap-1 sm:gap-2 bg-[#FFFFFF0D] px-3 py-1.5 rounded-full border border-[#FFFFFF1A] hover:bg-[#131035] ${saved ? 'text-yellow-400' : 'hover:text-yellow-400'} cursor-pointer`}
         >
           <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" fill={saved ? 'currentColor' : 'none'} />
           <span className="text-xs sm:text-sm">{localSaves}</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Comments Accordion */}

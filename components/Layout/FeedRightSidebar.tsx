@@ -179,7 +179,7 @@ export default function FeedRightSidebar() {
         setIsLoadingLiveNFTs(true)
         const queryParams = new URLSearchParams()
         queryParams.append('page', '1')
-        queryParams.append('limit', '100')
+        queryParams.append('limit', '20')
         queryParams.append('blocked', 'false')
 
         const url = `${authRoutes.getNFTsByCollection}?${queryParams.toString()}`

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
-import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, ArrowLeft } from 'lucide-react'
+import { ArrowUp, Heart, Check, LayoutGrid, LayoutList, ArrowLeft, ChartColumnBig } from 'lucide-react'
 import { Dropdown, Space, Avatar, Spin, Tooltip } from 'antd'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -263,7 +263,7 @@ function NFTCard({
       onClick={() => router.push(`/marketplace/nft/${nftId}?collectionId=${collectionId}`)}
     >
       <div 
-        className="relative rounded-2xl overflow-y-auto transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-[#5B5FE3]/30 nft-cards-scrollbar"
+        className="relative rounded-2xl overflow-y-auto transition-transform hover:scale-[1.03] p-2 bg-[#0A0D1F] nft-cards-scrollbar"
         style={{
           height: '380px',
           boxShadow: '0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
@@ -277,46 +277,40 @@ function NFTCard({
               e.stopPropagation()
               setIsFavorite(!isFavorite)
             }}
-            className="absolute glass top-7.5 right-7.5 z-10 p-2 rounded-full transition-colors"
-            // style={{
-            //   background: 'linear-gradient(180deg, rgba(126,107,239,0.45), rgba(126,107,239,0.22))',
-            // }}
+            className="absolute top-7.5 right-7.5 z-10 p-1.5 sm:p-2 rounded-full bg-transparent border border-white/30 hover:bg-white/10 transition-colors"
           >
-            
             <Heart 
-              className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
             />
           </button>
 
           {/* Padded media with gradient */}
           <div className="absolute inset-0 p-3.5">
             <div
-              className="relative p-3 h-full w-full rounded-[14px] overflow-hidden ring-1 ring-white/10 bg-[#050616]"
-              style={{ background: 'radial-gradient(120% 120% at 50% 0%,rgb(78, 13, 255) 0%, #180B34 68%, #070817 100%)' }}
+              className="relative p-3 h-full w-full rounded-[14px] overflow-hidden bg-gradient-to-b from-[#4F01E6] to-[#25016E]"
             >
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{ background: 'radial-gradient(120% 100% at 50% 0%, rgba(0,0,0,0) 52%, rgba(5,6,20,0.65) 100%)' }}
-              />
-              <div className="pointer-events-none absolute inset-0 ring-1 ring-[#7E6BEF]/25 rounded-[14px]" />
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center p-4">
                 {nftImage && !imageError ? (
-                  <Image 
-                    src={nftImage} 
-                    alt={displayName} 
-                    fill
-                    className="object-cover rounded-[14px] pointer-events-none select-none"
-                    onError={() => setImageError(true)}
-                  />
+                  <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center bg-white rounded-lg overflow-hidden">
+                    <Image 
+                      src={nftImage} 
+                      alt={displayName} 
+                      fill
+                      className="object-contain pointer-events-none select-none"
+                      onError={() => setImageError(true)}
+                    />
+                  </div>
                 ) : (
-                  <Image 
-                    src={spadesImage} 
-                    alt="21 Spade" 
-                    width={125} 
-                    height={125} 
-                    priority
-                    className="object-contain pointer-events-none select-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.55)]"
-                  />
+                  <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center bg-white rounded-lg">
+                    <Image 
+                      src={spadesImage} 
+                      alt="21 Spade" 
+                      width={125} 
+                      height={125} 
+                      priority
+                      className="object-contain pointer-events-none select-none"
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -401,13 +395,14 @@ function NFTCard({
           )}
           
           {/* Price */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <ArrowUp className="w-3.5 h-3.5 text-red-500 fill-red-500" />
               <span className="text-white text-sm font-semibold font-exo2">A. {price}</span>
             </div>
-            <button className="px-3 py-1.5 text-xs font-medium text-gray-300 border border-gray-600 rounded-full hover:border-gray-500 transition-colors flex items-center gap-1.5">
-              <span className="font-exo2">Details</span>
+            <button className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-gray-300 border border-gray-600 rounded-lg font-exo2 whitespace-nowrap hover:border-gray-500 transition-colors">
+              <ChartColumnBig className="w-3 h-3 sm:w-3.5 sm:h-3.5 object-contain" />
+              <span>Details</span>
             </button>
           </div>
         </div>
@@ -430,7 +425,7 @@ export default function CollectionProfile({
 }: CollectionProfileProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('Items')
-  const [selectedSort, setSelectedSort] = useState('Price High to Low')
+  const [selectedSort, setSelectedSort] = useState('recent')
   const [layoutView, setLayoutView] = useState<'grid' | 'list'>('grid')
   
   // State for collection data
@@ -451,6 +446,7 @@ export default function CollectionProfile({
       
       if (response.success && response.data) {
         const collection = response.data.collection || response.data
+        console.log('collection', collection)
         setCollectionData(collection)
       } else {
         console.warn("⚠️ Collection not found")
@@ -547,11 +543,14 @@ export default function CollectionProfile({
     }
   }, [activeTab, nfts.length])
 
+  console.log('collectionData', collectionData)
+
   // Use API data if available, otherwise use props/defaults
   const displayCollectionName = collectionData?.collectionName || collectionData?.name || collectionName
   const displayDescription = collectionData?.collectionDescription || collectionData?.description || description
   const displayFloorPrice = collectionData?.averagePrice ? `${collectionData.averagePrice} AVAX` : floorPrice
   const displayItems = collectionData?.totalCollectionNfts || collectionData?.totalNfts || items
+  console.log('displayItems', displayItems)
   const displayOwners = collectionData?.totalOwners || owners
   const displayNftCount = collectionData?.totalCollectionNfts || collectionData?.totalNfts || nftCount
   const collectionImage = collectionData?.imageUrl || collectionData?.coverPhoto || null
@@ -746,7 +745,7 @@ export default function CollectionProfile({
             {/* Description */}
             <p className="text-white text-base mb-6 font-exo2 max-w-[400px]">
               {displayDescription}
-              <span className="text-[#C084FC] ml-2 hover:underline cursor-pointer font-bold font-exo2">More</span>
+              {/* <span className="text-[#C084FC] ml-2 hover:underline cursor-pointer font-bold font-exo2">More</span> */}
             </p>
 
             {/* Stats Pill */}
@@ -836,7 +835,7 @@ export default function CollectionProfile({
             </Dropdown>
 
             {/* Layout Toggles */}
-            <div className="flex items-center gap-0 border border-white/10 rounded-full bg-[#1A1A2E]">
+            {/* <div className="flex items-center gap-0 border border-white/10 rounded-full bg-[#1A1A2E]">
               <button
                 onClick={() => setLayoutView('list')}
                 className={`p-2 rounded-l-full transition-colors ${
@@ -853,7 +852,7 @@ export default function CollectionProfile({
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

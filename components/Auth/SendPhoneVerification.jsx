@@ -283,14 +283,14 @@ export default function SendPhoneVerification() {
                 type="button"
                 onClick={handleSend}
                 disabled={sending}
-                className="w-full rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold btn-purple-gradient transition-all duration-200"
+                className="cursor-pointer w-full rounded-full px-4 py-2 sm:py-2.5 text-white text-base sm:text-lg font-exo2 font-semibold btn-purple-gradient transition-all duration-200"
               >
                 {sending ? 'Sending...' : 'Send Verification Code'}
               </button>
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="w-full border mt-3 border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2"
+                className="cursor-pointer w-full border mt-3 border-gray-600 rounded-full text-white text-base sm:text-lg py-2 sm:py-2.5 hover:bg-[#4A008F] transition flex items-center justify-center gap-2 font-exo2"
               >
                 Back
               </button>

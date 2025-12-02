@@ -341,7 +341,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <div className="flex justify-center border-b border-[#2A2F4A]">
               <button
                 onClick={handleToggleSidebar}
-                className="p-1.5 rounded-lg text-white transition-colors"
+                className="p-1.5 rounded-lg text-white transition-colors cursor-pointer"
                 title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
               >
                 <Image src={image22} alt="Toggle sidebar" width={40} height={40} className="object-contain" />
@@ -378,7 +378,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           setTooltipPosition(null)
                         }}
                         onClick={handleSpadesFIClick}
-                        className={`relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                        className={`cursor-pointer relative flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-3 ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
                           isActive
                             ? 'text-[#FFB600] bg-[#7E6BEF0A]'
                             : 'text-[#A3AED0] hover:text-white hover:bg-white/5'
@@ -419,7 +419,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                               <button
                                 key={subItem.path}
                                 onClick={() => handleNavigation(subItem.path, subItem.label)}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 pl-8 text-sm font-exo2 transition-colors ${isSubActive
+                                className={`cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 pl-8 text-sm font-exo2 transition-colors ${isSubActive
                                     ? 'text-[#FFB600] bg-[#7E6BEF0A]'
                                     : 'text-gray-300 hover:text-white hover:bg-white/5'
                                   }`}
@@ -457,7 +457,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           setTooltipPosition(null)
                         }}
                         onClick={() => handleNavigation(item.path, item.label)}
-                        className={`relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
+                        className={`cursor-pointer relative flex items-center mt-1 ${sidebarOpen ? 'gap-3' : 'justify-center'} ${sidebarOpen ? 'px-4' : 'px-2'} py-3 w-full transition-colors ${
                           isActive
                             ? 'text-[#FFB600] bg-[#7E6BEF0A]'
                             : 'text-[#A3AED0] hover:text-white hover:bg-white/5'
@@ -501,12 +501,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleNavigation('/messages', 'Messages')}
-                    className="text-white hover:text-gray-300 transition-colors"
+                    className="cursor-pointer text-white hover:text-gray-300 transition-colors"
                     title="New Message"
                   >
                     <Send className="w-5 h-5" />
                   </button>
-                  <button className="text-white hover:text-gray-300 transition-colors">
+                  <button className="cursor-pointer text-white hover:text-gray-300 transition-colors">
                     <MoreVertical className="w-5 h-5" />
                   </button>
                 </div>
@@ -585,7 +585,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               {/* View All */}
               <button
                 onClick={() => handleNavigation('/messages', 'Messages')}
-                className="flex items-center gap-1 text-white text-sm font-exo2 hover:text-gray-300 transition-colors"
+                className="cursor-pointer flex items-center gap-1 text-white text-sm font-exo2 hover:text-gray-300 transition-colors"
               >
                 View All
                 <ChevronRight className="w-4 h-4" />

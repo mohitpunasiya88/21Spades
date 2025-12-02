@@ -58,11 +58,11 @@ function NFTCard({ title, creator, price, edition, verified = true, imageUrl }: 
           <span className="text-[#4A01D9] text-xs md:text-sm font-semibold">Floor Price</span>
 
           <div className="flex items-center gap-1">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg">
-                          <Image src={bidIcon} alt="detail" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
-                        </span>
-                        <span className="text-[#000000] font-semibold text-xs sm:text-sm">{price}</span>
-                      </div>
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg">
+              <Image src={bidIcon} alt="detail" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+            </span>
+            <span className="text-[#000000] font-semibold text-xs sm:text-sm">{price}</span>
+          </div>
         </div>
       </div>
     </div>

@@ -243,12 +243,12 @@ function NFTCard({ title, creator, floorPrice = '0.01 AVAX', verified = true, co
         />
 
         {/* Heart Icon - Exact positioning */}
-        <button 
+        {/* <button 
           onClick={(e) => e.stopPropagation()}
           className="absolute top-6 right-6 z-10 p-2 rounded-full border border-white/35 bg-white/10 text-white transition-colors hover:bg-white/25"
         >
           <CiHeart className="w-4 h-4" />
-        </button>
+        </button> */}
       </div>
 
       {/* Content - Exact match with Figma - Dark theme with white text */}
@@ -364,12 +364,12 @@ const TokenizedCollectionCard: React.FC = () => {
     },
   ]
 
-  const handleMenuClick: MenuProps['onClick'] = (e) => {
-    const selectedItem = items.find(item => item?.key === e.key)
-    if (selectedItem && 'label' in selectedItem) {
-      setSelectedNetwork(selectedItem.label as string)
-    }
-  }
+  // const handleMenuClick: MenuProps['onClick'] = (e) => {
+  //   const selectedItem = items.find(item => item?.key === e.key)
+  //   if (selectedItem && 'label' in selectedItem) {
+  //     setSelectedNetwork(selectedItem.label as string)
+  //   }
+  // }
 
   // Map collections to NFT card format
   const mappedCollections = collections.map((collection: any) => {

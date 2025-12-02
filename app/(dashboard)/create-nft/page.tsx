@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker } from "antd"
+import { Button, Input, Upload, Select, Switch, InputNumber, Modal, DatePicker, Tooltip } from "antd"
 import dayjs, { Dayjs } from "dayjs"
 import { Upload as UploadIcon, X, Plus, CloudUpload, Calendar, Signature } from "lucide-react"
 import Image from "next/image"
@@ -60,6 +60,23 @@ const { user } = useAuthStore()
   const [expirationDate, setExpirationDate] = useState<Dayjs | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastValidFixedPriceRef = useRef<string>("")
+
+  // Error states for validation
+  const [errors, setErrors] = useState<{
+    freeMinting?: string
+    uploadedFile?: string
+    title?: string
+    description?: string
+    category?: string
+    royalties?: string
+    selectedMethod?: string
+    selectedCollection?: string
+    selectedCollectionAddress?: string
+    fixedPrice?: string
+    startingDate?: string
+    expirationDate?: string
+    walletAddress?: string
+  }>({})
 
   // Create Collection Modal States
   const [isCreateCollectionModalOpen, setIsCreateCollectionModalOpen] = useState(false)
@@ -225,6 +242,10 @@ const { user } = useAuthStore()
       setUploadedFile(file)
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
+      // Clear error when file is uploaded
+      if (errors.uploadedFile) {
+        setErrors(prev => ({ ...prev, uploadedFile: undefined }))
+      }
 
       // Get image dimensions if it's an image
       if (file.type.startsWith("image/")) {
@@ -266,6 +287,10 @@ const { user } = useAuthStore()
       setUploadedFile(file)
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
+      // Clear error when file is uploaded
+      if (errors.uploadedFile) {
+        setErrors(prev => ({ ...prev, uploadedFile: undefined }))
+      }
 
       // Get image dimensions if it's an image
       if (file.type.startsWith("image/")) {
@@ -296,52 +321,96 @@ const { user } = useAuthStore()
   const { mint, setApprovalForAll, isApproved } = useNFTCollection();
   const {createPutOnSaleSignature, auctionNonceStatus} = useMarketplace();
   const handleCreateItem = async () => {
-    // Validation
+    // Collect all validation errors
+    const validationErrors: {
+      freeMinting?: string
+      uploadedFile?: string
+      title?: string
+      description?: string
+      category?: string
+      royalties?: string
+      selectedMethod?: string
+      selectedCollection?: string
+      selectedCollectionAddress?: string
+      fixedPrice?: string
+      startingDate?: string
+      expirationDate?: string
+      walletAddress?: string
+    } = {}
+
+    // Validate all fields and collect errors
+    if (!freeMinting) {
+      validationErrors.freeMinting = "Please enable Free Minting to create NFT"
+    }
     if (!uploadedFile) {
-      message.error("Please upload a file")
-      return
+      validationErrors.uploadedFile = "Please upload a file"
     }
     if (!title.trim()) {
-      message.error("Please enter a title")
-      return
+      validationErrors.title = "Please enter a title"
     }
     if (!description.trim()) {
-      message.error("Please enter a description")
-      return
+      validationErrors.description = "Please enter a description"
     }
-    if (!selectedCollection) {
-      message.error("Please select or create a collection")
-      return
+    if (!category) {
+      validationErrors.category = "Please select a category"
     }
-    if (!selectedCollectionAddress) {
-      message.error("Selected collection address is missing. Please reselect the collection.")
-      return
+    // Validate royalties - required field
+    if (royalties === null || royalties === undefined) {
+      validationErrors.royalties = "Please enter royalties"
+    } else if (royalties < 0 || royalties > 50) {
+      validationErrors.royalties = "Royalties must be between 0 and 50%"
+    }
+    // Validate selected method - if Fixed Rate or Auction is selected, price/date validation will be done below
+    if (selectedMethod === "Fixed Rate" || selectedMethod === "Time Auction") {
+      // Method is selected, validate price/dates below
     }
     if ((!fixedPrice || fixedPrice.trim() === "") && selectedMethod === "Fixed Rate") {
-      message.error("Please enter a fixed price")
-      return
+      validationErrors.fixedPrice = "Please enter a fixed price"
     }
     if (selectedMethod === "Time Auction") {
+      if (!fixedPrice || fixedPrice.trim() === "") {
+        validationErrors.fixedPrice = "Please enter a starting price for auction"
+      }
       if (!startingDate) {
-        message.error("Please select a starting date and time")
-        return
+        validationErrors.startingDate = "Please select a starting date and time"
       }
       if (!expirationDate) {
-        message.error("Please select an expiration date and time")
-        return
+        validationErrors.expirationDate = "Please select an expiration date and time"
       }
-      if (expirationDate.isBefore(startingDate) || expirationDate.isSame(startingDate)) {
-        message.error("Expiration date and time must be after starting date and time")
-        return
+      if (startingDate && expirationDate && (expirationDate.isBefore(startingDate) || expirationDate.isSame(startingDate))) {
+        validationErrors.expirationDate = "Expiration date and time must be after starting date and time"
       }
+    }
+    if (!selectedCollection) {
+      validationErrors.selectedCollection = "Please select or create a collection"
+    }
+    if (!selectedCollectionAddress) {
+      validationErrors.selectedCollectionAddress = "Selected collection address is missing. Please reselect the collection."
     }
 
-    // Hardcoded wallet address for testing
+    // Check wallet address
     const walletAddress = address
     if (!walletAddress) {
-      message.error("Wallet address not found. Please connect your wallet.")
+      validationErrors.walletAddress = "Wallet address not found. Please connect your wallet."
+    }
+
+    // Set errors and return if any validation fails
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      // Scroll to first error field
+      const firstErrorField = Object.keys(validationErrors)[0]
+      const errorElement = document.querySelector(`[data-error-field="${firstErrorField}"]`)
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
       return
     }
+
+    // Clear errors if validation passes
+    setErrors({})
+
+    // At this point, walletAddress is guaranteed to be non-null due to validation above
+    const validatedWalletAddress = walletAddress!
 
     setIsCreatingNFT(true)
     let loadingMessage: any = null
@@ -357,14 +426,15 @@ const { user } = useAuthStore()
         })
       }
 
-      const imageUrl = await fileToDataURL(uploadedFile)
+      // At this point, uploadedFile is guaranteed to be non-null due to validation above
+      const imageUrl = await fileToDataURL(uploadedFile!)
 
       // Determine media type
-      const mediaType = uploadedFile.type.startsWith("image/")
+      const mediaType = uploadedFile!.type.startsWith("image/")
         ? "image"
-        : uploadedFile.type.startsWith("video/")
+        : uploadedFile!.type.startsWith("video/")
           ? "video"
-          : uploadedFile.type.startsWith("audio/")
+          : uploadedFile!.type.startsWith("audio/")
             ? "audio"
             : "image"
 
@@ -402,7 +472,7 @@ const { user } = useAuthStore()
       let payload: any = {
         collectionId: selectedCollection,
         royalty: royalties || 0,
-        walletAddress: walletAddress,
+        walletAddress: validatedWalletAddress,
         itemName: title,
         itemDescription: description,
         ipfsHash: "", // Will be set by backend or IPFS upload
@@ -424,12 +494,12 @@ const { user } = useAuthStore()
         startingTime: startingTime,
         endingTime: endingTime,
         isMultiple: false,
-        owners: [walletAddress],
+        owners: [validatedWalletAddress],
         isUnlockable: unlockOncePurchased,
         chainIndex: 1,
         blocked: false,
         creator: {
-          walletAddress: walletAddress,
+          walletAddress: validatedWalletAddress,
           name: user?.name || "",
           profilePicture: user?.profilePicture || "",
         },
@@ -451,16 +521,17 @@ const { user } = useAuthStore()
 
       try {
         /// fix the token URL we need url of pinata i
+        // At this point, selectedCollectionAddress is guaranteed to be non-null due to validation above
         const response = await mint({
           to: address as string,
           tokenURI:  "test/pinata", //payload.imageUrl,
           royalty: payload.royalty,
-        },selectedCollectionAddress)
+        }, selectedCollectionAddress!)
 const idsssss = Number(response[0].args.tokenId).toString()
         payload.nftId = Number(response[0].args.tokenId).toString()
         const mintTxHash = Array.isArray(response) ? response[0]?.transactionHash : undefined
         await logWalletActivity({
-          walletAddress,
+          walletAddress: validatedWalletAddress,
           hash: mintTxHash,
           chainId: resolvedChainId,
         })
@@ -472,9 +543,10 @@ const idsssss = Number(response[0].args.tokenId).toString()
       // Ensure marketplace approval for this collection before minting / API call
       const marketplaceAddress = CONTRACTS.ERC721Marketplace.address
       try {
-        const hasApproval = await isApproved(walletAddress, marketplaceAddress, selectedCollectionAddress)
+        // At this point, selectedCollectionAddress is guaranteed to be non-null due to validation above
+        const hasApproval = await isApproved(validatedWalletAddress, marketplaceAddress, selectedCollectionAddress!)
         if (!hasApproval) {
-          await setApprovalForAll(marketplaceAddress, true, selectedCollectionAddress)
+          await setApprovalForAll(marketplaceAddress, true, selectedCollectionAddress!)
         }
       } catch (approvalError) {
         console.error("❌ Error while ensuring marketplace approval:", approvalError)
@@ -514,9 +586,10 @@ payload.nonce = nonceResponse.data.nonce;
       // Use the exact string value to avoid scientific notation issues
       const priceString = fixedPrice && fixedPrice.trim() !== "" ? fixedPrice : "0"
       
+      // At this point, selectedCollectionAddress is guaranteed to be non-null due to validation above
       const salePayload = {
         tokenId: payload.nftId, // this is the token id of the nft
-        erc721: selectedCollectionAddress, // this is the erc721 collection address of the nft
+        erc721: selectedCollectionAddress!, // this is the erc721 collection address of the nft
         priceEth: priceString, // Use exact string value to preserve precision (no scientific notation)
         nonce: nonceResponse.data.nonce, // get nonce by hook of useMarketplace
         erc20Token: payload.erc20Token || "0x0000000000000000000000000000000000000000", // 0x0000000000000000000000000000000000000000 for native token or erc20 token address 
@@ -1102,7 +1175,7 @@ payload.nonce = nonceResponse.data.nonce;
 
       <div className="">
         {/* Upload File */}
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6" data-error-field="uploadedFile">
           <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">Upload File</h2>
           <p className="text-[#9BA3AF] text-xs sm:text-sm mb-3 sm:mb-4">File type supported PNG, GIF, WEBP, MP3, MP4 ; (MAX 500MB)</p>
 
@@ -1180,37 +1253,61 @@ payload.nonce = nonceResponse.data.nonce;
               ref={fileInputRef}
               type="file"
               accept="image/png,image/gif,image/webp,audio/mpeg,video/mp4"
-              onChange={handleFileUpload}
+              onChange={(e) => {
+                handleFileUpload(e)
+                if (errors.uploadedFile) {
+                  setErrors(prev => ({ ...prev, uploadedFile: undefined }))
+                }
+              }}
               className="hidden"
             />
           </div>
+          {errors.uploadedFile && (
+            <p className="text-red-500 text-sm mt-2">{errors.uploadedFile}</p>
+          )}
         </div>
 
         {/* Title */}
-        <div className="p-4 sm:p-6 font-exo2">
+        <div className="p-4 sm:p-6 font-exo2" data-error-field="title">
           <h2 className="text-white text-sm font-medium mb-2">
             Title <span className="text-[#884DFF] text-2xl">*</span>
           </h2>
           <Input
             placeholder="e.g: Crypto Hunks"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="!bg-[#090721]  !border-[#A3AED033] !font-exo2 !text-white !h-12 !rounded-lg placeholder:!text-[#6B7280]"
+            onChange={(e) => {
+              setTitle(e.target.value)
+              if (errors.title) {
+                setErrors(prev => ({ ...prev, title: undefined }))
+              }
+            }}
+            className="!bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !h-12 !rounded-lg placeholder:!text-[#6B7280]"
           />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-2">{errors.title}</p>
+          )}
         </div>
 
         {/* Description */}
-        <div className="p-4 sm:p-6 font-exo2">
+        <div className="p-4 sm:p-6 font-exo2" data-error-field="description">
           <h2 className="text-white text-sm font-medium mb-2">
             Description <span className="text-[#884DFF] text-2xl">*</span>
           </h2>
           <TextArea
             placeholder="e.g: This is very limited item"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value)
+              if (errors.description) {
+                setErrors(prev => ({ ...prev, description: undefined }))
+              }
+            }}
             rows={4}
             className="!bg-[#090721] !border-[#A3AED033] !font-exo2 !text-white !rounded-lg placeholder:!text-[#6B7280] sm:!min-h-[120px]"
           />
+          {errors.description && (
+            <p className="text-red-500 text-sm mt-2">{errors.description}</p>
+          )}
         </div>
 
         {/* Size (Instead) */}
@@ -1230,12 +1327,17 @@ payload.nonce = nonceResponse.data.nonce;
         <div className="p-4 sm:p-6 font-exo2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Category */}
-            <div>
+            <div data-error-field="category">
               <h2 className="text-white text-sm font-medium mb-2">Category</h2>
               <Select
                 placeholder={categoriesLoading ? "Loading categories..." : "Select Category"}
                 value={category || undefined}
-                onChange={(v) => setCategory(v)}
+                onChange={(v) => {
+                  setCategory(v)
+                  if (errors.category) {
+                    setErrors(prev => ({ ...prev, category: undefined }))
+                  }
+                }}
                 loading={categoriesLoading}
                 className="!w-full category-select [&_.ant-select-selector]:!bg-[#090721] [&_.ant-select-selector]:!border-[#A3AED033] [&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selection-placeholder]:!text-[#6B7280] [&_.ant-select-selection-item]:!text-white [&_.ant-select-arrow]:!text-white"
                 classNames={{
@@ -1251,10 +1353,13 @@ payload.nonce = nonceResponse.data.nonce;
                 notFoundContent={categoriesLoading ? "Fetching..." : "No categories"}
                 getPopupContainer={(trigger) => trigger.parentElement || document.body}
               />
+              {errors.category && (
+                <p className="text-red-500 text-sm mt-5">{errors.category}</p>
+              )}
             </div>
 
             {/* Royalties */}
-            <div>
+            <div data-error-field="royalties">
               <h2 className="text-white text-sm font-medium mb-2">Royalties</h2>
               <div className="h-12 bg-[#090721] border border-[#A3AED033] rounded-lg flex items-center px-4">
                 <div className="flex items-center">
@@ -1276,6 +1381,10 @@ payload.nonce = nonceResponse.data.nonce;
                             // Allow typing decimal point
                             setRoyalties(null)
                           }
+                        }
+                        // Clear error when user types
+                        if (errors.royalties) {
+                          setErrors(prev => ({ ...prev, royalties: undefined }))
                         }
                       }
                     }}
@@ -1303,6 +1412,9 @@ payload.nonce = nonceResponse.data.nonce;
                   <span className="text-white text-sm ml-1">%</span>
                 </div>
               </div>
+              {errors.royalties && (
+                <p className="text-red-500 text-sm mt-2">{errors.royalties}</p>
+              )}
             </div>
           </div>
         </div>
@@ -1321,14 +1433,19 @@ payload.nonce = nonceResponse.data.nonce;
         </div> */}
 
         {/* Select Method */}
-        <div className="p-4 sm:p-6 font-exo2 w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
+        <div className="p-4 sm:p-6 font-exo2 w-full sm:w-[70%] md:w-[50%] lg:w-[40%]" data-error-field="selectedMethod">
           <h2 className="text-white text-sm font-medium mb-3">
             Select Method <span className="text-[#884DFF] text-2xl">*</span>
           </h2>
           <div className="flex gap-3 sm:gap-5">
             <button
-              onClick={() => setSelectedMethod("")}
-              className={`flex-1 px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+              onClick={() => {
+                setSelectedMethod("")
+                if (errors.selectedMethod) {
+                  setErrors(prev => ({ ...prev, selectedMethod: undefined }))
+                }
+              }}
+              className={`flex-1 px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 selectedMethod === ""
                   ? "bg-white text-black"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
@@ -1337,8 +1454,13 @@ payload.nonce = nonceResponse.data.nonce;
               None
             </button>
             <button
-              onClick={() => setSelectedMethod("Fixed Rate")}
-              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+              onClick={() => {
+                setSelectedMethod("Fixed Rate")
+                if (errors.selectedMethod || errors.fixedPrice) {
+                  setErrors(prev => ({ ...prev, selectedMethod: undefined, fixedPrice: undefined }))
+                }
+              }}
+              className={`flex-1 px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 selectedMethod === "Fixed Rate"
                   ? "bg-white text-black"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
@@ -1347,8 +1469,13 @@ payload.nonce = nonceResponse.data.nonce;
               Fixed Rate
             </button>
             <button
-              onClick={() => setSelectedMethod("Time Auction")}
-              className={`flex-1 px-4 sm:px-6 py-4 rounded-full text-xs sm:text-sm font-bold transition-all ${
+              onClick={() => {
+                setSelectedMethod("Time Auction")
+                if (errors.selectedMethod || errors.fixedPrice || errors.startingDate || errors.expirationDate) {
+                  setErrors(prev => ({ ...prev, selectedMethod: undefined, fixedPrice: undefined, startingDate: undefined, expirationDate: undefined }))
+                }
+              }}
+              className={`flex-1 px-4 sm:px-6 py-4 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 selectedMethod === "Time Auction"
                   ? "bg-white text-black"
                   : "bg-transparent text-white border border-[#A3AED033] hover:border-white"
@@ -1357,10 +1484,13 @@ payload.nonce = nonceResponse.data.nonce;
               Auction
             </button>
           </div>
+          {errors.selectedMethod && (
+            <p className="text-red-500 text-sm mt-2">{errors.selectedMethod}</p>
+          )}
         </div>
 
         {/* Price (AVAX) */}
-        <div className="p-4 sm:p-6 font-exo2">
+        <div className="p-4 sm:p-6 font-exo2" data-error-field="fixedPrice">
           <h2 className="text-white text-sm font-medium mb-2">
             Price (AVAX)
           </h2>
@@ -1381,6 +1511,9 @@ payload.nonce = nonceResponse.data.nonce;
                         lastValidFixedPriceRef.current = value
                       } else if (value === "") {
                         lastValidFixedPriceRef.current = ""
+                      }
+                      if (errors.fixedPrice) {
+                        setErrors(prev => ({ ...prev, fixedPrice: undefined }))
                       }
                     }
                   }}
@@ -1414,18 +1547,26 @@ payload.nonce = nonceResponse.data.nonce;
               </p> */}
             </div>
           </div>
+          {errors.fixedPrice && (
+            <p className="text-red-500 text-sm mt-2">{errors.fixedPrice}</p>
+          )}
         </div>
 
         {/* Time Auction Date Fields */}
         {selectedMethod === "Time Auction" && (
           <div className="p-4 sm:p-6 font-exo2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 cursor-pointer">
               {/* Starting Date & Time */}
-              <div>
+              <div data-error-field="startingDate">
                 <h2 className="text-white text-sm font-medium mb-2">Starting Date & Time</h2>
                 <DatePicker
                   value={startingDate}
-                  onChange={(date) => setStartingDate(date)}
+                  onChange={(date) => {
+                    setStartingDate(date)
+                    if (errors.startingDate) {
+                      setErrors(prev => ({ ...prev, startingDate: undefined }))
+                    }
+                  }}
                   showTime={{
                     format: 'HH:mm',
                     minuteStep: 1,
@@ -1466,14 +1607,22 @@ payload.nonce = nonceResponse.data.nonce;
                   suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                   getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 />
+                {errors.startingDate && (
+                  <p className="text-red-500 text-sm mt-2">{errors.startingDate}</p>
+                )}
               </div>
 
               {/* Expiration Date & Time */}
-              <div>
+              <div data-error-field="expirationDate">
                 <h2 className="text-white text-sm font-medium mb-2">Expiration Date & Time</h2>
                 <DatePicker
                   value={expirationDate}
-                  onChange={(date) => setExpirationDate(date)}
+                  onChange={(date) => {
+                    setExpirationDate(date)
+                    if (errors.expirationDate) {
+                      setErrors(prev => ({ ...prev, expirationDate: undefined }))
+                    }
+                  }}
                   showTime={{
                     format: 'HH:mm',
                     minuteStep: 1,
@@ -1542,6 +1691,9 @@ payload.nonce = nonceResponse.data.nonce;
                   suffixIcon={<Calendar className="h-4 w-4 text-white" />}
                   getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 />
+                {errors.expirationDate && (
+                  <p className="text-red-500 text-sm mt-2">{errors.expirationDate}</p>
+                )}
               </div>
             </div>
           </div>
@@ -1569,14 +1721,22 @@ payload.nonce = nonceResponse.data.nonce;
             </div>
 
             {/* Free Minting */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between" data-error-field="freeMinting">
               <div className="flex-1">
                 <h3 className="text-white text-sm sm:text-base font-[400] mb-1">Free Minting</h3>
                 <p className="text-[#A3AED0] text-xs sm:text-sm">Buyer will pay gas fees for minting</p>
+                {errors.freeMinting && (
+                  <p className="text-red-500 text-sm mt-1">{errors.freeMinting}</p>
+                )}
               </div>
               <Switch
                 checked={freeMinting}
-                onChange={setFreeMinting}
+                onChange={(checked) => {
+                  setFreeMinting(checked)
+                  if (errors.freeMinting) {
+                    setErrors(prev => ({ ...prev, freeMinting: undefined }))
+                  }
+                }}
                 className="[&_.ant-switch-checked]:!bg-[#4E00E5]"
                 style={{
                   backgroundColor: freeMinting ? '#4E00E5' : '#26017059'
@@ -1620,9 +1780,12 @@ payload.nonce = nonceResponse.data.nonce;
       </div>
 
        {/* Choose/Create Collection */}
-        <div className="p-4 sm:p-6 font-exo2">
+        <div className="p-4 sm:p-6 font-exo2" data-error-field="selectedCollection">
           <h2 className="text-white text-sm font-medium mb-2">Collection <span className="text-[#884DFF] text-2xl">*</span></h2>
           <p className="text-[#A3AED0] text-xs mb-4">Choose an existing collection or create a new one.</p>
+          {errors.selectedCollection && (
+            <p className="text-red-500 text-sm mb-2">{errors.selectedCollection}</p>
+          )}
 
           <div
             className={collections.length > 4 ? "collections-scroll pr-2" : ""}
@@ -1653,11 +1816,13 @@ payload.nonce = nonceResponse.data.nonce;
                   const itemCount = collection.totalCollectionNfts || collection.totalNfts || 0
                  
                   const handleCollectionClick = () => {
-                  
                       // Select this collection
                       setSelectedCollection(collectionId)
                       setSelectedCollectionAddress(collectionAddress)
-                    
+                      // Clear errors when collection is selected
+                      if (errors.selectedCollection || errors.selectedCollectionAddress) {
+                        setErrors(prev => ({ ...prev, selectedCollection: undefined, selectedCollectionAddress: undefined }))
+                      }
                   }
 
                   const handleDeselectClick = (e: React.MouseEvent) => {
@@ -1670,7 +1835,7 @@ payload.nonce = nonceResponse.data.nonce;
                       key={collectionId}
                       type="button"
                       onClick={handleCollectionClick}
-                      className={`group relative flex h-full overflow-hidden rounded-2xl duration-300 border-2 ${isSelected
+                      className={`group relative flex h-full overflow-hidden rounded-2xl duration-300 border-2 cursor-pointer ${isSelected
                           ? "border-[#6C4DFF] shadow-[0_12px_30px_rgba(108,77,255,0.35)]"
                           : "border-transparent hover:border-[#6C4DFF]/60"
                         }`}
@@ -1714,7 +1879,7 @@ payload.nonce = nonceResponse.data.nonce;
                   <button
                     type="button"
                     onClick={() => setIsCreateCollectionModalOpen(true)}
-                    className={`group flex h-[180px] sm:h-[200px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 ${selectedCollection === "create-new"
+                    className={`group flex h-[180px] sm:h-[200px] w-full flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-dashed transition-all duration-300 cursor-pointer ${selectedCollection === "create-new"
                       ? "border-[#6C4DFF] text-white bg-[#120D39]"
                       : "border-[#2A2F4A] text-[#A3AED0] hover:border-[#6C4DFF] hover:text-white"
                       }`}
@@ -1742,6 +1907,10 @@ payload.nonce = nonceResponse.data.nonce;
                       } else {
                         setSelectedCollection(collectionId)
                         setSelectedCollectionAddress(collectionAddress)
+                        // Clear errors when collection is selected
+                        if (errors.selectedCollection || errors.selectedCollectionAddress) {
+                          setErrors(prev => ({ ...prev, selectedCollection: undefined, selectedCollectionAddress: undefined }))
+                        }
                       }
                     }
 
