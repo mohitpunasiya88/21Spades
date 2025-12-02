@@ -1748,7 +1748,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                         </button>
                       </Tooltip>
                     )}
-                    <Tooltip title="This feature is coming soon!" placement="top">
+                    {/* <Tooltip title="This feature is coming soon!" placement="top">
                       <button
                         onClick={(e) => {
                           e.preventDefault()
@@ -1761,7 +1761,7 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
                         <ShoppingCart className="w-4 h-4" />
                         Make an Offer
                       </button>
-                    </Tooltip>
+                    </Tooltip> */}
                   </>
                 ) : isFixedRate ? (
                   // Fixed Rate (auctionType = 1): Only Buy Now button
