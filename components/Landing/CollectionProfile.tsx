@@ -272,7 +272,7 @@ function NFTCard({
         {/* Media box */}
         <div className="relative h-[250px] p-3">
           {/* Heart Icon */}
-          <button
+          {/* <button
             onClick={(e) => {
               e.stopPropagation()
               setIsFavorite(!isFavorite)
@@ -282,7 +282,7 @@ function NFTCard({
             <Heart 
               className={`w-4 h-4 sm:w-5 sm:h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white stroke-2'}`}
             />
-          </button>
+          </button> */}
 
           {/* Padded media with gradient */}
           <div className="absolute inset-0 p-3.5">
@@ -291,7 +291,7 @@ function NFTCard({
             >
               <div className="absolute inset-0 flex items-center justify-center p-4">
                 {nftImage && !imageError ? (
-                  <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center bg-white rounded-lg overflow-hidden">
+                  <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center rounded-lg overflow-hidden">
                     <Image 
                       src={nftImage} 
                       alt={displayName} 
@@ -301,7 +301,7 @@ function NFTCard({
                     />
                   </div>
                 ) : (
-                  <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center bg-white rounded-lg">
+                  <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center rounded-lg">
                     <Image 
                       src={spadesImage} 
                       alt="21 Spade" 

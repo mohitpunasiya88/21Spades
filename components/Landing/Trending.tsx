@@ -189,7 +189,7 @@ export default function Trending() {
           </p>
         </div>
 
-        <div className="mb-8 md:mb-12 w-full md:max-w-4xl mx-auto font-exo2 relative z-20">
+        <div className="mb-8 md:mb-12 w-full max-w-full mx-auto font-exo2 relative z-20">
           <div
             className="flex flex-nowrap items-center justify-start md:justify-center gap-0 overflow-x-auto overflow-y-hidden rounded-full py-2.5 px-4 w-full max-w-full backdrop-blur-sm scrollbar-hide relative z-20"
             style={{

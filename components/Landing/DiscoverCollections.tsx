@@ -318,7 +318,7 @@ export default function DiscoverCollections() {
 
       {/* Top glowing spade icon */}
       <div className="flex justify-center items-center mb-8">
-          <BsSuitSpade className="text-white w-6 h-6" />
+          {/* <BsSuitSpade className="text-white w-6 h-6" /> */}
         </div>
 
       <div className="mx-auto px-4 relative z-20">
@@ -417,9 +417,9 @@ export default function DiscoverCollections() {
                       />
 
                       {/* Heart Icon */}
-                      <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
+                      {/* <button className="absolute top-4 right-4 p-1 bg-[#ffffff2e] rounded-full backdrop-blur-sm cursor-pointer">
                         <CiHeart className="w-5 h-5 text-white" />
-                      </button>
+                      </button> */}
                     </div>
 
                     {/* Content */}
