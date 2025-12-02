@@ -425,7 +425,7 @@ export default function CollectionProfile({
 }: CollectionProfileProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('Items')
-  const [selectedSort, setSelectedSort] = useState('recent')
+  const [selectedSort, setSelectedSort] = useState('Price High to Low')
   const [layoutView, setLayoutView] = useState<'grid' | 'list'>('grid')
   
   // State for collection data

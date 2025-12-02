@@ -1539,16 +1539,26 @@ const erc721 = NFTDetails?.collectionId?.collectionAddress as string
 
   // Navigate to chat with current owner when clicking the message icon
   const handleOwnerChatClick = useCallback(() => {
+    // Try multiple possible locations for owner ID
     const ownerId =
       rawNftData?.currentOwner?._id ||
       rawNftData?.currentOwner?.id ||
+      rawNftData?.owner?._id ||
+      rawNftData?.owner?.id ||
+      (typeof rawNftData?.owner === 'string' ? rawNftData.owner : null) ||
       (currentNft as any)?.currentOwner?._id ||
-      (currentNft as any)?.currentOwner?.id
+      (currentNft as any)?.currentOwner?.id ||
+      (currentNft as any)?.owner?._id ||
+      (currentNft as any)?.owner?.id
 
-    if (!ownerId) return
+    if (!ownerId) {
+      console.warn('Owner ID not found for chat navigation', { rawNftData, currentNft })
+      message.error('Owner information not available')
+      return
+    }
 
     router.push(`/messages?userId=${ownerId}`)
-  }, [rawNftData, currentNft, router])
+  }, [rawNftData, currentNft, router, message])
 
   if (!currentNft && isLoadingDetails) {
     return (

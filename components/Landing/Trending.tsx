@@ -150,6 +150,7 @@ export default function Trending() {
       const price = nft.price ? `${nft.price} AVAX` : nft.floorPrice ? `${nft.floorPrice} AVAX` : '0.01 AVAX';
       const title = nft.itemName || nft.name || 'Unnamed NFT';
       const edition = nft.nftId ? `#${nft.nftId}` : '1 of 1';
+      const collectionId = nft.collectionId?._id || nft.collectionId || nft.collection?._id || nft.collection;
 
       return {
         title,
@@ -158,7 +159,8 @@ export default function Trending() {
         edition,
         category: categoryName.toUpperCase(),
         imageUrl: nft.imageUrl || nft.image,
-        nftId: nft._id || nft.id
+        nftId: nft._id || nft.id,
+        collectionId: collectionId
       };
     });
   }, [apiNfts]);
@@ -191,7 +193,7 @@ export default function Trending() {
 
         <div className="mb-8 md:mb-12 w-full max-w-full mx-auto font-exo2 relative z-20">
           <div
-            className="flex flex-nowrap items-center justify-start md:justify-center gap-0 overflow-x-auto overflow-y-hidden rounded-full py-2.5 px-4 w-full max-w-full backdrop-blur-sm scrollbar-hide relative z-20"
+            className="flex flex-nowrap items-center justify-start md:justify-center gap-0 overflow-x-auto overflow-y-hidden rounded-full py-2.5 px-4 w-[70%] sm:w-[80%] md:w-[90%] lg:w-[70%] max-w-full mx-auto backdrop-blur-sm scrollbar-hide relative z-20"
             style={{
               background: 'linear-gradient(to right, rgba(79, 1, 30, 0.1) 0%, rgba(20, 25, 45, 0.1) 100%)',
               border: '1px solid rgba(255, 255, 255, 0.1)', zIndex: 20, touchAction: 'pan-x', WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth'
@@ -277,7 +279,7 @@ export default function Trending() {
         <div className="text-center px-4">
           <button
             onClick={() => router.push('/marketplace')}
-            className="inline-flex md:inline-flex flex-nowrap items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white"
+            className="cursor-pointer inline-flex md:inline-flex flex-nowrap items-center justify-center gap-2 px-8 md:px-14 py-2 md:py-2 w-full md:w-auto rounded-full font-semibold transition-all hover:scale-105 text-white"
             style={{ background: 'linear-gradient(180deg, #4F01E6 0%, #25016E 83.66%)' }}
           >
             <span>Explore All</span>
