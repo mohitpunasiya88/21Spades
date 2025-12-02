@@ -655,6 +655,7 @@ export default function CollectionProfile({
     return sorted
   }, [nfts, activeTab, timeUpdate, selectedSort])
 
+  
   const sortItems: MenuProps['items'] = [
     { label: 'Price High to Low', key: 'Price-high' },
     { label: 'Price Low to High', key: 'Price-low' },
