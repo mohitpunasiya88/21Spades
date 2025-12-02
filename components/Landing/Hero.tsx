@@ -30,7 +30,7 @@ export default function Hero() {
   }
 
   return (
-    <div className=" bg-[#000000] relative md:w-[97%] w-[100%] mx-auto flex flex-col items-center justify-center mt-5 p-8 rounded-lg ">
+    <div className=" bg-[#000000] relative md:w-[97%] w-[100%] mx-auto flex flex-col items-center justify-center mt-5 p-8 rounded-[40px] overflow-hidden">
 
       {/* blobs */}
       <div className="hero-blobs rounded-lg">

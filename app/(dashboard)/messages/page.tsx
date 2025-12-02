@@ -51,7 +51,9 @@ export default function MessagesPage() {
 
   // Load chats on mount
   useEffect(() => {
-    getChats()
+    getChats().catch((error) => {
+      console.error('Error loading chats:', error)
+    })
   }, [getChats])
 
 
@@ -72,13 +74,18 @@ export default function MessagesPage() {
     const paramsChanged = prevParamsRef.current !== currentParams
     if (!paramsChanged && chats.length > 0) {
       // If params haven't changed and we already have a selected chat, don't re-select
-      if (selectedChat) return
+      if (selectedChat) {
+        // But check if the selected chat matches the userId
+        if (userId && selectedChat?.participants?.some(p => p._id === userId || (p as any).id === userId)) {
+          return
+        }
+        if (chatId && selectedChat?._id === chatId) {
+          return
+        }
+      }
     }
     
     prevParamsRef.current = currentParams
-    
-    // Only proceed if chats are loaded
-    if (chats.length === 0) return
     
     // If we already have a selected chat and it matches the URL params, don't change it
     const currentSelectedChatId = selectedChat?._id
@@ -86,27 +93,63 @@ export default function MessagesPage() {
     if (userId && selectedChat?.participants?.some(p => p._id === userId || (p as any).id === userId)) return
     
     if (chatId) {
-      const chat = chats.find(c => c._id === chatId)
-      if (chat) {
-        setSelectedChat(chat)
-        setIsMobileChatOpen(true)
+      // If chats are loaded, find the chat
+      if (chats.length > 0) {
+        const chat = chats.find(c => c._id === chatId)
+        if (chat) {
+          setSelectedChat(chat)
+          setIsMobileChatOpen(true)
+        }
       }
     } else if (userId) {
-      // Find chat by userId - check both _id and id formats
-      const chat = chats.find(c => 
-        c.participants && c.participants.some(p => 
-          p._id === userId || (p as any).id === userId
+      // If chats are loaded, try to find existing chat
+      if (chats.length > 0) {
+        const chat = chats.find(c => 
+          c.participants && c.participants.some(p => 
+            p._id === userId || (p as any).id === userId
+          )
         )
-      )
-      if (chat) {
-        setSelectedChat(chat)
-        setIsMobileChatOpen(true)
+        if (chat) {
+          setSelectedChat(chat)
+          setIsMobileChatOpen(true)
+        } else {
+          // Create new chat with this user
+          createOrGetChat(userId).then((chat) => {
+            if (chat) {
+              // createOrGetChat already sets selectedChat in store, but ensure it's set here too
+              setSelectedChat(chat)
+              setIsMobileChatOpen(true)
+              // Also update URL to remove userId param after chat is created
+              if (typeof window !== 'undefined') {
+                const url = new URL(window.location.href)
+                url.searchParams.delete('userId')
+                url.searchParams.set('chat', chat._id)
+                window.history.replaceState({}, '', url.toString())
+              }
+            }
+          }).catch((error) => {
+            console.error('Error creating chat:', error)
+          })
+        }
       } else {
-        // Create new chat with this user
+        // Chats not loaded yet, but we have userId - create chat directly
+        // This handles the case when navigating directly with userId before chats load
         createOrGetChat(userId).then((chat) => {
           if (chat) {
+            // createOrGetChat already sets selectedChat in store, but ensure it's set here too
+            setSelectedChat(chat)
             setIsMobileChatOpen(true)
+            // Also update URL to remove userId param after chat is created
+            // This prevents re-triggering the effect
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href)
+              url.searchParams.delete('userId')
+              url.searchParams.set('chat', chat._id)
+              window.history.replaceState({}, '', url.toString())
+            }
           }
+        }).catch((error) => {
+          console.error('Error creating chat:', error)
         })
       }
     }
