@@ -56,7 +56,7 @@ export default function Trending() {
       setIsLoadingNfts(true);
       const queryParams = new URLSearchParams();
       queryParams.append('page', '1');
-      queryParams.append('limit', '100'); // Fetch more to filter by category
+      queryParams.append('limit', '30'); // Fetch more to filter by category
       queryParams.append('blocked', 'false');
 
       // Fetch all NFTs (without collectionId to get all NFTs)
