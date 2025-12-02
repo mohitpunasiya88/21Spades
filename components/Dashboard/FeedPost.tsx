@@ -1648,7 +1648,14 @@ export default function FeedPost({ post }: FeedPostProps) {
                                 <Smile className="w-5 h-5" />
                               </button>
                               {isEmojiPickerOpen && (
-                                <div className="absolute top-full right-0 mt-2 z-50">
+                                <div 
+                                  className="absolute bottom-full right-0 mb-2 z-[100]"
+                                  style={{ 
+                                    maxHeight: 'min(400px, calc(100vh - 200px))',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)'
+                                  }}
+                                >
                                   <EmojiPicker
                                     onEmojiClick={(emojiData) => {
                                       setCommentText(prev => prev + (emojiData.emoji || ''))
